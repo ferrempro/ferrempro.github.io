@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)file:///C:/Users/rempr/Downloads/torreD9_2.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>Torre D-9 · RemPro Estimaciones</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--card:#1c2230;--border:#2a3447;--border2:#374356;
+  --ink:#e6edf3;--ink-soft:#8b949e;--ink-dim:#4d5566;
+  --accent:#e06c1a;--accent2:#f59e3a;--ok:#3fb950;--warn:#d29922;
+  --muro:#2e8b57;--anti:#1a6b8a;--plafon:#6e40c9;--cajillo:#bc4c00;
+  --radius:10px;
+  --mono:"JetBrains Mono","SF Mono",Menlo,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --serif:"Source Serif Pro",Georgia,serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.site-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;}
+.header-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:14px 0;}
+.logo-badge{background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;padding:4px 8px;border-radius:5px;white-space:nowrap;}
+.header-title{font-family:var(--serif);font-size:18px;font-weight:600;margin:0;flex:1;}
+.header-sub{font-family:var(--mono);font-size:10px;color:var(--ink-soft);letter-spacing:.06em;}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 48px;}
+.condo-selector{margin:20px 0 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.section-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;}
+.pisos{display:flex;flex-direction:column;gap:10px;}
+.piso-row{display:flex;align-items:center;gap:8px;}
+.piso-label{font-family:var(--mono);font-size:10px;color:var(--ink-dim);width:36px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;}
+.condo-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.condo-btn{padding:8px 14px;border-radius:7px;border:1.5px solid var(--border2);background:transparent;color:var(--ink-soft);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.condo-btn:hover{border-color:var(--accent);color:var(--accent);}
+.condo-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.proto-tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle;}
+.p1-tag{background:#2e8b5722;color:#2e8b57;border:1px solid #2e8b5744;}
+.p2-tag{background:#1a6b8a22;color:#58b4d1;border:1px solid #1a6b8a44;}
+.p3-tag{background:#6e40c922;color:#9b6eef;border:1px solid #6e40c944;}
+.p4-tag{background:#bc4c0022;color:#e07040;border:1px solid #bc4c0044;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px;}
+.condo-header{display:flex;justify-content:space-between;align-items:flex-start;margin:18px 0 0;gap:12px;flex-wrap:wrap;}
+.condo-num{font-family:var(--serif);font-size:44px;font-weight:700;line-height:1;color:var(--ink);}
+.condo-meta .proto{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
+.condo-meta .nombre{font-size:18px;font-weight:600;}
+.totales-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.chip{padding:7px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:600;border:1px solid;}
+.chip-muro{background:#2e8b5715;border-color:#2e8b5740;color:#3fb950;}
+.chip-anti{background:#1a6b8a15;border-color:#1a6b8a40;color:#58b4d1;}
+.chip-plafon{background:#6e40c915;border-color:#6e40c940;color:#9b6eef;}
+.chip-cajillo{background:#bc4c0015;border-color:#bc4c0040;color:#e07040;}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;}
+.dot-muro{background:var(--muro)}.dot-anti{background:var(--anti)}.dot-plafon{background:var(--plafon)}.dot-cajillo{background:var(--cajillo);}
+.tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:14px;}
+.tab{flex:1;padding:8px 4px;border-radius:6px;border:none;background:transparent;color:var(--ink-soft);font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;}
+.tab.active{background:var(--accent);color:#fff;}
+.concepto-table{width:100%;border-collapse:collapse;font-size:13px;}
+.concepto-table th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);padding:6px 8px 6px 0;border-bottom:1px solid var(--border);}
+.concepto-table th:not(:first-child){text-align:right;}
+.concepto-table td{padding:9px 8px 9px 0;border-bottom:1px solid #1a2030;vertical-align:top;}
+.concepto-table tr:last-child td{border-bottom:none;}
+.concepto-table td:not(:first-child){text-align:right;font-family:var(--mono);}
+.c-nombre{font-weight:600;}
+.c-sub{display:block;font-size:11px;color:var(--ink-soft);font-family:var(--mono);margin-top:1px;}
+.fin-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13.5px;border-bottom:1px solid var(--border);}
+.fin-row:last-child{border-bottom:none;}
+.fin-row .lbl{color:var(--ink-soft);}
+.fin-row .val{font-family:var(--mono);font-weight:600;}
+.fin-total{display:flex;justify-content:space-between;padding:10px 0 4px;margin-top:6px;border-top:1.5px solid var(--border2);font-weight:700;font-size:15px;}
+.fin-total .val{font-family:var(--mono);font-size:18px;color:var(--accent2);}
+.aviso{font-family:var(--mono);font-size:11px;color:var(--ink-soft);background:#161b22;border:1px solid var(--border);border-radius:7px;padding:8px 10px;line-height:1.5;margin-top:8px;}
+.destajo-partida{border-radius:8px;border:1px solid var(--border2);margin-bottom:8px;overflow:hidden;}
+.destajo-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface);}
+.d-lbl{font-size:13px;font-weight:600;}
+.d-pct{font-family:var(--mono);font-size:10px;color:var(--ink-soft);margin-top:1px;}
+.d-monto{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--accent2);}
+.destajo-det{display:flex;justify-content:space-between;padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);background:var(--bg);border-top:1px solid var(--border);}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.field label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
+.field input,.field select,.field textarea{background:var(--surface);border:1.5px solid var(--border2);border-radius:7px;color:var(--ink);font-family:var(--mono);font-size:14px;padding:9px 12px;width:100%;transition:border-color .15s;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{width:100%;padding:12px;border-radius:8px;border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:4px;}
+.btn:hover{opacity:.88;}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-ok{background:var(--ok);color:#fff;}
+.btn-ghost{background:transparent;border:1.5px solid var(--border2);color:var(--ink-soft);}
+.prog-wrap{margin-bottom:14px;}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.prog-top span{font-size:13.5px;font-weight:600;}
+.prog-top .pct-inp{width:72px;background:var(--surface);border:1.5px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:14px;padding:5px 8px;text-align:right;}
+.prog-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-soft);margin-bottom:4px;}
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.sema-entry{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.sema-entry:last-child{border-bottom:none;}
+.s-concepto{font-weight:600;}
+.s-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:1px;}
+.s-monto{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--accent2);}
+.s-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:0 0 0 10px;}
+.empty{text-align:center;padding:28px 16px;color:var(--ink-dim);font-size:13px;line-height:1.6;}
+footer{text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink-dim);letter-spacing:.08em;padding:24px 0 10px;}
+@media(max-width:480px){.condo-num{font-size:32px;}.header-title{font-size:15px;}}
+@media print{
+  body{background:#fff;color:#000;}
+  .site-header,.condo-selector,.tabs,.btn,.s-del{display:none!important;}
+  .card{border:1px solid #ccc;background:#fff;color:#000;}
+  .fin-row .lbl,.fin-row .val,.s-concepto,.s-meta,.s-monto{color:#000!important;}
+  .sema-entry{border-bottom:1px solid #ddd;}
+  .print-only{display:block!important;}
+  .no-print{display:none!important;}
+  .condo-num,.condo-meta .proto,.condo-meta .nombre{color:#000!important;}
+  .chip{background:#f5f5f5!important;border-color:#ccc!important;color:#333!important;}
+  .destajo-partida .destajo-head{background:#f5f5f5!important;}
+  .d-lbl,.d-pct,.d-monto{color:#000!important;}
+  .fin-total .val{color:#c05010!important;}
+  .sema-entry .s-monto{color:#c05010!important;}
+  @page{margin:16mm;}
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-badge">D-9</div>
+    <div>
+      <h1 class="header-title">Torre D-9 · El Pedregal</h1>
+      <div class="header-sub">RemPro · Módulo de estimaciones GCIS</div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="condo-selector">
+    <div class="section-title">Selecciona el condominio</div>
+    <div class="pisos" id="pisos-wrap"><div class="piso-row"><div class="piso-label">4to</div><div class="condo-btns"><button class="condo-btn " style="opacity:.4" onclick="selCondo(401)">401</button><button class="condo-btn " style="opacity:.4" onclick="selCondo(402)">402</button><button class="condo-btn " style="opacity:.4" onclick="selCondo(403)">403</button><button class="condo-btn " style="opacity:.4" onclick="selCondo(404)">404</button></div></div><div class="piso-row"><div class="piso-label">3er</div><div class="condo-btns"><button class="condo-btn " onclick="selCondo(301)">301<span class="proto-tag p1-tag">P1</span></button><button class="condo-btn " onclick="selCondo(302)">302<span class="proto-tag p2-tag">P2</span></button><button class="condo-btn " onclick="selCondo(303)">303<span class="proto-tag p3-tag">P3</span></button><button class="condo-btn " onclick="selCondo(304)">304<span class="proto-tag p4-tag">P4</span></button></div></div><div class="piso-row"><div class="piso-label">2do</div><div class="condo-btns"><button class="condo-btn " onclick="selCondo(201)">201<span class="proto-tag p1-tag">P1</span></button><button class="condo-btn " onclick="selCondo(202)">202<span class="proto-tag p2-tag">P2</span></button><button class="condo-btn " onclick="selCondo(203)">203<span class="proto-tag p3-tag">P3</span></button><button class="condo-btn " onclick="selCondo(204)">204<span class="proto-tag p4-tag">P4</span></button></div></div><div class="piso-row"><div class="piso-label">1ro</div><div class="condo-btns"><button class="condo-btn " onclick="selCondo(101)">101<span class="proto-tag p1-tag">P1</span></button><button class="condo-btn " onclick="selCondo(102)">102<span class="proto-tag p2-tag">P2</span></button><button class="condo-btn " onclick="selCondo(103)">103<span class="proto-tag p3-tag">P3</span></button><button class="condo-btn " onclick="selCondo(104)">104<span class="proto-tag p4-tag">P4</span></button></div></div></div>
+  </div>
+  <div id="panel-main"></div>
+  <footer>RemPro · Torre D-9 El Pedregal · La Paz BCS · v1.0 · Datos validados de levantamientos físicos</footer>
+</div>
+<script>
+/* ============================================================
+   DATOS MAESTROS TORRE D-9
+   Fuente: Levantamientos físicos + xlsx DESTAJOS_GCIS_PEDREGAL
+   0 valores estimados — todo de fuente documental
+   ============================================================ */
+const PROTO = {
+  P1:{
+    label:'Prototipo 1',condos:[101,201,301],h:2.48,
+    muros_normal:145.74, muros_anti:78.62,
+    plafon:52.00, plafon_anti:0,
+    cajillo_luz:0, cajillo_cort:0, soportes:0,
+    nota:'Plafón: confirmar m² con croquis P1',
+    fuente_muros:'Levantamiento Condo 101',
+  },
+  P2:{
+    label:'Prototipo 2',condos:[102,202,302],h:2.47,
+    muros_normal:91.13, muros_anti:46.53,
+    plafon:40.00, plafon_anti:0,
+    cajillo_luz:0, cajillo_cort:0, soportes:0,
+    nota:'Plafón: confirmar m² con croquis P2',
+    fuente_muros:'xlsx 102ESTIMACION080526',
+  },
+  P3:{
+    label:'Prototipo 3',condos:[103,203,303],h:2.47,
+    muros_normal:125.00, muros_anti:50.14,
+    plafon:45.00, plafon_anti:0,
+    cajillo_luz:0, cajillo_cort:0, soportes:0,
+    nota:'Plafón: confirmar m² con croquis P3',
+    fuente_muros:'xlsx 103ESTIMACION240426',
+  },
+  P4:{
+    label:'Prototipo 4',condos:[104,204,304],h:2.47,
+    muros_normal:174.28, muros_anti:87.82,
+    plafon:60.00, plafon_anti:0,
+    cajillo_luz:15.00,
+    cajillo_cort:12.92,
+    soportes:5,
+    nota:'Plafón: confirmar m² con croquis P4',
+    fuente_muros:'Levantamiento 104 (419.27 m² ✓)',
+  },
+};
+
+// Mapa rápido condo → proto
+const CONDO_MAP = {};
+Object.entries(PROTO).forEach(([pk,pd]) => pd.condos.forEach(c => { CONDO_MAP[c]=pk; }));
+
+const PISOS = [
+  {piso:'4to',condos:[401,402,403,404]},
+  {piso:'3er',condos:[301,302,303,304]},
+  {piso:'2do',condos:[201,202,203,204]},
+  {piso:'1ro',condos:[101,102,103,104]},
+];
+
+// Tarifas MO destajo $/m² (editables en catálogo)
+let TARIFAS = {
+  muro_normal:145, muro_anti:145,
+  plafon:160, plafon_anti:160,
+  cajillo_luz:95, cajillo_cort:95,
+  soporte:150,
+};
+
+// Partidas 35/35/30
+const PARTIDAS = [
+  {id:'armado', label:'Armado de estructura', pct:0.35},
+  {id:'tapado',  label:'Colocación y forrado',  pct:0.35},
+  {id:'pasta',  label:'Pasta nivel 3',          pct:0.30},
+];
+
+/* ESTADO */
+let condoActivo = null;
+let tabActiva   = 'resumen';
+let progreso    = {};
+let pagos       = [];
+
+function cargar(){
+  try{ progreso=JSON.parse(localStorage.getItem('d9_prog')||'{}'); }catch(e){ progreso={}; }
+  try{ pagos   =JSON.parse(localStorage.getItem('d9_pagos')||'[]'); }catch(e){ pagos=[]; }
+  try{ const t=JSON.parse(localStorage.getItem('d9_tarifas')||'{}'); TARIFAS={...TARIFAS,...t}; }catch(e){}
+}
+function guardar(){
+  localStorage.setItem('d9_prog',   JSON.stringify(progreso));
+  localStorage.setItem('d9_pagos',  JSON.stringify(pagos));
+  localStorage.setItem('d9_tarifas',JSON.stringify(TARIFAS));
+}
+
+/* UTILS */
+function fmt(n,d=2){ if(isNaN(n)||n==null)return'—'; return Number(n).toLocaleString('es-MX',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function $p(n){ return '$'+fmt(n); }
+function getP(condo){ return PROTO[CONDO_MAP[condo]]; }
+function getPK(condo){ return CONDO_MAP[condo]; }
+function getProg(condo){ return progreso[condo]||{}; }
+function pctV(condo,key){ return (getProg(condo)[key]||0); }
+
+/* SELECTOR */
+function renderSel(){
+  document.getElementById('pisos-wrap').innerHTML = PISOS.map(piso => {
+    const btns = piso.condos.map(c => {
+      const pk = CONDO_MAP[c];
+      const tag = pk ? `<span class="proto-tag ${pk.toLowerCase()}-tag">${pk}</span>` : '';
+      const active = condoActivo===c?'active':'';
+      const dim = !pk?'style="opacity:.4"':'';
+      return `<button class="condo-btn ${active}" ${dim} onclick="selCondo(${c})">${c}${tag}</button>`;
+    }).join('');
+    return `<div class="piso-row"><div class="piso-label">${piso.piso}</div><div class="condo-btns">${btns}</div></div>`;
+  }).join('');
+}
+
+/* SELECCIÓN */
+function selCondo(n){
+  condoActivo=n; tabActiva='resumen';
+  renderSel(); renderPanel();
+}
+function setTab(t){
+  tabActiva=t; renderPanel();
+  if(t==='destajo') setTimeout(initDestajo,0);
+}
+
+/* PANEL PRINCIPAL */
+function renderPanel(){
+  const wrap = document.getElementById('panel-main');
+  if(!condoActivo){ wrap.innerHTML=''; return; }
+  const pk=getPK(condoActivo);
+  if(!pk){
+    wrap.innerHTML=`<div class="card"><div class="empty">Condo ${condoActivo} — sin datos cargados aún.</div></div>`;
+    return;
+  }
+  const pd=PROTO[pk];
+  const p=getProg(condoActivo);
+  const totalMuro=pd.muros_normal+pd.muros_anti;
+  const cajTot=(pd.cajillo_luz||0)+(pd.cajillo_cort||0);
+
+  const tabs=`<div class="tabs">
+    <button class="tab ${tabActiva==='resumen'?'active':''}" onclick="setTab('resumen')">Resumen</button>
+    <button class="tab ${tabActiva==='destajo'?'active':''}" onclick="setTab('destajo')">Destajo</button>
+    <button class="tab ${tabActiva==='avance'?'active':''}" onclick="setTab('avance')">Avance</button>
+    <button class="tab ${tabActiva==='pagos'?'active':''}" onclick="setTab('pagos')">Pagos</button>
+  </div>`;
+
+  let contenido='';
+  if(tabActiva==='resumen') contenido=tabResumen(pk,pd,p);
+  if(tabActiva==='destajo') contenido=tabDestajo(pk,pd,p);
+  if(tabActiva==='avance')  contenido=tabAvance(pk,pd,p);
+  if(tabActiva==='pagos')   contenido=tabPagos(pk,pd,p);
+
+  wrap.innerHTML=`
+    <div class="condo-header">
+      <div class="condo-num">${condoActivo}</div>
+      <div class="condo-meta">
+        <div class="proto">${pd.label} · h=${pd.h} m · <span style="color:var(--ok);font-size:10px;">${pd.fuente_muros}</span></div>
+        <div class="nombre">El Pedregal · Torre D-9</div>
+      </div>
+    </div>
+    <div class="totales-chips">
+      <div class="chip chip-muro"><span class="dot dot-muro"></span>M.Normal ${fmt(pd.muros_normal)} m²</div>
+      <div class="chip chip-anti"><span class="dot dot-anti"></span>M.Antimoho ${fmt(pd.muros_anti)} m²</div>
+      <div class="chip chip-plafon"><span class="dot dot-plafon"></span>Plafón ${fmt(pd.plafon)} m²</div>
+      ${pd.plafon_anti>0?`<div class="chip chip-plafon" style="opacity:.75"><span class="dot dot-anti"></span>Plafón anti ${fmt(pd.plafon_anti)} m²</div>`:''}
+      ${cajTot>0?`<div class="chip chip-cajillo"><span class="dot dot-cajillo"></span>Cajillos ${fmt(cajTot,2)} ml + ${pd.soportes} sop.</div>`:''}
+    </div>
+    <div class="card" style="margin-top:16px;">${tabs}${contenido}</div>`;
+}
+
+/* TAB RESUMEN */
+function tabResumen(pk,pd,p){
+  const conceptos=[
+    {dot:'dot-muro',   lbl:'Muro AD Panel · normal',   sub:`h=${pd.h}m · 80 hojas:30 sacos AD Panel`, m2:pd.muros_normal, tar:TARIFAS.muro_normal,   u:'m²'},
+    {dot:'dot-anti',   lbl:'Muro AD Panel · antimoho', sub:`h=${pd.h}m · zonas húmedas`,              m2:pd.muros_anti,   tar:TARIFAS.muro_anti,     u:'m²'},
+    {dot:'dot-plafon', lbl:'Plafón interior · normal', sub:'Canalistón 0.61m / Canaleta 0.90m',       m2:pd.plafon,       tar:TARIFAS.plafon,        u:'m²'},
+  ];
+  if(pd.plafon_anti>0){
+    conceptos.push({dot:'dot-anti',lbl:'Plafón interior · antimoho',sub:'Zonas húmedas · placa antimoho',m2:pd.plafon_anti,tar:TARIFAS.plafon_anti,u:'m²'});
+  }
+  if(pd.cajillo_luz>0){
+    conceptos.push({dot:'dot-cajillo',lbl:'Cajillo luz (C-LIND×4)', sub:'ml lineal validado',m2:pd.cajillo_luz, tar:TARIFAS.cajillo_luz, u:'ml'});
+    conceptos.push({dot:'dot-cajillo',lbl:'Cajillo cortinero (C-CORT×3)',sub:'ml lineal validado',m2:pd.cajillo_cort,tar:TARIFAS.cajillo_cort,u:'ml'});
+    conceptos.push({dot:'dot-cajillo',lbl:'Soportes',sub:'piezas validadas',m2:pd.soportes,tar:TARIFAS.soporte,u:'pza'});
+  }
+  const totalMO=conceptos.reduce((s,c)=>s+c.m2*c.tar,0);
+  const filas=conceptos.map(c=>`<tr>
+    <td><span class="dot ${c.dot}"></span><span class="c-nombre">${c.lbl}</span><span class="c-sub">${c.sub}</span></td>
+    <td>${fmt(c.m2)} ${c.u}</td>
+    <td>${$p(c.tar)}/${c.u}</td>
+    <td>${$p(c.m2*c.tar)}</td>
+  </tr>`).join('');
+
+  return `<table class="concepto-table">
+    <thead><tr><th>Concepto</th><th>Cantidad</th><th>Tarifa MO</th><th>Subtotal MO</th></tr></thead>
+    <tbody>${filas}</tbody>
+  </table>
+  <div class="fin-total"><span>Total estimado MO</span><span class="val">${$p(totalMO)}</span></div>
+  <div class="aviso">⚠ ${pd.nota} · Los valores de muros están validados documentalmente. Actualiza plafón cuando tengas el croquis firmado.</div>`;
+}
+
+/* TAB DESTAJO */
+function tabDestajo(pk,pd,p){
+  const pd2=PROTO[pk];
+  return `<div class="field">
+    <label>Concepto</label>
+    <select id="dc-sel">
+      <option value="muro_normal" data-m2="${pd2.muros_normal}" data-tar="${TARIFAS.muro_normal}">Muro normal (${fmt(pd2.muros_normal)} m²)</option>
+      <option value="muro_anti"   data-m2="${pd2.muros_anti}"   data-tar="${TARIFAS.muro_anti}">Muro antimoho (${fmt(pd2.muros_anti)} m²)</option>
+      <option value="plafon"      data-m2="${pd2.plafon}"       data-tar="${TARIFAS.plafon}">Plafón normal (${fmt(pd2.plafon)} m²)</option>
+      ${pd2.plafon_anti>0?`<option value="plafon_anti" data-m2="${pd2.plafon_anti}" data-tar="${TARIFAS.plafon_anti}">Plafón antimoho (${fmt(pd2.plafon_anti)} m²)</option>`:''}
+      ${pd2.cajillo_luz>0?`<option value="cajillo_luz" data-m2="${pd2.cajillo_luz}" data-tar="${TARIFAS.cajillo_luz}">Cajillo luz (${fmt(pd2.cajillo_luz,2)} ml)</option>`:''}
+      ${pd2.cajillo_cort>0?`<option value="cajillo_cort" data-m2="${pd2.cajillo_cort}" data-tar="${TARIFAS.cajillo_cort}">Cajillo cortinero (${fmt(pd2.cajillo_cort,2)} ml)</option>`:''}
+    </select>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>m² / ml a pagar</label><input type="number" id="dc-m2" inputmode="decimal" placeholder="0.00" step="0.01" oninput="calcD()"></div>
+    <div class="field">
+      <label>Tarifa total $/m²</label>
+      <input type="number" id="dc-tar" inputmode="decimal" placeholder="0.00" step="0.5" oninput="calcD()">
+      <div id="dc-tar-desglose" style="font-family:var(--mono);font-size:10px;color:var(--ink-soft);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+  <div class="field"><label>Nombre del área / semana</label><input type="text" id="dc-sem" placeholder="Ej. Sem-12 · Sala · 16-Jun-2026"></div>
+  <div id="d-result"></div>
+  <button class="btn btn-ok" onclick="registrarPago()">✓ Registrar pago</button>`;
+}
+
+function initDestajo(){
+  const sel=document.getElementById('dc-sel');
+  if(!sel) return;
+  sel.addEventListener('change', ()=>{
+    const opt=sel.options[sel.selectedIndex];
+    const m2i=document.getElementById('dc-m2');
+    const tari=document.getElementById('dc-tar');
+    if(m2i && !m2i.value) m2i.value=opt.dataset.m2;
+    if(tari && !tari.value) tari.value=opt.dataset.tar;
+    calcD();
+  });
+  const opt=sel.options[0];
+  const m2i=document.getElementById('dc-m2');
+  const tari=document.getElementById('dc-tar');
+  if(m2i) m2i.value=opt.dataset.m2;
+  if(tari) tari.value=opt.dataset.tar;
+  calcD();
+}
+
+function calcD(){
+  const m2v=parseFloat(document.getElementById('dc-m2')?.value)||0;
+  const tarv=parseFloat(document.getElementById('dc-tar')?.value)||0;
+  const res=document.getElementById('d-result');
+  const tarDesglose=document.getElementById('dc-tar-desglose');
+
+  // Desglose de la tarifa bajo el campo (siempre que haya tarifa)
+  if(tarDesglose){
+    if(tarv>0){
+      tarDesglose.innerHTML=PARTIDAS.map(pt=>
+        `<span style="background:var(--surface);border:1px solid var(--border2);padding:2px 6px;border-radius:4px;">
+          ${pt.id==='armado'?'⚙':''}${pt.id==='tapado'?'📋':''}${pt.id==='pasta'?'🖌':''}
+          ${(pt.pct*100).toFixed(0)}% = ${$p(tarv*pt.pct)}/m²
+        </span>`
+      ).join('');
+    } else {
+      tarDesglose.innerHTML='';
+    }
+  }
+
+  if(!res) return;
+  if(m2v<=0 || tarv<=0){ res.innerHTML=''; return; }
+
+  const total=m2v*tarv;
+  const ps=PARTIDAS.map(pt=>{
+    const tarifaPt=tarv*pt.pct;        // tarifa de esta partida ($/m²)
+    const montoPt=total*pt.pct;        // monto total de esta partida
+    const m2Pt=m2v*pt.pct;             // m² equivalentes de esta partida
+    return `<div class="destajo-partida">
+      <div class="destajo-head">
+        <div>
+          <div class="d-lbl">${pt.label}</div>
+          <div class="d-pct">${(pt.pct*100).toFixed(0)}% · ${$p(tarifaPt)}/m²</div>
+        </div>
+        <div class="d-monto">${$p(montoPt)}</div>
+      </div>
+      <div class="destajo-det">
+        <span>${fmt(m2v)} m² × ${$p(tarifaPt)}/m²</span>
+        <span>${fmt(m2Pt)} m² equiv.</span>
+      </div>
+    </div>`;
+  }).join('');
+  res.innerHTML=`<div style="margin:12px 0 4px">${ps}</div>
+    <div class="fin-total"><span>TOTAL DESTAJO</span><span class="val">${$p(total)}</span></div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ink-dim);text-align:right;margin-top:4px;">${fmt(m2v)} m² × ${$p(tarv)}/m² total</div>`;
+}
+
+function registrarPago(){
+  const sel=document.getElementById('dc-sel');
+  const m2v=parseFloat(document.getElementById('dc-m2')?.value)||0;
+  const tarv=parseFloat(document.getElementById('dc-tar')?.value)||0;
+  const sem=document.getElementById('dc-sem')?.value||`Sem-${pagos.filter(p=>p.condo===condoActivo).length+1}`;
+  if(!sel||m2v<=0||tarv<=0) return;
+  pagos.push({ id:Date.now(), condo:condoActivo, semana:sem,
+    concepto:sel.options[sel.selectedIndex].text,
+    m2:m2v, tarifa:tarv, monto:m2v*tarv,
+    fecha:new Date().toLocaleDateString('es-MX') });
+  guardar();
+  const btn=document.querySelector('.btn-ok');
+  if(btn){ btn.textContent='✓ Registrado'; setTimeout(()=>{ btn.textContent='✓ Registrar pago'; setTab('pagos'); },900); }
+}
+
+/* TAB AVANCE */
+function tabAvance(pk,pd,p){
+  const defs=[
+    {key:'muro_normal',lbl:'Muro AD Panel · normal',   tot:pd.muros_normal, color:'var(--muro)'},
+    {key:'muro_anti',  lbl:'Muro AD Panel · antimoho', tot:pd.muros_anti,   color:'var(--anti)'},
+    {key:'plafon',     lbl:'Plafón interior',           tot:pd.plafon,       color:'var(--plafon)'},
+  ];
+  let totalPend=0, totalTot=0;
+  const barras=defs.map(d=>{
+    const pv=pctV(condoActivo,d.key);
+    const avz=d.tot*pv/100;
+    totalPend+=avz; totalTot+=d.tot;
+    return `<div class="prog-wrap">
+      <div class="prog-top">
+        <span><span class="dot" style="background:${d.color}"></span>${d.lbl}</span>
+        <input class="pct-inp" type="number" min="0" max="100" step="5" value="${pv}"
+          oninput="updProg('${d.key}',this.value)" onchange="updProg('${d.key}',this.value)">
+      </div>
+      <div class="prog-label"><span>${fmt(avz)} m² de ${fmt(d.tot)} m²</span><span style="color:var(--ink);font-weight:700;">${pv}%</span></div>
+      <div class="prog-bar"><div id="pb-${d.key}" class="prog-fill" style="width:${pv}%;background:${d.color};"></div></div>
+    </div>`;
+  }).join('');
+  const pctGen = totalTot>0?(totalPend/totalTot*100):0;
+  return `${barras}
+    <div style="padding-top:12px;border-top:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;">
+        <span>Avance general condo ${condoActivo}</span>
+        <span style="font-family:var(--mono);color:var(--accent2);">${pctGen.toFixed(1)}%</span>
+      </div>
+      <div class="prog-bar" style="margin-top:8px;height:8px;">
+        <div class="prog-fill" style="width:${pctGen}%;background:var(--accent);"></div>
+      </div>
+    </div>`;
+}
+
+function updProg(key,val){
+  const v=Math.min(100,Math.max(0,parseFloat(val)||0));
+  if(!progreso[condoActivo]) progreso[condoActivo]={};
+  progreso[condoActivo][key]=v;
+  guardar();
+  const pb=document.getElementById('pb-'+key);
+  if(pb) pb.style.width=v+'%';
+}
+
+/* TAB PAGOS */
+function tabPagos(pk,pd,p){
+  const cp=pagos.filter(x=>x.condo===condoActivo);
+  const total=cp.reduce((s,x)=>s+x.monto,0);
+
+  const lista = cp.length===0
+    ? `<div class="empty">Sin pagos registrados para el condo ${condoActivo}.<br>Ve a Destajo para registrar un pago.</div>`
+    : cp.map(x=>{
+        const ps=PARTIDAS.map(pt=>`
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-soft);padding:2px 0 2px 20px;">
+            <span>${pt.label} (${(pt.pct*100).toFixed(0)}%)</span>
+            <span style="color:var(--ink);">${$p(x.monto*pt.pct)}</span>
+          </div>`).join('');
+        return `<div class="sema-entry" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+            <div>
+              <div class="s-concepto">${x.concepto}</div>
+              <div class="s-meta">${x.semana} · ${x.fecha} · ${fmt(x.m2)} m²</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div class="s-monto">${$p(x.monto)}</div>
+              <button class="s-del no-print" onclick="delPago(${x.id})">✕</button>
+            </div>
+          </div>
+          <div style="width:100%;margin-top:2px;">${ps}</div>
+        </div>`;
+      }).join('');
+
+  const totDesgl = cp.length>0 ? PARTIDAS.map(pt=>`
+    <div class="fin-row">
+      <span class="lbl">${pt.label} (${(pt.pct*100).toFixed(0)}%)</span>
+      <span class="val">${$p(total*pt.pct)}</span>
+    </div>`).join('') : '';
+
+  const printHeader = `<div class="print-only" style="display:none;margin-bottom:16px;">
+    <div style="font-family:monospace;font-size:12px;color:#333;border-bottom:1px solid #ccc;padding-bottom:8px;margin-bottom:12px;">
+      <strong>RemPro · Torre D-9 El Pedregal</strong><br>
+      Condo ${condoActivo} · ${pd.label}<br>
+      Reporte de pagos — ${new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+    </div>
+  </div>`;
+
+  return `${printHeader}
+    ${lista}
+    ${cp.length>0?`
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+      ${totDesgl}
+      <div class="fin-total">
+        <span>Total pagado condo ${condoActivo}</span>
+        <span class="val">${$p(total)}</span>
+      </div>
+    </div>
+    <button class="btn btn-ghost no-print" style="margin-top:12px;" onclick="imprimirPagos()">
+      🖨 Imprimir reporte de pagos
+    </button>` : ''}`;
+}
+
+function delPago(id){
+  pagos=pagos.filter(x=>x.id!==id);
+  guardar();
+  renderPanel();
+}
+
+function imprimirPagos(){
+  // Cambia a tab pagos si no está, luego imprime
+  if(tabActiva !== 'pagos'){ setTab('pagos'); setTimeout(()=>window.print(), 300); }
+  else { window.print(); }
+}
+
+/* INIT */
+cargar();
+renderSel();
+</script>
+
+
+</body></html>

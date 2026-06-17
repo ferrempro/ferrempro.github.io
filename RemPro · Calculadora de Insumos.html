@@ -1,0 +1,4168 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)file:///C:/Users/rempr/Downloads/index_11.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1c1f1a">
+<title>RemPro · Calculadora de Insumos</title>
+<link rel="manifest" href="file:///C:/Users/rempr/Downloads/manifest.json">
+<style>
+  :root{
+    --bg: #f6f4ee;
+    --panel: #ffffff;
+    --ink: #1c1f1a;
+    --ink-soft: #5b5e55;
+    --line: #e1ddd2;
+    --accent: #c5601f;
+    --accent-soft: #f3e3d4;
+    --muro: #2f4a3a;
+    --plafon: #3a5f8a;
+    --ok: #2f6b3f;
+    --radius: 14px;
+    --serif: "Source Serif Pro", Georgia, "Times New Roman", serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 40px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 18px;
+  }
+
+  /* Header */
+  header.hero{
+    padding: env(safe-area-inset-top, 24px) 0 0 0;
+    margin-bottom: 8px;
+  }
+  .hero-inner{
+    padding: 28px 0 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+  }
+  h1{
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Selector */
+  .selector{
+    display: flex;
+    gap: 10px;
+    margin: 18px 0;
+  }
+  .selector button{
+    flex: 1;
+    padding: 16px 12px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--line);
+    background: var(--panel);
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .selector button .tag{
+    display:block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.6;
+  }
+  .selector button.active{
+    color: #fff;
+    border-color: transparent;
+  }
+  .selector button[data-mode="muro"].active{ background: var(--muro); }
+  .selector button[data-mode="plafon"].active{ background: var(--plafon); }
+  .selector button.active .tag{ opacity: 0.75; }
+
+  /* Card */
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .card h2{
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+  .field-row{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .field{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label{
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .field input, .field select{
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 11px 12px;
+    border-radius: 9px;
+    border: 1.5px solid var(--line);
+    background: #fdfcfa;
+    color: var(--ink);
+    width: 100%;
+    appearance: none;
+  }
+  .field select{
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+  .field input:focus, .field select:focus{
+    outline: none;
+    border-color: var(--accent);
+  }
+  .toggle-row{
+    display:flex;
+    gap:8px;
+    margin-bottom: 12px;
+  }
+  .toggle-row .field{ flex:1; }
+  .pill-group{
+    display:flex;
+    gap:8px;
+  }
+  .pill{
+    flex:1;
+    padding: 10px 8px;
+    border-radius: 9px;
+    border: 1.5px solid var(--line);
+    background: #fdfcfa;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-align:center;
+    cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .pill.active{
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* Result */
+  .result-box{
+    display:flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--ink);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 4px 0 14px;
+  }
+  .result-box .label{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 6px;
+    display:block;
+  }
+  .result-box .value{
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .result-box .unit{
+    font-family: var(--sans);
+    font-size: 14px;
+    opacity: 0.55;
+    margin-left: 6px;
+  }
+  .result-box .area-detail{
+    text-align: right;
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: 0.7;
+    font-family: var(--mono);
+  }
+
+  /* Insumos table */
+  .insumos h2{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .insumos h2 .count{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .group{
+    margin-bottom: 16px;
+  }
+  .group:last-child{ margin-bottom: 0; }
+  .group-title{
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .item-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f1efe8;
+  }
+  .item-row:last-child{ border-bottom: none; }
+  .item-name{
+    color: var(--ink);
+  }
+  .item-name .sub{
+    display:block;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+  .item-qty{
+    font-family: var(--mono);
+    font-weight: 600;
+    white-space: nowrap;
+    padding-left: 12px;
+    text-align:right;
+  }
+  .item-qty .u{
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-left: 3px;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding: 28px 16px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .empty-state .glyph{
+    font-family: var(--serif);
+    font-size: 30px;
+    color: var(--line);
+    margin-bottom: 8px;
+  }
+
+  footer{
+    text-align:center;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    padding: 22px 0 10px;
+    opacity: 0.55;
+  }
+
+  /* Buttons */
+  .btn-primary, .btn-secondary{
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 9px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 4px;
+  }
+  .btn-primary{
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover{ opacity: 0.9; }
+  .btn-primary:active{ transform: scale(0.99); }
+  .btn-secondary{
+    background: var(--ink);
+    color: #fff;
+  }
+  .btn-secondary:hover{ opacity: 0.9; }
+
+  /* Áreas guardadas */
+  .area-card{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .area-card:last-child{ margin-bottom: 0; }
+  .area-info .area-name{
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 2px;
+  }
+  .area-info .area-meta{
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .area-tag{
+    display:inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+    color: #fff;
+  }
+  .area-tag.muro{ background: var(--muro); }
+  .area-tag.plafon{ background: var(--plafon); }
+  .area-delete{
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .area-delete:hover{
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* Consolidado */
+  .consol-group{
+    margin-bottom: 14px;
+  }
+  .consol-group:last-child{ margin-bottom: 0; }
+  .consol-row{
+    display:flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid #f1efe8;
+  }
+  .consol-row:last-child{ border-bottom: none; }
+  .consol-row .name{ color: var(--ink); }
+  .consol-row .qty{
+    font-family: var(--mono);
+    font-weight: 600;
+    white-space: nowrap;
+    padding-left: 12px;
+  }
+  .consol-row .qty .u{
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-left: 3px;
+  }
+
+  /* Lista de muros / plafones */
+  .lista-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1efe8;
+    gap: 10px;
+  }
+  .lista-row:last-child{ border-bottom: none; }
+  .lista-row .lista-info .lista-nombre{
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 2px;
+  }
+  .lista-row .lista-info .lista-ubicacion{
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .lista-row .lista-m2{
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .lista-row .lista-m2 .u{
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-left: 3px;
+  }
+  .lista-row .lista-delete{
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0 0 8px;
+    flex-shrink: 0;
+  }
+  .lista-row .lista-delete:hover{ color: var(--accent); }
+  .lista-total{
+    display:flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1.5px solid var(--ink);
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+  .lista-total .qty{
+    font-family: var(--mono);
+  }
+  .lista-total .qty .u{
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-left: 3px;
+  }
+
+  /* APU — Análisis de Precios Unitarios */
+  .apu-meta{
+    display:flex; gap:16px; flex-wrap:wrap;
+    font-family:var(--mono); font-size:11.5px;
+    color:var(--ink-soft); margin-bottom:14px;
+    padding-bottom:10px; border-bottom:1px solid var(--line);
+  }
+  .apu-meta span b{ color:var(--ink); }
+  .apu-seccion{ margin-bottom:14px; }
+  .apu-seccion-titulo{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent);
+    margin:0 0 6px; padding-bottom:5px; border-bottom:1px solid var(--line);
+  }
+  .apu-tabla{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .apu-tabla th{
+    text-align:left; font-family:var(--mono); font-size:10px;
+    font-weight:600; color:var(--ink-soft); letter-spacing:.06em;
+    padding:4px 6px 4px 0; border-bottom:1px solid var(--line);
+  }
+  .apu-tabla th:not(:first-child){ text-align:right; }
+  .apu-tabla td{
+    padding:5px 6px 5px 0; border-bottom:1px solid #f1efe8;
+    vertical-align:top; line-height:1.3;
+  }
+  .apu-tabla td:not(:first-child){
+    text-align:right; font-family:var(--mono); white-space:nowrap;
+  }
+  .apu-tabla tr:last-child td{ border-bottom:none; }
+  .apu-tabla .sub{
+    display:block; font-size:10.5px; color:var(--ink-soft);
+    font-family:var(--mono);
+  }
+  .apu-subtotal td{
+    font-weight:700; border-top:1px solid var(--line) !important;
+    border-bottom:none !important; padding-top:8px !important;
+    font-family:var(--mono);
+  }
+  .apu-total-directo{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:10px 0 6px; border-top:1.5px solid var(--ink); margin-top:4px;
+    font-weight:700; font-size:14px;
+  }
+  .apu-total-directo .qty{ font-family:var(--mono); font-size:16px; }
+  .apu-pu{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:8px 12px; background:var(--ink); color:#fff;
+    border-radius:10px; margin-top:10px;
+    font-weight:700; font-size:13.5px;
+  }
+  .apu-pu .qty{
+    font-family:var(--mono); font-size:20px; color:var(--accent-soft);
+  }
+  .apu-mo-input-row{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:12px; padding:10px 12px;
+    background:var(--accent-soft); border-radius:9px;
+  }
+  .apu-mo-input-row label{
+    font-size:12.5px; font-weight:600; flex:1;
+    color:var(--ink);
+  }
+  .apu-mo-input-row .cat-peso{ font-size:13px; color:var(--ink-soft); }
+  .apu-mo-input-row input{
+    font-family:var(--mono); font-size:15px; font-weight:700;
+    width:90px; padding:7px 8px; text-align:right;
+    border:1.5px solid var(--line); border-radius:7px;
+    background:#fff; color:var(--ink);
+  }
+  .apu-mo-input-row input:focus{ outline:none; border-color:var(--accent); }
+
+  /* Precio Neto */
+  .pneto-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:7px 0; border-bottom:1px solid #f1efe8; font-size:13.5px;
+  }
+  .pneto-row:last-child{ border-bottom:none; }
+  .pneto-row .label{ flex:1; }
+  .pneto-row .qty{ font-family:var(--mono); font-weight:600; padding-left:12px; }
+  .pneto-total{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:10px 0 4px; margin-top:6px;
+    border-top:2px solid var(--ink); font-weight:700; font-size:15px;
+  }
+  .pneto-total .qty{ font-family:var(--mono); font-size:18px; color:var(--accent); }
+
+  /* Módulo de Destajo */
+  .destajo-partida{
+    border-radius:10px;
+    border:1px solid var(--line);
+    margin-bottom:10px;
+    overflow:hidden;
+  }
+  .destajo-partida:last-child{ margin-bottom:0; }
+  .destajo-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    font-weight:700;
+    font-size:14px;
+  }
+  .destajo-header .pct{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.06em;
+    opacity:.7;
+  }
+  .destajo-header .monto{
+    font-family:var(--mono);
+    font-size:18px;
+    font-weight:700;
+  }
+  .destajo-detail{
+    display:flex;
+    justify-content:space-between;
+    padding:7px 14px;
+    font-size:12px;
+    color:var(--ink-soft);
+    border-top:1px solid rgba(255,255,255,.15);
+    font-family:var(--mono);
+  }
+  .destajo-p1{ background:var(--muro); color:#fff; }
+  .destajo-p2{ background:#4a7a5a; color:#fff; }
+  .destajo-p3{ background:var(--plafon); color:#fff; }
+  .destajo-total-wrap{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:12px 0 4px;
+    margin-top:12px;
+    border-top:2px solid var(--ink);
+    font-weight:700;
+    font-size:15px;
+  }
+  .destajo-total-wrap .qty{
+    font-family:var(--mono);
+    font-size:20px;
+    color:var(--accent);
+  }
+  .destajo-empty{
+    text-align:center;
+    padding:20px 0 8px;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+
+  /* Catálogo de precios */
+  .catalogo-grupo{
+    margin-bottom: 16px;
+  }
+  .catalogo-grupo:last-child{ margin-bottom: 0; }
+  .catalogo-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f1efe8;
+    font-size: 13.5px;
+  }
+  .catalogo-row:last-child{ border-bottom: none; }
+  .catalogo-row .cat-nombre{
+    flex: 1;
+    line-height: 1.3;
+  }
+  .catalogo-row .cat-unidad{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .catalogo-row .cat-precio-wrap{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .catalogo-row .cat-peso{
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .catalogo-row input.cat-input{
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    width: 90px;
+    padding: 6px 8px;
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    background: #fdfcfa;
+    color: var(--ink);
+    text-align: right;
+  }
+  .catalogo-row input.cat-input:focus{
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* Costo de compra */
+  .costo-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid #f1efe8;
+    gap: 8px;
+  }
+  .costo-row:last-child{ border-bottom: none; }
+  .costo-row .costo-nombre{ flex: 1; }
+  .costo-row .costo-calc{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .costo-row .costo-total{
+    font-family: var(--mono);
+    font-weight: 700;
+    white-space: nowrap;
+    padding-left: 8px;
+  }
+  .costo-sin-precio{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    padding-left: 8px;
+  }
+  .costo-subtotal{
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0 4px;
+    margin-top: 4px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .costo-subtotal .qty{ font-family: var(--mono); }
+  .costo-gran-total{
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0 4px;
+    margin-top: 8px;
+    border-top: 2px solid var(--ink);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .costo-gran-total .qty{
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .costo-aviso{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--accent-soft);
+    border-radius: 7px;
+    line-height: 1.5;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .card, .result-box{
+      animation: rise 0.32s ease both;
+    }
+    @keyframes rise{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+  }
+
+  /* Print styles: solo el consolidado es imprimible */
+  @media print{
+    body *{ visibility: hidden; }
+    #print-area, #print-area *{ visibility: visible; }
+    #print-area{
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      padding: 20px;
+    }
+    .btn-secondary, .btn-primary{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">RemPro · Sistema de Estimación</p>
+      <h1>Calculadora de Insumos</h1>
+      <p class="subtitle">Captura las medidas del área de trabajo para obtener los m² y la explosión completa de materiales según especificación.</p>
+    </div>
+  </header>
+
+  <div class="selector">
+    <button data-mode="muro" class="active">
+      <span class="tag">01 · Vertical</span>
+      Muro
+    </button>
+    <button data-mode="plafon">
+      <span class="tag">02 · Horizontal</span>
+      Plafón
+    </button>
+  </div>
+
+  <!-- MURO FORM -->
+  <div class="card" id="card-muro">
+    <h2>Dimensiones del muro</h2>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label>Sistema de muro</label>
+      <div class="pill-group" id="muro-sistema">
+        <div class="pill active" data-val="interior">Interior · Tablaroca</div>
+        <div class="pill" data-val="exterior">Exterior · Cementicio</div>
+        <div class="pill" data-val="adpanel">AD Panel · Pegado</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="muro-largo">Largo (m)</label>
+        <input type="number" id="muro-largo" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label for="muro-altura">Altura (m)</label>
+        <input type="number" id="muro-altura" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+      </div>
+    </div>
+
+    <!-- Caras: solo aplica a interior y exterior, no a AD Panel -->
+    <div id="muro-caras-wrap" class="field" style="margin-bottom:12px;">
+      <label>Caras a forrar</label>
+      <div class="pill-group" id="muro-caras">
+        <div class="pill active" data-val="1">1 cara</div>
+        <div class="pill" data-val="2">2 caras</div>
+      </div>
+    </div>
+
+    <!-- Placa INTERIOR (tablaroca) -->
+    <div id="muro-placa-interior">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Tipo de placa</label>
+        <div class="pill-group" id="muro-placa">
+          <div class="pill active" data-val="normal">Normal</div>
+          <div class="pill" data-val="antimoho">Antimoho</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="muro-espesor">Espesor de placa</label>
+          <select id="muro-espesor">
+            <option value="12.5">1/2" (12.5 mm)</option>
+            <option value="16">5/8" (16 mm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="muro-espaciamiento">Espaciamiento postes</label>
+          <select id="muro-espaciamiento">
+            <option value="0.61">0.61 m (interior)</option>
+            <option value="0.406">0.406 m (exterior)</option>
+            <option value="0.40">0.40 m</option>
+            <option value="0.30">0.30 m</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Calibre de perfiles</label>
+          <div class="pill-group" id="muro-calibre">
+            <div class="pill" data-val="26">Cal. 26</div>
+            <div class="pill" data-val="24">Cal. 24</div>
+            <div class="pill active" data-val="20">Cal. 20</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="muro-ancho-perfil">Ancho de perfil</label>
+          <select id="muro-ancho-perfil">
+            <option value="4.10" selected="">4.10 cm (1 5/8")</option>
+            <option value="6.35">6.35 cm (2 1/2")</option>
+            <option value="9.20">9.20 cm (3 5/8")</option>
+            <option value="15.24">15.24 cm (6")</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:12px;">
+        <label>Acabado de pasta</label>
+        <div class="pill-group" id="muro-acabado">
+          <div class="pill active" data-val="juntas">Solo juntas (1.00 kg/m²)</div>
+          <div class="pill" data-val="nivel5">Nivel 5 (1.80 kg/m²)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placa EXTERIOR (cementicio) -->
+    <div id="muro-placa-exterior" style="display:none;">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Tipo de panel</label>
+        <select id="muro-panel-exterior">
+          <option value="permabase">Permabase (cementicio)</option>
+          <option value="durock">Durock (cementicio)</option>
+          <option value="densglass">DensGlass (fibra de vidrio)</option>
+          <option value="glasrey">Glasrey (fibra de vidrio)</option>
+          <option value="securock">Securock (yeso reforzado ext.)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="muro-espesor-ext">Espesor de panel</label>
+          <select id="muro-espesor-ext">
+            <option value="12.5">1/2" (12.5 mm)</option>
+            <option value="16">5/8" (16 mm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="muro-espaciamiento-ext">Espaciamiento postes</label>
+          <select id="muro-espaciamiento-ext">
+            <option value="0.406" selected="">0.406 m (exterior)</option>
+            <option value="0.40">0.40 m</option>
+            <option value="0.61">0.61 m</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Calibre de perfiles</label>
+          <div class="pill-group" id="muro-calibre-ext">
+            <div class="pill" data-val="26">Cal. 26 · interior</div>
+            <div class="pill active" data-val="20">Cal. 20 · exterior</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="muro-ancho-perfil-ext">Ancho de perfil</label>
+          <select id="muro-ancho-perfil-ext">
+            <option value="4.10">4.10 cm (1 5/8")</option>
+            <option value="6.35" selected="">6.35 cm (2 1/2")</option>
+            <option value="9.20">9.20 cm (3 5/8")</option>
+            <option value="15.24">15.24 cm (6")</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:12px;">
+        <label>Acabado de superficie</label>
+        <select id="muro-acabado-ext">
+          <option value="basecoat">Basecoat</option>
+          <option value="cemenquin">Cemenquin</option>
+          <option value="econotex">Econotex grueso</option>
+        </select>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>Capas de protección</label>
+        <div class="pill-group" id="muro-capas-ext">
+          <div class="pill active" data-val="membrana">Membrana hidrófuga</div>
+          <div class="pill active" data-val="malla">Malla de fibra de vidrio</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placa AD PANEL (pegado directo sobre muro de bloque, sin estructura) -->
+    <div id="muro-placa-adpanel" style="display:none;">
+      <div style="background:var(--accent-soft);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;">
+        Sistema de pegado directo — <strong>sin estructura metálica</strong>. AD Panel sustituye al mortero. Ratio: 30 sacos por cada 80 hojas.
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Tipo de placa</label>
+        <div class="pill-group" id="muro-placa-adp">
+          <div class="pill active" data-val="normal">Hoja normal</div>
+          <div class="pill" data-val="antimoho">Hoja antimoho</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="muro-espesor-adp">Espesor de placa</label>
+          <select id="muro-espesor-adp">
+            <option value="12.5">1/2" (12.5 mm)</option>
+            <option value="16">5/8" (16 mm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Acabado de pasta</label>
+          <div class="pill-group" id="muro-acabado-adp">
+            <div class="pill active" data-val="juntas">Solo juntas (1.00 kg/m²)</div>
+            <div class="pill" data-val="nivel5">Nivel 5 (1.80 kg/m²)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque sólido y opcionales (solo interior y exterior) -->
+    <div id="muro-extra-wrap">
+    <div class="field" style="margin-bottom:12px; margin-top:14px;">
+      <label>Refuerzo de rigidez</label>
+      <div class="pill-group" id="muro-bloque">
+        <div class="pill" data-val="si">Con bloque sólido</div>
+        <div class="pill active" data-val="no">Sin bloque sólido</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0;">
+      <label>Opciones adicionales</label>
+      <div class="pill-group" id="muro-opcionales">
+        <div class="pill" data-val="esquineros">Esquineros</div>
+        <div class="pill" data-val="aislante">Aislante</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- ESQUINEROS (opcional) -->
+  <div class="card" id="card-esquineros" style="display:none;">
+    <h2>Esquineros</h2>
+    <div class="field">
+      <label for="muro-cantos">Cantos expuestos (cuántos)</label>
+      <select id="muro-cantos">
+        <option value="0">Ninguno</option>
+        <option value="1">1 canto libre</option>
+        <option value="2">2 cantos libres</option>
+        <option value="3">3 cantos libres</option>
+        <option value="4">4 cantos libres</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- AISLANTE (opcional) -->
+  <div class="card" id="card-aislante" style="display:none;">
+    <h2>Aislante</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:0; line-height:1.5;">
+      Se calcula por el área de elevación del muro (largo × altura), independientemente del número de caras, con 5% de desperdicio.
+    </p>
+  </div>
+
+  <!-- PLAFON FORM -->
+  <div class="card" id="card-plafon" style="display:none;">
+    <h2>Dimensiones del plafón</h2>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label>Sistema de plafón</label>
+      <div class="pill-group" id="plafon-sistema">
+        <div class="pill active" data-val="interior">Interior · Tablaroca</div>
+        <div class="pill" data-val="exterior">Exterior · Cementicio</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="plafon-largo">Largo (m)</label>
+        <input type="number" id="plafon-largo" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label for="plafon-ancho">Ancho (m)</label>
+        <input type="number" id="plafon-ancho" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+      </div>
+    </div>
+
+    <!-- Placa INTERIOR (tablaroca) -->
+    <div id="plafon-placa-interior">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Tipo de placa</label>
+        <div class="pill-group" id="plafon-placa">
+          <div class="pill active" data-val="normal">Normal</div>
+          <div class="pill" data-val="antimoho">Antimoho</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="plafon-espesor">Espesor de placa</label>
+          <select id="plafon-espesor">
+            <option value="12.5">1/2" (12.5 mm)</option>
+            <option value="16">5/8" (16 mm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="plafon-calibre-sel">Calibre de perfiles</label>
+          <select id="plafon-calibre-sel">
+            <option value="26">Cal. 26</option>
+            <option value="24" selected="">Cal. 24</option>
+            <option value="20">Cal. 20</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placa EXTERIOR (cementicio) -->
+    <div id="plafon-placa-exterior" style="display:none;">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Tipo de panel</label>
+        <select id="plafon-panel-exterior">
+          <option value="permabase">Permabase (cementicio)</option>
+          <option value="durock">Durock (cementicio)</option>
+          <option value="densglass">DensGlass (fibra de vidrio)</option>
+          <option value="glasrey">Glasrey (fibra de vidrio)</option>
+          <option value="securock">Securock (yeso reforzado ext.)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="plafon-espesor-ext">Espesor de panel</label>
+          <select id="plafon-espesor-ext">
+            <option value="12.5">1/2" (12.5 mm)</option>
+            <option value="16">5/8" (16 mm)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Calibre de perfiles</label>
+          <div class="pill-group" id="plafon-calibre-ext">
+            <div class="pill" data-val="26">Cal. 26 · interior</div>
+            <div class="pill active" data-val="20">Cal. 20 · exterior</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:12px;">
+        <label>Acabado de superficie</label>
+        <select id="plafon-acabado-ext">
+          <option value="basecoat">Basecoat</option>
+          <option value="cemenquin">Cemenquin</option>
+          <option value="econotex">Econotex grueso</option>
+        </select>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>Capas de protección</label>
+        <div class="pill-group" id="plafon-capas-ext">
+          <div class="pill active" data-val="membrana">Membrana hidrófuga</div>
+          <div class="pill active" data-val="malla">Malla de fibra de vidrio</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-top:14px;">
+      <div class="field">
+        <label for="plafon-sep-canalistón">Separación canalistón</label>
+        <select id="plafon-sep-canalistón">
+          <option value="0.61" selected="">0.61 m</option>
+          <option value="0.40">0.40 m</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="plafon-sep-canaleta">Separación canaleta de carga</label>
+        <select id="plafon-sep-canaleta">
+          <option value="0.90" selected="">0.90 m</option>
+          <option value="1.22">1.22 m</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" id="plafon-acabado-interior-wrap" style="margin-bottom:0;">
+      <label>Acabado de pasta</label>
+      <div class="pill-group" id="plafon-acabado">
+        <div class="pill active" data-val="juntas">Solo juntas (1.00 kg/m²)</div>
+        <div class="pill" data-val="nivel5">Nivel 5 (1.80 kg/m²)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-box">
+    <div>
+      <span class="label" id="result-label">Área total a forrar</span>
+      <span class="value" id="result-value">0.00</span><span class="unit">m²</span>
+    </div>
+    <div class="area-detail" id="result-detail">Sin medidas</div>
+  </div>
+
+  <!-- INSUMOS -->
+  <div class="card insumos">
+    <h2>Explosión de insumos <span class="count" id="insumos-count"></span></h2>
+    <div id="insumos-body">
+    <div class="empty-state">
+      <div class="glyph">＋</div>
+      Ingresa las medidas para calcular la explosión de materiales.
+    </div></div>
+  </div>
+
+  <!-- APU -->
+  <div class="card" id="card-apu" style="display:none;">
+    <h2>Análisis de precios unitarios <span class="count" id="apu-concepto"></span></h2>
+    <div id="apu-body"></div>
+  </div>
+
+  <!-- PRECIO NETO -->
+  <div class="card" id="card-precio-neto" style="display:none;">
+    <h2>Precio neto <span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);">Material + MO · sin incrementos</span></h2>
+    <div id="precio-neto-body"></div>
+  </div>
+
+  <!-- MÓDULO DE DESTAJO -->
+  <div class="card" id="card-destajo">
+    <h2>Control de destajo</h2>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;">
+      Ingresa el concepto y los m² a pagar. El monto se divide automáticamente en las tres partidas de avance.
+    </p>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label>Concepto</label>
+      <select id="destajo-concepto">
+        <option value="muro_int_1cara">Muro interior tablaroca 1 cara</option>
+        <option value="muro_int_2caras">Muro interior tablaroca 2 caras</option>
+        <option value="muro_ext">Muro exterior cementicio</option>
+        <option value="muro_adpanel_normal">Muro AD Panel · hoja normal</option>
+        <option value="muro_adpanel_antimoho">Muro AD Panel · hoja antimoho</option>
+        <option value="plafon_int">Plafón interior tablaroca</option>
+        <option value="plafon_ext">Plafón exterior cementicio</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="destajo-m2">Metros cuadrados</label>
+        <input type="number" id="destajo-m2" inputmode="decimal" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label for="destajo-tarifa">Tarifa $/m²</label>
+        <input type="number" id="destajo-tarifa" inputmode="decimal" placeholder="0.00" step="0.5" min="0">
+      </div>
+    </div>
+
+    <div id="destajo-body"><div class="destajo-empty">Ingresa los m² y la tarifa para generar el desglose.</div></div>
+  </div>
+
+  <!-- GUARDAR ÁREA -->
+  <div class="card">
+    <h2>Guardar esta área</h2>
+    <div class="field" style="margin-bottom:12px;">
+      <label for="area-nombre">Nombre del área</label>
+      <input type="text" id="area-nombre" placeholder="Ej. Muro Norte Recámara 1" maxlength="60">
+    </div>
+    <div class="field" style="margin-bottom:12px;">
+      <label for="area-ubicacion">Ubicación</label>
+      <input type="text" id="area-ubicacion" placeholder="Ej. Nivel 2 / Casa Pedregal" maxlength="60">
+    </div>
+    <button id="btn-guardar-area" class="btn-primary">Guardar cálculo</button>
+  </div>
+
+  <!-- ÁREAS GUARDADAS -->
+  <div class="card">
+    <h2>Áreas guardadas <span class="count" id="areas-count">3 áreas</span></h2>
+    <div id="areas-body"><div class="area-card">
+      <div class="area-info">
+        <p class="area-name"><span class="area-tag muro">Muro</span>Muro #1</p>
+        <p class="area-meta">9.00 m² · 2 caras · Exterior</p>
+      </div>
+      <button class="area-delete" data-id="a_1781561598175_mihgy" title="Eliminar">✕</button>
+    </div><div class="area-card">
+      <div class="area-info">
+        <p class="area-name"><span class="area-tag muro">Muro</span>RECAMARA PRINCIPAL</p>
+        <p class="area-meta">9.00 m² · 2 caras · Interior · COCINA</p>
+      </div>
+      <button class="area-delete" data-id="a_1781562274315_mh1nl" title="Eliminar">✕</button>
+    </div><div class="area-card">
+      <div class="area-info">
+        <p class="area-name"><span class="area-tag plafon">Plafón</span>RECAMARA PRINCIPAL PLAFON</p>
+        <p class="area-meta">16.00 m² · Interior</p>
+      </div>
+      <button class="area-delete" data-id="a_1781562347747_asg8i" title="Eliminar">✕</button>
+    </div></div>
+  </div>
+
+  <!-- LISTA DE MUROS -->
+  <div class="card">
+    <h2>Lista de muros <span class="count" id="lista-muros-count">1 registro</span></h2>
+    <div id="lista-muros-body">
+    <div class="lista-row">
+      <div class="lista-info">
+        <p class="lista-nombre">RECAMARA PRINCIPAL</p>
+        <p class="lista-ubicacion">COCINA</p>
+      </div>
+      <div class="lista-m2">9.00<span class="u">m²</span></div>
+      <button class="lista-delete" data-id="a_1781562274315_mh1nl" title="Eliminar">✕</button>
+    </div>
+  <div class="lista-total">
+    <div>Total</div>
+    <div class="qty">9.00<span class="u">m²</span></div>
+  </div></div>
+  </div>
+
+  <!-- LISTA DE PLAFONES -->
+  <div class="card">
+    <h2>Lista de plafones <span class="count" id="lista-plafones-count">1 registro</span></h2>
+    <div id="lista-plafones-body">
+    <div class="lista-row">
+      <div class="lista-info">
+        <p class="lista-nombre">RECAMARA PRINCIPAL PLAFON</p>
+        
+      </div>
+      <div class="lista-m2">16.00<span class="u">m²</span></div>
+      <button class="lista-delete" data-id="a_1781562347747_asg8i" title="Eliminar">✕</button>
+    </div>
+  <div class="lista-total">
+    <div>Total</div>
+    <div class="qty">16.00<span class="u">m²</span></div>
+  </div></div>
+  </div>
+
+  <!-- CONSOLIDADO DE MATERIALES -->
+  <div class="card" id="card-consolidado" style="display: block;">
+    <div id="print-area">
+      <h2>Consolidado de materiales <span class="count" id="consolidado-count">3 áreas</span></h2>
+      <div id="consolidado-body"><div class="consol-group">
+      <p class="group-title">Placa / Panel</p><div class="consol-row">
+        <div class="name">Panel Permabase 1/2"</div>
+        <div class="qty">7<span class="u">paneles</span></div>
+      </div><div class="consol-row">
+        <div class="name">Placa de yeso antimoho 1/2"</div>
+        <div class="qty">7<span class="u">hojas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Placa de yeso normal 1/2"</div>
+        <div class="qty">6<span class="u">hojas</span></div>
+      </div></div><div class="consol-group">
+      <p class="group-title">Estructura metálica</p><div class="consol-row">
+        <div class="name">Poste metálico cal.20 · 6.35 cm</div>
+        <div class="qty">9<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Canal sup./inf. cal.20 · 6.35 cm</div>
+        <div class="qty">3<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Poste metálico cal.20 · 4.10 cm</div>
+        <div class="qty">6<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Canal sup./inf. cal.20 · 4.10 cm</div>
+        <div class="qty">3<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Canalistón / listón metálico cal.24</div>
+        <div class="qty">12<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Canaleta de carga cal.24</div>
+        <div class="qty">9<span class="u">pzas (3.05 m)</span></div>
+      </div><div class="consol-row">
+        <div class="name">Ángulo perimetral cal.24</div>
+        <div class="qty">6<span class="u">pzas (3.05 m)</span></div>
+      </div></div><div class="consol-group">
+      <p class="group-title">Fijaciones y tornillería</p><div class="consol-row">
+        <div class="name">Taquete/clavo + fulminante (canal)</div>
+        <div class="qty">22<span class="u">pzas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Mini pija 8 × 1/2"</div>
+        <div class="qty">210<span class="u">pzas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Tornillo 6 × 1 1/4"</div>
+        <div class="qty">1,055<span class="u">pzas</span></div>
+      </div></div><div class="consol-group">
+      <p class="group-title">Acabado de superficie</p><div class="consol-row">
+        <div class="name">Basecoat</div>
+        <div class="qty">59.94<span class="u">kg</span></div>
+      </div><div class="consol-row">
+          <div class="name" style="color:var(--ink-soft); font-size:12.5px;">↳ sacos de compra (ref.)</div>
+          <div class="qty">3<span class="u">sacos</span></div>
+        </div></div><div class="consol-group">
+      <p class="group-title">Capas de protección</p><div class="consol-row">
+        <div class="name">Membrana hidrófuga</div>
+        <div class="qty">18.90<span class="u">m²</span></div>
+      </div><div class="consol-row">
+        <div class="name">Malla de fibra de vidrio</div>
+        <div class="qty">20.00<span class="u">m²</span></div>
+      </div><div class="consol-row">
+          <div class="name" style="color:var(--ink-soft); font-size:12.5px;">↳ rollos de compra (ref.)</div>
+          <div class="qty">1<span class="u">rollos</span></div>
+        </div></div><div class="consol-group">
+      <p class="group-title">Acabado de juntas</p><div class="consol-row">
+        <div class="name">Cinta para juntas</div>
+        <div class="qty">45.90<span class="u">ml</span></div>
+      </div><div class="consol-row">
+          <div class="name" style="color:var(--ink-soft); font-size:12.5px;">↳ rollos de compra (ref.)</div>
+          <div class="qty">4<span class="u">rollos</span></div>
+        </div><div class="consol-row">
+        <div class="name">Pasta Ready Mix · Solo juntas</div>
+        <div class="qty">34.00<span class="u">kg</span></div>
+      </div><div class="consol-row">
+          <div class="name" style="color:var(--ink-soft); font-size:12.5px;">↳ cubetas de compra (ref.)</div>
+          <div class="qty">2<span class="u">cubetas</span></div>
+        </div><div class="consol-row">
+        <div class="name">Lija</div>
+        <div class="qty">4<span class="u">hojas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Lija</div>
+        <div class="qty">5<span class="u">hojas</span></div>
+      </div></div><div class="consol-group">
+      <p class="group-title">Suspensión y amarres</p><div class="consol-row">
+        <div class="name">Colgantes alambre cal. 12</div>
+        <div class="qty">36<span class="u">pzas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Alambre galvanizado cal. 12</div>
+        <div class="qty">25.20<span class="u">ml</span></div>
+      </div><div class="consol-row">
+        <div class="name">Amarres alambre cal. 16</div>
+        <div class="qty">48<span class="u">pzas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Alambre galvanizado cal. 16</div>
+        <div class="qty">33.60<span class="u">ml</span></div>
+      </div></div><div class="consol-group">
+      <p class="group-title">Fijaciones</p><div class="consol-row">
+        <div class="name">Taquete/clavo + fulminante (ángulo perimetral)</div>
+        <div class="qty">29<span class="u">pzas</span></div>
+      </div><div class="consol-row">
+        <div class="name">Clavo/fulminante o taquete (colgantes a losa)</div>
+        <div class="qty">36<span class="u">pzas</span></div>
+      </div></div></div>
+      <div id="costo-compra-print" style="display: block;">
+        <div style="height:1px; background:var(--line); margin:16px 0;"></div>
+        <h2 style="margin-top:0;">Costo estimado de compra</h2>
+        <div id="costo-compra-print-body"><div class="consol-group">
+      <p class="group-title">Placa / Panel</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Panel Permabase 1/2"</div>
+          <div class="costo-calc">7 panel × $867.00</div>
+          <div class="costo-total">$6,069.00</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Placa de yeso antimoho 1/2"</div>
+          <div class="costo-calc">7 hoja × $332.56</div>
+          <div class="costo-total">$2,327.92</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Placa de yeso normal 1/2"</div>
+          <div class="costo-calc">6 hoja × $222.00</div>
+          <div class="costo-total">$1,332.00</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Placa / Panel</span>
+        <span class="qty">$9,728.92</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Estructura metálica</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Poste metálico cal.20 · 6.35 cm</div>
+          <div class="costo-calc">9 pieza × $116.98</div>
+          <div class="costo-total">$1,052.82</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canal sup./inf. cal.20 · 6.35 cm</div>
+          <div class="costo-calc">3 pieza × $93.37</div>
+          <div class="costo-total">$280.11</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Poste metálico cal.20 · 4.10 cm</div>
+          <div class="costo-calc">6 pzas (3.05 m)</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canal sup./inf. cal.20 · 4.10 cm</div>
+          <div class="costo-calc">3 pzas (3.05 m)</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canalistón / listón metálico cal.24</div>
+          <div class="costo-calc">12 pieza × $54.56</div>
+          <div class="costo-total">$654.72</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canaleta de carga cal.24</div>
+          <div class="costo-calc">9 pieza × $69.74</div>
+          <div class="costo-total">$627.66</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Ángulo perimetral cal.24</div>
+          <div class="costo-calc">6 pieza × $47.92</div>
+          <div class="costo-total">$287.52</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Estructura metálica</span>
+        <span class="qty">$2,902.83</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Fijaciones y tornillería</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Taquete/clavo + fulminante (canal)</div>
+          <div class="costo-calc">1 caja c/100 × $164.29</div>
+          <div class="costo-total">$164.29</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Mini pija 8 × 1/2"</div>
+          <div class="costo-calc">1 millar × $219.81</div>
+          <div class="costo-total">$219.81</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Tornillo 6 × 1 1/4"</div>
+          <div class="costo-calc">2 millar × $265.61</div>
+          <div class="costo-total">$531.22</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Fijaciones y tornillería</span>
+        <span class="qty">$915.32</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Acabado de superficie</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Basecoat</div>
+          <div class="costo-calc">3 saco 25 kg × $661.33</div>
+          <div class="costo-total">$1,983.99</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Acabado de superficie</span>
+        <span class="qty">$1,983.99</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Capas de protección</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Membrana hidrófuga</div>
+          <div class="costo-calc">19 rollo × $2,550.00</div>
+          <div class="costo-total">$48,450.00</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Malla de fibra de vidrio</div>
+          <div class="costo-calc">1 rollo 50m²</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Capas de protección</span>
+        <span class="qty">$48,450.00</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Acabado de juntas</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Cinta para juntas</div>
+          <div class="costo-calc">4 rollo × $132.04</div>
+          <div class="costo-total">$528.16</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Pasta Ready Mix · Solo juntas</div>
+          <div class="costo-calc">2 caja × $250.96</div>
+          <div class="costo-total">$501.92</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Lija</div>
+          <div class="costo-calc">4 hoja</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Lija</div>
+          <div class="costo-calc">5 hoja</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Acabado de juntas</span>
+        <span class="qty">$1,030.08</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Suspensión y amarres</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Colgantes alambre cal. 12</div>
+          <div class="costo-calc">36 pieza</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Alambre galvanizado cal. 12</div>
+          <div class="costo-calc">10.4 kg × $88.50</div>
+          <div class="costo-total">$920.40</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Amarres alambre cal. 16</div>
+          <div class="costo-calc">48 pieza</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Alambre galvanizado cal. 16</div>
+          <div class="costo-calc">5.8 kg × $75.40</div>
+          <div class="costo-total">$437.32</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Suspensión y amarres</span>
+        <span class="qty">$1,357.72</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Fijaciones</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Taquete/clavo + fulminante (ángulo perimetral)</div>
+          <div class="costo-calc">1 caja c/100 × $164.29</div>
+          <div class="costo-total">$164.29</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Clavo/fulminante o taquete (colgantes a losa)</div>
+          <div class="costo-calc">1 caja c/100 × $272.71</div>
+          <div class="costo-total">$272.71</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Fijaciones</span>
+        <span class="qty">$437.00</span>
+      </div>
+    </div><div class="costo-gran-total">
+    <span>TOTAL ESTIMADO</span>
+    <span class="qty">$66,805.86</span>
+  </div><p class="costo-aviso">⚠ 7 materiales sin precio. Actualiza el Catálogo de precios para completar el estimado.</p><p class="costo-aviso" style="margin-top:6px;">Precios sin IVA · Referencia Acyma del Noroeste La Paz · Confirmar con cotización directa antes de compra.</p></div>
+      </div>
+    </div>
+    <button id="btn-imprimir" class="btn-secondary">Imprimir lista de compra</button>
+  </div>
+
+  <!-- CATÁLOGO DE PRECIOS ACYMA -->
+  <div class="card" id="card-catalogo" style="display: block;">
+    <h2>Catálogo de precios <span class="count" style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);">Acyma del Noroeste</span></h2>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.5;">
+      Captura el precio unitario de cada material según cotización de Acyma La Paz. Los precios se guardan en este dispositivo y se actualizan en el costo de compra automáticamente.
+    </p>
+    <div id="catalogo-body"><div class="catalogo-grupo">
+      <p class="group-title">Hojas de recubrimiento</p><div class="catalogo-row">
+        <div class="cat-nombre">Placa normal 1/2" (12.5 mm)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_normal_12.5" placeholder="0.00" value="222">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Placa normal 5/8" (16 mm)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_normal_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Placa antimoho 1/2" (12.5 mm)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_antimoho_12.5" placeholder="0.00" value="332.56">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Placa antimoho 5/8" (16 mm)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_antimoho_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Permabase 1/2"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_permabase_12.5" placeholder="0.00" value="867">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Permabase 5/8"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_permabase_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Durock 1/2"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_durock_12.5" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Durock 5/8"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_durock_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel DensGlass 1/2"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_densglass_12.5" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel DensGlass 5/8"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_densglass_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Glasrey 1/2"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_glasrey_12.5" placeholder="0.00" value="656.2">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Glasrey 5/8"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_glasrey_16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Securock 1/2"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_securock_12.5" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Panel Securock 5/8"</div>
+        <div class="cat-unidad">/panel</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="panel_securock_16" placeholder="0.00" value="">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Perfiles metálicos galvanizados</p><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.26 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal26_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.26 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal26_6.35" placeholder="0.00" value="60.62">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.26 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal26_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.26 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal26_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.24 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal24_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.24 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal24_6.35" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.24 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal24_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.24 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal24_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.20 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal20_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.20 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal20_6.35" placeholder="0.00" value="116.98">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.20 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal20_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Poste cal.20 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="poste_cal20_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.26 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal26_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.26 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal26_6.35" placeholder="0.00" value="60.62">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.26 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal26_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.26 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal26_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.24 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal24_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.24 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal24_6.35" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.24 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal24_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.24 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal24_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.20 · 4.10 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal20_4.10" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.20 · 6.35 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal20_6.35" placeholder="0.00" value="93.37">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.20 · 9.20 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal20_9.20" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canal cal.20 · 15.24 cm</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canal_cal20_15.24" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canalistón / listón cal.26</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canalistón_cal26" placeholder="0.00" value="54.56">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canalistón / listón cal.24</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canalistón_cal24" placeholder="0.00" value="54.56">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canalistón / listón cal.20</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canalistón_cal20" placeholder="0.00" value="92.12">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canaleta de carga cal.26</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canaleta_carga_cal26" placeholder="0.00" value="54.56">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canaleta de carga cal.24</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canaleta_carga_cal24" placeholder="0.00" value="69.74">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Canaleta de carga cal.20</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="canaleta_carga_cal20" placeholder="0.00" value="69.74">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Ángulo perimetral cal.26</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="angulo_perimetral_cal26" placeholder="0.00" value="47.92">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Ángulo perimetral cal.24</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="angulo_perimetral_cal24" placeholder="0.00" value="47.92">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Ángulo perimetral cal.20</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="angulo_perimetral_cal20" placeholder="0.00" value="57.06">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Bloque sólido (refuerzo)</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="bloque_solido" placeholder="0.00" value="">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Esquineros y molduras</p><div class="catalogo-row">
+        <div class="cat-nombre">Esquinero metálico</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="esquinero_metalico" placeholder="0.00" value="">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Tornillos</p><div class="catalogo-row">
+        <div class="cat-nombre">Tornillo 6 × 1 1/4"</div>
+        <div class="cat-unidad">/millar</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="tornillo_6x114" placeholder="0.00" value="265.61">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Mini pija 8 × 1/2"</div>
+        <div class="cat-unidad">/millar</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="minipija_8x12" placeholder="0.00" value="219.81">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Taquete/clavo + fulminante (canal)</div>
+        <div class="cat-unidad">/caja c/100</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="taquete_canal" placeholder="0.00" value="164.29">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Taquete/clavo + fulminante (ángulo)</div>
+        <div class="cat-unidad">/caja c/100</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="taquete_angulo" placeholder="0.00" value="164.29">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Clavo ancla (colgantes a losa)</div>
+        <div class="cat-unidad">/caja c/100</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="fijacion_colgante" placeholder="0.00" value="272.71">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Cintas y mallas</p><div class="catalogo-row">
+        <div class="cat-nombre">Cinta para juntas (Perfacinta 500 plg)</div>
+        <div class="cat-unidad">/rollo</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="cinta_juntas" placeholder="0.00" value="132.04">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Malla de fibra de vidrio</div>
+        <div class="cat-unidad">/rollo 50m²</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="malla_fibra_vidrio" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Colgantes alambre cal. 12 (pzas)</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="colgante_alambre12" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Alambre galv. cal. 12</div>
+        <div class="cat-unidad">/kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="alambre_galv_12" placeholder="0.00" value="88.5">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Amarres alambre cal. 16 (pzas)</div>
+        <div class="cat-unidad">/pieza</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="amarre_alambre16" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Alambre galv. cal. 16</div>
+        <div class="cat-unidad">/kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="alambre_galv_16" placeholder="0.00" value="75.4">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Bases y acabados</p><div class="catalogo-row">
+        <div class="cat-nombre">Pasta Ready Mix · Solo juntas (Unimax)</div>
+        <div class="cat-unidad">/caja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="pasta_juntas" placeholder="0.00" value="250.96">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Pasta Ready Mix · Nivel 5 (Unimax)</div>
+        <div class="cat-unidad">/caja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="pasta_nivel5" placeholder="0.00" value="250.96">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">AD Panel / Basecoat (saco 25 kg)</div>
+        <div class="cat-unidad">/saco 25 kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="acabado_basecoat" placeholder="0.00" value="661.33">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Hi Tech gris / Cemenquin (saco 20 kg)</div>
+        <div class="cat-unidad">/saco 20 kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="acabado_cemenquin" placeholder="0.00" value="246.59">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Econotex grueso (saco 20 kg)</div>
+        <div class="cat-unidad">/saco 20 kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="acabado_econotex" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Membrana impermeable Elite PR</div>
+        <div class="cat-unidad">/rollo</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="membrana_hidrofuga" placeholder="0.00" value="2550">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">Miscelánea</p><div class="catalogo-row">
+        <div class="cat-nombre">Lija (muro interior)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="lija_muro_int" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Lija (plafón)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="lija_plafon" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Lana de fibra de vidrio / mineral</div>
+        <div class="cat-unidad">/m²</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="aislante_lana" placeholder="0.00" value="">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Lija (AD Panel)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="lija_adp" placeholder="0.00" value="">
+        </div>
+      </div></div><div class="catalogo-grupo">
+      <p class="group-title">AD Panel · Adhesivo</p><div class="catalogo-row">
+        <div class="cat-nombre">AD Panel (adhesivo) saco 25 kg</div>
+        <div class="cat-unidad">/saco 25 kg</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="adpanel_saco" placeholder="0.00" value="661.33">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Hoja normal 1/2" (AD Panel)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_adp_normal_12.5" placeholder="0.00" value="222">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Hoja normal 5/8" (AD Panel)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_adp_normal_16" placeholder="0.00" value="222">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Hoja antimoho 1/2" (AD Panel)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_adp_antimoho_12.5" placeholder="0.00" value="332.56">
+        </div>
+      </div><div class="catalogo-row">
+        <div class="cat-nombre">Hoja antimoho 5/8" (AD Panel)</div>
+        <div class="cat-unidad">/hoja</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01" data-key="placa_adp_antimoho_16" placeholder="0.00" value="332.56">
+        </div>
+      </div></div></div>
+    <button id="btn-guardar-precios" class="btn-primary" style="margin-top:14px;">Guardar precios</button>
+  </div>
+
+  <!-- COSTO DE COMPRA -->
+  <div class="card" id="card-costo" style="display: block;">
+    <div>
+      <h2>Costo estimado de compra</h2>
+      <div id="costo-body"><div class="consol-group">
+      <p class="group-title">Placa / Panel</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Panel Permabase 1/2"</div>
+          <div class="costo-calc">7 panel × $867.00</div>
+          <div class="costo-total">$6,069.00</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Placa de yeso antimoho 1/2"</div>
+          <div class="costo-calc">7 hoja × $332.56</div>
+          <div class="costo-total">$2,327.92</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Placa de yeso normal 1/2"</div>
+          <div class="costo-calc">6 hoja × $222.00</div>
+          <div class="costo-total">$1,332.00</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Placa / Panel</span>
+        <span class="qty">$9,728.92</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Estructura metálica</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Poste metálico cal.20 · 6.35 cm</div>
+          <div class="costo-calc">9 pieza × $116.98</div>
+          <div class="costo-total">$1,052.82</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canal sup./inf. cal.20 · 6.35 cm</div>
+          <div class="costo-calc">3 pieza × $93.37</div>
+          <div class="costo-total">$280.11</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Poste metálico cal.20 · 4.10 cm</div>
+          <div class="costo-calc">6 pzas (3.05 m)</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canal sup./inf. cal.20 · 4.10 cm</div>
+          <div class="costo-calc">3 pzas (3.05 m)</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canalistón / listón metálico cal.24</div>
+          <div class="costo-calc">12 pieza × $54.56</div>
+          <div class="costo-total">$654.72</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Canaleta de carga cal.24</div>
+          <div class="costo-calc">9 pieza × $69.74</div>
+          <div class="costo-total">$627.66</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Ángulo perimetral cal.24</div>
+          <div class="costo-calc">6 pieza × $47.92</div>
+          <div class="costo-total">$287.52</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Estructura metálica</span>
+        <span class="qty">$2,902.83</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Fijaciones y tornillería</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Taquete/clavo + fulminante (canal)</div>
+          <div class="costo-calc">1 caja c/100 × $164.29</div>
+          <div class="costo-total">$164.29</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Mini pija 8 × 1/2"</div>
+          <div class="costo-calc">1 millar × $219.81</div>
+          <div class="costo-total">$219.81</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Tornillo 6 × 1 1/4"</div>
+          <div class="costo-calc">2 millar × $265.61</div>
+          <div class="costo-total">$531.22</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Fijaciones y tornillería</span>
+        <span class="qty">$915.32</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Acabado de superficie</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Basecoat</div>
+          <div class="costo-calc">3 saco 25 kg × $661.33</div>
+          <div class="costo-total">$1,983.99</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Acabado de superficie</span>
+        <span class="qty">$1,983.99</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Capas de protección</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Membrana hidrófuga</div>
+          <div class="costo-calc">19 rollo × $2,550.00</div>
+          <div class="costo-total">$48,450.00</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Malla de fibra de vidrio</div>
+          <div class="costo-calc">1 rollo 50m²</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Capas de protección</span>
+        <span class="qty">$48,450.00</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Acabado de juntas</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Cinta para juntas</div>
+          <div class="costo-calc">4 rollo × $132.04</div>
+          <div class="costo-total">$528.16</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Pasta Ready Mix · Solo juntas</div>
+          <div class="costo-calc">2 caja × $250.96</div>
+          <div class="costo-total">$501.92</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Lija</div>
+          <div class="costo-calc">4 hoja</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Lija</div>
+          <div class="costo-calc">5 hoja</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Acabado de juntas</span>
+        <span class="qty">$1,030.08</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Suspensión y amarres</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Colgantes alambre cal. 12</div>
+          <div class="costo-calc">36 pieza</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Alambre galvanizado cal. 12</div>
+          <div class="costo-calc">10.4 kg × $88.50</div>
+          <div class="costo-total">$920.40</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Amarres alambre cal. 16</div>
+          <div class="costo-calc">48 pieza</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Alambre galvanizado cal. 16</div>
+          <div class="costo-calc">5.8 kg × $75.40</div>
+          <div class="costo-total">$437.32</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Suspensión y amarres</span>
+        <span class="qty">$1,357.72</span>
+      </div>
+    </div><div class="consol-group">
+      <p class="group-title">Fijaciones</p>
+      <div class="costo-row">
+          <div class="costo-nombre">Taquete/clavo + fulminante (ángulo perimetral)</div>
+          <div class="costo-calc">1 caja c/100 × $164.29</div>
+          <div class="costo-total">$164.29</div>
+        </div><div class="costo-row">
+          <div class="costo-nombre">Clavo/fulminante o taquete (colgantes a losa)</div>
+          <div class="costo-calc">1 caja c/100 × $272.71</div>
+          <div class="costo-total">$272.71</div>
+        </div>
+      <div class="costo-subtotal">
+        <span>Subtotal Fijaciones</span>
+        <span class="qty">$437.00</span>
+      </div>
+    </div><div class="costo-gran-total">
+    <span>TOTAL ESTIMADO</span>
+    <span class="qty">$66,805.86</span>
+  </div><p class="costo-aviso">⚠ 7 materiales sin precio. Actualiza el Catálogo de precios para completar el estimado.</p><p class="costo-aviso" style="margin-top:6px;">Precios sin IVA · Referencia Acyma del Noroeste La Paz · Confirmar con cotización directa antes de compra.</p></div>
+    </div>
+  </div>
+
+  <footer>RemPro · Materiales de construcción ligera</footer>
+</div>
+
+<script>
+/* ============================================================
+   ESTADO Y CONSTANTES
+   ============================================================ */
+const PLACA_AREA = 1.22 * 2.44; // m² por placa estándar 4'x8' = 2.977
+
+let mode = "muro";
+let currentCalc = null; // { tipo: 'muro'|'plafon', areaResumen, data }
+let savedAreas = []; // [{ id, nombre, tipo, areaResumen, data, fecha }]
+let listaMuros = []; // [{ id, nombre, ubicacion, m2 }]
+let listaPlafones = []; // [{ id, nombre, ubicacion, m2 }]
+let preciosAcyma = {}; // { key: precio } — editable, persiste en localStorage
+
+/* ============================================================
+   CATÁLOGO MAESTRO DE MATERIALES Y PRECIOS
+   Define todos los materiales que pueden aparecer en el consolidado
+   con su unidad de precio y grupo Acyma. precioDefault = 0.
+   ============================================================ */
+const CATALOGO_MAESTRO = [
+  // Hojas de Recubrimiento
+  { key: 'placa_normal_12.5',    label: 'Placa normal 1/2" (12.5 mm)',    unidad: 'hoja',   grupo: 'Hojas de recubrimiento' },
+  { key: 'placa_normal_16',      label: 'Placa normal 5/8" (16 mm)',      unidad: 'hoja',   grupo: 'Hojas de recubrimiento' },
+  { key: 'placa_antimoho_12.5',  label: 'Placa antimoho 1/2" (12.5 mm)', unidad: 'hoja',   grupo: 'Hojas de recubrimiento' },
+  { key: 'placa_antimoho_16',    label: 'Placa antimoho 5/8" (16 mm)',    unidad: 'hoja',   grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_permabase_12.5', label: 'Panel Permabase 1/2"',           unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_permabase_16',   label: 'Panel Permabase 5/8"',           unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_durock_12.5',    label: 'Panel Durock 1/2"',              unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_durock_16',      label: 'Panel Durock 5/8"',              unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_densglass_12.5', label: 'Panel DensGlass 1/2"',          unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_densglass_16',   label: 'Panel DensGlass 5/8"',          unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_glasrey_12.5',   label: 'Panel Glasrey 1/2"',            unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_glasrey_16',     label: 'Panel Glasrey 5/8"',            unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_securock_12.5',  label: 'Panel Securock 1/2"',           unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  { key: 'panel_securock_16',    label: 'Panel Securock 5/8"',           unidad: 'panel',  grupo: 'Hojas de recubrimiento' },
+  // Perfiles metálicos (precio por pieza de 3.05 m)
+  { key: 'poste_cal26_4.10',     label: 'Poste cal.26 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal26_6.35',     label: 'Poste cal.26 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal26_9.20',     label: 'Poste cal.26 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal26_15.24',    label: 'Poste cal.26 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal24_4.10',     label: 'Poste cal.24 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal24_6.35',     label: 'Poste cal.24 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal24_9.20',     label: 'Poste cal.24 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal24_15.24',    label: 'Poste cal.24 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal20_4.10',     label: 'Poste cal.20 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal20_6.35',     label: 'Poste cal.20 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal20_9.20',     label: 'Poste cal.20 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'poste_cal20_15.24',    label: 'Poste cal.20 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal26_4.10',     label: 'Canal cal.26 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal26_6.35',     label: 'Canal cal.26 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal26_9.20',     label: 'Canal cal.26 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal26_15.24',    label: 'Canal cal.26 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal24_4.10',     label: 'Canal cal.24 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal24_6.35',     label: 'Canal cal.24 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal24_9.20',     label: 'Canal cal.24 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal24_15.24',    label: 'Canal cal.24 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal20_4.10',     label: 'Canal cal.20 · 4.10 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal20_6.35',     label: 'Canal cal.20 · 6.35 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal20_9.20',     label: 'Canal cal.20 · 9.20 cm',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canal_cal20_15.24',    label: 'Canal cal.20 · 15.24 cm',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canalistón_cal26',     label: 'Canalistón / listón cal.26',     unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canalistón_cal24',     label: 'Canalistón / listón cal.24',     unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canalistón_cal20',     label: 'Canalistón / listón cal.20',     unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canaleta_carga_cal26', label: 'Canaleta de carga cal.26',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canaleta_carga_cal24', label: 'Canaleta de carga cal.24',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'canaleta_carga_cal20', label: 'Canaleta de carga cal.20',       unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'angulo_perimetral_cal26', label: 'Ángulo perimetral cal.26',    unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'angulo_perimetral_cal24', label: 'Ángulo perimetral cal.24',    unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  { key: 'angulo_perimetral_cal20', label: 'Ángulo perimetral cal.20',    unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  // Esquineros
+  { key: 'esquinero_metalico',   label: 'Esquinero metálico',             unidad: 'pieza',  grupo: 'Esquineros y molduras' },
+  // Bloque sólido
+  { key: 'bloque_solido',        label: 'Bloque sólido (refuerzo)',        unidad: 'pieza',  grupo: 'Perfiles metálicos galvanizados' },
+  // Tornillos y fijaciones
+  { key: 'tornillo_6x114',       label: 'Tornillo 6 × 1 1/4"',            unidad: 'millar', grupo: 'Tornillos', presentacion: { divisor: 1000 } },
+  { key: 'minipija_8x12',        label: 'Mini pija 8 × 1/2"',             unidad: 'millar', grupo: 'Tornillos', presentacion: { divisor: 1000 } },
+  { key: 'taquete_canal',        label: 'Taquete/clavo + fulminante (canal)', unidad: 'caja c/100', grupo: 'Tornillos', presentacion: { divisor: 100 } },
+  { key: 'taquete_angulo',       label: 'Taquete/clavo + fulminante (ángulo)', unidad: 'caja c/100', grupo: 'Tornillos', presentacion: { divisor: 100 } },
+  { key: 'fijacion_colgante',    label: 'Clavo ancla (colgantes a losa)',  unidad: 'caja c/100', grupo: 'Tornillos', presentacion: { divisor: 100 } },
+  // Cintas, mallas y alambre
+  { key: 'cinta_juntas',         label: 'Cinta para juntas (Perfacinta 500 plg)', unidad: 'rollo',  grupo: 'Cintas y mallas', presentacion: { divisor: 12.70 } },
+  { key: 'malla_fibra_vidrio',   label: 'Malla de fibra de vidrio',        unidad: 'rollo 50m²', grupo: 'Cintas y mallas', presentacion: { divisor: 50 } },
+  { key: 'colgante_alambre12',   label: 'Colgantes alambre cal. 12 (pzas)', unidad: 'pieza',  grupo: 'Cintas y mallas' },
+  { key: 'alambre_galv_12',      label: 'Alambre galv. cal. 12',           unidad: 'kg',     grupo: 'Cintas y mallas', factorKg: 0.41 },
+  { key: 'amarre_alambre16',     label: 'Amarres alambre cal. 16 (pzas)',  unidad: 'pieza',  grupo: 'Cintas y mallas' },
+  { key: 'alambre_galv_16',      label: 'Alambre galv. cal. 16',           unidad: 'kg',     grupo: 'Cintas y mallas', factorKg: 0.17 },
+  // Bases y acabados
+  { key: 'pasta_juntas',         label: 'Pasta Ready Mix · Solo juntas (Unimax)',  unidad: 'caja', grupo: 'Bases y acabados', presentacion: { divisor: 28 } },
+  { key: 'pasta_nivel5',         label: 'Pasta Ready Mix · Nivel 5 (Unimax)',      unidad: 'caja', grupo: 'Bases y acabados', presentacion: { divisor: 28 } },
+  { key: 'acabado_basecoat',     label: 'AD Panel / Basecoat (saco 25 kg)',        unidad: 'saco 25 kg', grupo: 'Bases y acabados', presentacion: { divisor: 25 } },
+  { key: 'acabado_cemenquin',    label: 'Hi Tech gris / Cemenquin (saco 20 kg)',  unidad: 'saco 20 kg', grupo: 'Bases y acabados', presentacion: { divisor: 20 } },
+  { key: 'acabado_econotex',     label: 'Econotex grueso (saco 20 kg)',            unidad: 'saco 20 kg', grupo: 'Bases y acabados', presentacion: { divisor: 20 } },
+  { key: 'membrana_hidrofuga',   label: 'Membrana impermeable Elite PR',           unidad: 'rollo',      grupo: 'Bases y acabados' },
+  // Miscelánea
+  { key: 'lija_muro_int',        label: 'Lija (muro interior)',            unidad: 'hoja',   grupo: 'Miscelánea' },
+  { key: 'lija_plafon',          label: 'Lija (plafón)',                   unidad: 'hoja',   grupo: 'Miscelánea' },
+  { key: 'aislante_lana',        label: 'Lana de fibra de vidrio / mineral', unidad: 'm²',   grupo: 'Miscelánea' },
+  // AD Panel — sistema de pegado directo
+  { key: 'adpanel_saco',         label: 'AD Panel (adhesivo) saco 25 kg',  unidad: 'saco 25 kg', grupo: 'AD Panel · Adhesivo', presentacion: { divisor: 25 } },
+  { key: 'placa_adp_normal_12.5',label: 'Hoja normal 1/2" (AD Panel)',     unidad: 'hoja',   grupo: 'AD Panel · Adhesivo' },
+  { key: 'placa_adp_normal_16',  label: 'Hoja normal 5/8" (AD Panel)',     unidad: 'hoja',   grupo: 'AD Panel · Adhesivo' },
+  { key: 'placa_adp_antimoho_12.5', label: 'Hoja antimoho 1/2" (AD Panel)', unidad: 'hoja', grupo: 'AD Panel · Adhesivo' },
+  { key: 'placa_adp_antimoho_16', label: 'Hoja antimoho 5/8" (AD Panel)', unidad: 'hoja',   grupo: 'AD Panel · Adhesivo' },
+  { key: 'lija_adp',             label: 'Lija (AD Panel)',                 unidad: 'hoja',   grupo: 'Miscelánea' },
+];
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+function num(id){
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) || v < 0 ? 0 : v;
+}
+function fmt(n, dec=2){
+  return n.toLocaleString('es-MX', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function ceilTo(n, step){
+  return Math.ceil(n / step) * step;
+}
+function selected(groupId){
+  return document.querySelector(`#${groupId} .pill.active`).dataset.val;
+}
+function setupPills(groupId, onChange){
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      group.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      onChange && onChange();
+      calcular();
+    });
+  });
+}
+// Grupo de pills donde varias pueden estar activas a la vez (toggle independiente)
+function setupMultiPills(groupId, onChange){
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      p.classList.toggle('active');
+      onChange && onChange();
+      calcular();
+    });
+  });
+}
+function activeOpcionales(groupId){
+  return Array.from(document.querySelectorAll(`#${groupId} .pill.active`)).map(p=>p.dataset.val);
+}
+
+/* ============================================================
+   MODO MURO / PLAFÓN
+   ============================================================ */
+document.querySelectorAll('.selector button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.selector button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    document.getElementById('card-muro').style.display = mode === 'muro' ? 'block' : 'none';
+    document.getElementById('card-plafon').style.display = mode === 'plafon' ? 'block' : 'none';
+    document.getElementById('result-label').textContent =
+      mode === 'muro' ? 'Área total de muro' : 'Área total de plafón';
+    calcular();
+  });
+});
+
+/* ============================================================
+   CÁLCULO PRINCIPAL
+   ============================================================ */
+function calcular(){
+  if(mode === 'muro') calcularMuro();
+  else calcularPlafon();
+}
+
+// ---- MURO ----------------------------------------------------
+function calcularMuro(){
+  const largo = num('muro-largo');
+  const altura = num('muro-altura');
+  const caras = parseInt(selected('muro-caras'));
+  const sistema = selected('muro-sistema'); // 'interior' | 'exterior'
+  const opcionales = activeOpcionales('muro-opcionales'); // ['esquineros','aislante']
+  const cantos = parseInt(document.getElementById('muro-cantos').value);
+  const conBloque = selected('muro-bloque') === 'si';
+
+  // Parámetros específicos de sistema
+  let tipoPlaca, espesor, espaciamiento, calibre, anchoPerfil, acabado;
+  let panelExt, acabadoExt, capasExt = [];
+  let tipoPlacaAdp, espesorAdp, acabadoAdp;
+
+  if(sistema === 'interior'){
+    tipoPlaca = selected('muro-placa');
+    espesor = document.getElementById('muro-espesor').value;
+    espaciamiento = parseFloat(document.getElementById('muro-espaciamiento').value);
+    calibre = selected('muro-calibre');
+    anchoPerfil = parseFloat(document.getElementById('muro-ancho-perfil').value);
+    acabado = selected('muro-acabado');
+  } else if(sistema === 'adpanel'){
+    tipoPlacaAdp = selected('muro-placa-adp');   // 'normal' | 'antimoho'
+    espesorAdp   = document.getElementById('muro-espesor-adp').value;
+    acabadoAdp   = selected('muro-acabado-adp'); // 'juntas' | 'nivel5'
+  } else {
+    panelExt = document.getElementById('muro-panel-exterior').value;
+    espesor = document.getElementById('muro-espesor-ext').value;
+    espaciamiento = parseFloat(document.getElementById('muro-espaciamiento-ext').value);
+    calibre = selected('muro-calibre-ext');
+    anchoPerfil = parseFloat(document.getElementById('muro-ancho-perfil-ext').value);
+    acabadoExt = document.getElementById('muro-acabado-ext').value;
+    capasExt = activeOpcionales('muro-capas-ext');
+  }
+
+  const areaMuro = largo * altura; // área de elevación, base del concepto
+  const areaPlaca = sistema === 'adpanel' ? areaMuro : areaMuro * caras;
+
+  document.getElementById('result-value').textContent = fmt(areaMuro);
+  document.getElementById('result-detail').innerHTML =
+    largo > 0 && altura > 0
+      ? sistema === 'adpanel'
+        ? `${fmt(largo)} × ${fmt(altura)} m<br>AD Panel · pegado directo`
+        : `${fmt(largo)} × ${fmt(altura)} m<br>${caras} cara${caras>1?'s':''} · placa ${fmt(areaPlaca)} m²`
+      : 'Sin medidas';
+
+  if(largo <= 0 || altura <= 0){
+    showEmpty();
+    return;
+  }
+
+  const PERFIL = 3.05; // m, pieza comercial
+
+  // --- 1. HOJAS / PANELES (por superficie real de placa, +10%) ---
+  const hojasCrudo = areaPlaca / PLACA_AREA;
+  const hojas = Math.ceil(hojasCrudo * 1.10);
+
+  // Los cálculos de estructura solo aplican a interior y exterior (no AD Panel)
+  let mlCanal=0, piezasCanal=0, numPostes=0, piezasPostes=0;
+  let fijacionesCanal=0, miniPija=0, tornillo614=0;
+  let piezasBloque=0, mlBloque=0;
+
+  if(sistema !== 'adpanel'){
+    // --- 2. CANAL SUPERIOR/INFERIOR ---
+    const mlCanalCrudo = largo * 2;
+    mlCanal = mlCanalCrudo * 1.05;
+    piezasCanal = Math.ceil(mlCanal / PERFIL);
+
+    // --- 3. POSTES METÁLICOS ---
+    numPostes = Math.ceil(largo / espaciamiento) + 1;
+    piezasPostes = numPostes;
+
+    // --- 4. FIJACIONES DE CANAL ---
+    const fijacionesCanalBase = Math.ceil(mlCanalCrudo / 0.60);
+    fijacionesCanal = Math.ceil(fijacionesCanalBase * 1.05);
+
+    // --- 5. MINI PIJAS ---
+    const miniPijaCrudo = numPostes * 4 * 1.05;
+    miniPija = Math.ceil(miniPijaCrudo / 5) * 5;
+
+    // --- 6. TORNILLO 6x1 1/4" ---
+    const tornillo614Crudo = hojas * 50 * 1.05;
+    tornillo614 = Math.ceil(tornillo614Crudo / 5) * 5;
+
+    // --- 7. BLOQUE SÓLIDO ---
+    const BLOQUE_ML = 0.77;
+    const numCavidades = Math.max(0, numPostes - 1);
+    if(conBloque){
+      piezasBloque = numCavidades * 2;
+      mlBloque = piezasBloque * BLOQUE_ML;
+    }
+  }
+
+  let result;
+  if(sistema === 'interior'){
+    const mlCinta = areaPlaca * 1.35;
+    const rollosCinta = Math.ceil(mlCinta / 12.70);
+    const kgPastaJuntas = areaPlaca * 1.00;
+    const kgPastaNivel5 = areaPlaca * 1.80;
+    const kgPasta = acabado === 'nivel5' ? kgPastaNivel5 : kgPastaJuntas;
+    const cubetasPasta = Math.ceil(kgPasta / 28);
+    const lija = Math.ceil(areaPlaca / 5);
+    result = {
+      sistema, areaMuro, areaPlaca, caras, tipoPlaca, espesor, espaciamiento, calibre, anchoPerfil,
+      hojasCrudo, hojas, mlCanal, piezasCanal, numPostes, piezasPostes,
+      fijacionesCanal, miniPija, tornillo614, conBloque, piezasBloque, mlBloque,
+      mlCinta, rollosCinta, acabado, kgPasta, cubetasPasta, lija, opcionales, cantos
+    };
+
+  } else if(sistema === 'adpanel'){
+    // Sin estructura metálica — hojas pegadas directamente sobre muro de bloque
+    const SACOS_X_HOJA = 30 / 80; // ratio 80 hojas : 30 sacos
+    const sacosAdpanel = Math.ceil(hojas * SACOS_X_HOJA);
+    const mlCinta = areaMuro * 1.35;
+    const rollosCinta = Math.ceil(mlCinta / 12.70);
+    const kgPastaJuntas = areaMuro * 1.00;
+    const kgPastaNivel5 = areaMuro * 1.80;
+    const kgPasta = acabadoAdp === 'nivel5' ? kgPastaNivel5 : kgPastaJuntas;
+    const cubetasPasta = Math.ceil(kgPasta / 28);
+    const lija = Math.ceil(areaMuro / 5) + 1;
+    result = {
+      sistema, areaMuro, areaPlaca: areaMuro, caras: 1,
+      tipoPlacaAdp, espesorAdp, acabado: acabadoAdp,
+      hojasCrudo, hojas, sacosAdpanel,
+      mlCinta, rollosCinta, kgPasta, cubetasPasta, lija,
+      opcionales, cantos
+    };
+
+  } else {
+    // EXTERIOR cementicio
+    const FACTOR_ACABADO = { basecoat: 3.33, cemenquin: 2.86, econotex: 3.57 };
+    const kgAcabado = areaPlaca * FACTOR_ACABADO[acabadoExt];
+    const sacosAcabado = Math.ceil(kgAcabado / 20);
+    let m2Membrana = 0;
+    if(capasExt.includes('membrana')) m2Membrana = areaPlaca * 1.05;
+    let m2Malla = 0, rollosMalla = 0;
+    if(capasExt.includes('malla')){
+      m2Malla = areaPlaca * (50/45);
+      rollosMalla = Math.ceil(m2Malla / 50);
+    }
+    result = {
+      sistema, areaMuro, areaPlaca, caras, panelExt, espesor, espaciamiento, calibre, anchoPerfil,
+      hojasCrudo, hojas, mlCanal, piezasCanal, numPostes, piezasPostes,
+      fijacionesCanal, miniPija, tornillo614, conBloque, piezasBloque, mlBloque,
+      acabadoExt, kgAcabado, sacosAcabado, capasExt, m2Membrana, m2Malla, rollosMalla,
+      opcionales, cantos
+    };
+  }
+
+  // --- ESQUINEROS (opcional: cantos expuestos x altura, +5%) ---
+  result.mlEsquinero = 0; result.piezasEsquinero = 0;
+  if(opcionales.includes('esquineros') && cantos > 0){
+    const mlCrudo = cantos * altura;
+    result.mlEsquinero = mlCrudo * 1.05;
+    result.piezasEsquinero = Math.ceil(result.mlEsquinero / PERFIL);
+  }
+
+  // --- AISLANTE (opcional: largo x altura, +5%) ---
+  result.m2Aislante = 0;
+  if(opcionales.includes('aislante')){
+    result.m2Aislante = areaMuro * 1.05;
+  }
+
+  currentCalc = { tipo: 'muro', areaResumen: areaMuro, data: result };
+  renderInsumosMuro(result);
+  renderAPU();
+  renderPrecioNeto();
+}
+
+// ---- PLAFÓN ----------------------------------------------------
+function calcularPlafon(){
+  const largo = num('plafon-largo');
+  const ancho = num('plafon-ancho');
+  const sistema = selected('plafon-sistema'); // 'interior' | 'exterior'
+  const sepCanalistón = parseFloat(document.getElementById('plafon-sep-canalistón').value);
+  const sepCanaleta = parseFloat(document.getElementById('plafon-sep-canaleta').value);
+  const acabado = selected('plafon-acabado'); // 'juntas' | 'nivel5' (aplica a ambos sistemas)
+
+  // Parámetros específicos de sistema
+  let tipoPlaca, espesor, calibre, panelExt, acabadoExt, capasExt = [];
+
+  if(sistema === 'interior'){
+    tipoPlaca = selected('plafon-placa');
+    espesor = document.getElementById('plafon-espesor').value;
+    calibre = document.getElementById('plafon-calibre-sel').value;
+  } else {
+    panelExt = document.getElementById('plafon-panel-exterior').value;
+    espesor = document.getElementById('plafon-espesor-ext').value;
+    calibre = selected('plafon-calibre-ext');
+    acabadoExt = document.getElementById('plafon-acabado-ext').value; // basecoat | cemenquin | econotex
+    capasExt = activeOpcionales('plafon-capas-ext'); // ['membrana','malla']
+  }
+
+  const areaTotal = largo * ancho;
+  const perimetro = 2 * largo + 2 * ancho;
+
+  document.getElementById('result-value').textContent = fmt(areaTotal);
+  document.getElementById('result-detail').innerHTML =
+    largo > 0 && ancho > 0
+      ? `${fmt(largo)} × ${fmt(ancho)} m<br>Perímetro ${fmt(perimetro)} m`
+      : 'Sin medidas';
+
+  if(largo <= 0 || ancho <= 0){
+    showEmpty();
+    return;
+  }
+
+  const PERFIL = 3.05; // m, pieza comercial
+  const EMPALME = 0.30; // ml extra por empalme
+
+  // --- 1. HOJAS / PANELES ---
+  const hojasCrudo = areaTotal / PLACA_AREA;
+  const hojasConDesp = hojasCrudo * 1.10;
+  const hojas = Math.ceil(hojasConDesp);
+
+  // --- 2. CANALISTÓN (sentido del ANCHO, líneas distribuidas sobre el LARGO) ---
+  const lineasCanalistón = Math.ceil(largo / sepCanalistón) + 1; // +1 línea de cierre
+  const piezasPorLineaCanalistón = Math.ceil(ancho / PERFIL);
+  const empalmesPorLineaCanalistón = piezasPorLineaCanalistón - 1;
+  const mlBaseCanalistón = lineasCanalistón * ancho;
+  const mlEmpalmesCanalistón = lineasCanalistón * empalmesPorLineaCanalistón * EMPALME;
+  const mlCanalistónCrudo = mlBaseCanalistón + mlEmpalmesCanalistón;
+  const mlCanalistón = mlCanalistónCrudo * 1.05;
+  const piezasCanalistón = Math.ceil(mlCanalistón / PERFIL);
+
+  // --- 3. CANALETA DE CARGA (sentido del LARGO, líneas distribuidas sobre el ANCHO) ---
+  const lineasCanaleta = Math.ceil(ancho / sepCanaleta) + 1; // +1 línea de cierre
+  const piezasPorLineaCanaleta = Math.ceil(largo / PERFIL);
+  const empalmesPorLineaCanaleta = piezasPorLineaCanaleta - 1;
+  const mlBaseCanaleta = lineasCanaleta * largo;
+  const mlEmpalmesCanaleta = lineasCanaleta * empalmesPorLineaCanaleta * EMPALME;
+  const mlCanaletaCrudo = mlBaseCanaleta + mlEmpalmesCanaleta;
+  const mlCanaleta = mlCanaletaCrudo * 1.05;
+  const piezasCanaleta = Math.ceil(mlCanaleta / PERFIL);
+
+  // --- 4. ÁNGULO PERIMETRAL ---
+  const mlAngulo = perimetro * 1.05;
+  const piezasAngulo = Math.ceil(mlAngulo / PERFIL);
+
+  // --- 5. FIJACIONES DE ÁNGULO PERIMETRAL (c/0.60 m + 5%) ---
+  const fijacionesAnguloCrudo = perimetro / 0.60;
+  const fijacionesAngulo = Math.ceil(fijacionesAnguloCrudo * 1.05);
+
+  // --- 6. COLGANTES CAL.12 (sobre líneas de canaleta, puntos según LARGO) ---
+  const puntosPorCanaleta = Math.ceil(largo / 0.90) + 1; // +1 punto de cierre
+  const colgantes = lineasCanaleta * puntosPorCanaleta;
+
+  // --- 7. ALAMBRE GALV. CAL.12 (0.70 ml por colgante) ---
+  const ML_COLGANTE = 0.40 + 0.10 + 0.20; // bajada + gancho + amarre
+  const mlAlambre12 = colgantes * ML_COLGANTE;
+
+  // --- 8. FIJACIONES SUPERIORES (1 por colgante) ---
+  const fijacionesSuperiores = colgantes;
+
+  // --- 9. AMARRES CAL.16 (cruces canalistón x canaleta) ---
+  const amarres = lineasCanalistón * lineasCanaleta;
+
+  // --- 10. ALAMBRE GALV. CAL.16 (0.70 ml por amarre) ---
+  const ML_AMARRE = 0.70;
+  const mlAlambre16 = amarres * ML_AMARRE;
+
+  // --- 11. TORNILLO 6x1 1/4" (50 por hoja/panel + 5%) ---
+  const tornillo614 = Math.ceil(hojas * 50 * 1.05);
+
+  // --- 12. MINI PIJA 8x1/2" (8/m² + 5%, redondeo a 10) ---
+  const miniPijaCrudo = areaTotal * 8 * 1.05;
+  const miniPija = Math.ceil(miniPijaCrudo / 10) * 10;
+
+  // --- 13. CINTA PARA JUNTAS (1.35 ml/m², igual para ambos sistemas) ---
+  const mlCinta = areaTotal * 1.35;
+  const rollosCinta = Math.ceil(mlCinta / 90); // rollo estándar ~90 ml de referencia
+
+  // --- 14/15. PASTA READY MIX (igual para ambos sistemas) ---
+  const kgPastaJuntas = areaTotal * 1.00;
+  const kgPastaNivel5 = areaTotal * 1.80;
+  const kgPasta = acabado === 'nivel5' ? kgPastaNivel5 : kgPastaJuntas;
+  const cubetasPasta = Math.ceil(kgPasta / 28);
+
+  // --- 16. LIJA (1 hoja por cada 5 m², +1 de reserva sobre el techo) ---
+  const lijaCrudo = areaTotal / 5;
+  const lijaFinal = Math.ceil(lijaCrudo) + 1;
+
+  const result = {
+    sistema, areaTotal, perimetro, espesor, calibre,
+    hojasCrudo, hojas,
+    sepCanalistón, lineasCanalistón, mlCanalistón, piezasCanalistón, empalmesPorLineaCanalistón,
+    sepCanaleta, lineasCanaleta, mlCanaleta, piezasCanaleta, empalmesPorLineaCanaleta,
+    mlAngulo, piezasAngulo,
+    fijacionesAngulo,
+    puntosPorCanaleta, colgantes, mlAlambre12,
+    fijacionesSuperiores,
+    amarres, mlAlambre16,
+    tornillo614, miniPija,
+    mlCinta, rollosCinta,
+    acabado, kgPasta, cubetasPasta,
+    lijaFinal
+  };
+
+  if(sistema === 'interior'){
+    result.tipoPlaca = tipoPlaca;
+  } else {
+    result.panelExt = panelExt;
+
+    // --- ACABADO DE SUPERFICIE EXTERIOR (kg/m² sobre área de placa) ---
+    const FACTOR_ACABADO = { basecoat: 3.33, cemenquin: 2.86, econotex: 3.57 };
+    result.acabadoExt = acabadoExt;
+    result.kgAcabado = areaTotal * FACTOR_ACABADO[acabadoExt];
+    result.sacosAcabado = Math.ceil(result.kgAcabado / 20);
+
+    // --- MEMBRANA HIDRÓFUGA (1 capa, +5%) ---
+    result.capasExt = capasExt;
+    result.m2Membrana = 0;
+    if(capasExt.includes('membrana')){
+      result.m2Membrana = areaTotal * 1.05;
+    }
+
+    // --- MALLA DE FIBRA DE VIDRIO (área x 50/45 por traslape) ---
+    result.m2Malla = 0; result.rollosMalla = 0;
+    if(capasExt.includes('malla')){
+      result.m2Malla = areaTotal * (50/45);
+      result.rollosMalla = Math.ceil(result.m2Malla / 50);
+    }
+  }
+
+  currentCalc = { tipo: 'plafon', areaResumen: areaTotal, data: result };
+  renderInsumosPlafon(result);
+  renderAPU();
+  renderPrecioNeto();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function showEmpty(){
+  currentCalc = null;
+  document.getElementById('insumos-count').textContent = '';
+  document.getElementById('insumos-body').innerHTML = `
+    <div class="empty-state">
+      <div class="glyph">＋</div>
+      Ingresa las medidas para calcular la explosión de materiales.
+    </div>`;
+  document.getElementById('card-apu').style.display = 'none';
+  document.getElementById('card-precio-neto').style.display = 'none';
+}
+
+function item(name, sub, qty, unit, dec=0){
+  return `<div class="item-row">
+    <div class="item-name">${name}${sub ? `<span class="sub">${sub}</span>` : ''}</div>
+    <div class="item-qty">${fmt(qty, dec)}<span class="u">${unit}</span></div>
+  </div>`;
+}
+
+/* ============================================================
+   EXTRACCIÓN DE LÍNEAS DE INSUMO (para guardar/consolidar)
+   ============================================================ */
+// key: identificador único de material (para sumar entre áreas)
+// qty: cantidad técnica (decimal, ya con desperdicios aplicados)
+// unit: unidad técnica (pzas, ml, m², kg, hojas, paneles)
+// presentacion: {divisor, label} opcional, para mostrar unidad de compra en consolidado
+function extraerLineasMuro(d){
+  const lineas = [];
+
+  if(d.sistema === 'adpanel'){
+    // Sin estructura — solo hoja + AD Panel adhesivo + acabados
+    const espesorLabel = d.espesorAdp === '16' ? '5/8"' : '1/2"';
+    const placaLabel = d.tipoPlacaAdp === 'antimoho' ? 'Hoja antimoho' : 'Hoja normal';
+    const placaKey = `placa_adp_${d.tipoPlacaAdp}_${d.espesorAdp}`;
+    lineas.push({ key: placaKey, label: `${placaLabel} ${espesorLabel} (AD Panel)`, groupTitle: 'AD Panel · Adhesivo', qty: d.hojas, unit: 'hojas' });
+    lineas.push({ key: 'adpanel_saco', label: 'AD Panel adhesivo (saco 25 kg)', groupTitle: 'AD Panel · Adhesivo', qty: d.sacosAdpanel, unit: 'sacos', presentacion: { divisor: 1, label: 'sacos' } });
+    const pastaKey = d.acabado === 'nivel5' ? 'pasta_nivel5' : 'pasta_juntas';
+    const pastaLabel = d.acabado === 'nivel5' ? 'Pasta Ready Mix · Nivel 5' : 'Pasta Ready Mix · Solo juntas';
+    lineas.push({ key: 'cinta_juntas', label: 'Cinta para juntas', groupTitle: 'Acabado de juntas', qty: d.mlCinta, unit: 'ml', presentacion: { divisor: 12.70, label: 'rollos' } });
+    lineas.push({ key: pastaKey, label: pastaLabel, groupTitle: 'Acabado de juntas', qty: d.kgPasta, unit: 'kg', presentacion: { divisor: 28, label: 'cubetas' } });
+    lineas.push({ key: 'lija_adp', label: 'Lija', groupTitle: 'Acabado de juntas', qty: d.lija, unit: 'hojas' });
+    return lineas;
+  }
+
+  if(d.sistema === 'interior'){
+    const placaLabel = d.tipoPlaca === 'antimoho' ? 'Placa de yeso antimoho' : 'Placa de yeso normal';
+    lineas.push({ key: `placa_${d.tipoPlaca}_${d.espesor}`, label: `${placaLabel} ${d.espesor === '16' ? '5/8"' : '1/2"'}`, groupTitle: 'Placa / Panel', qty: d.hojas, unit: 'hojas' });
+  } else {
+    const PANEL_LABELS = {
+      permabase: 'Panel Permabase', durock: 'Panel Durock',
+      densglass: 'Panel DensGlass', glasrey: 'Panel Glasrey', securock: 'Panel Securock'
+    };
+    lineas.push({ key: `panel_${d.panelExt}_${d.espesor}`, label: `${PANEL_LABELS[d.panelExt]} ${d.espesor === '16' ? '5/8"' : '1/2"'}`, groupTitle: 'Placa / Panel', qty: d.hojas, unit: 'paneles' });
+  }
+
+  lineas.push({ key: `poste_cal${d.calibre}_${d.anchoPerfil}`, label: `Poste metálico cal.${d.calibre} · ${fmt(d.anchoPerfil,2)} cm`, groupTitle: 'Estructura metálica', qty: d.piezasPostes, unit: 'pzas (3.05 m)' });
+  lineas.push({ key: `canal_cal${d.calibre}_${d.anchoPerfil}`, label: `Canal sup./inf. cal.${d.calibre} · ${fmt(d.anchoPerfil,2)} cm`, groupTitle: 'Estructura metálica', qty: d.piezasCanal, unit: 'pzas (3.05 m)' });
+
+  if(d.conBloque){
+    lineas.push({ key: 'bloque_solido', label: 'Bloque sólido (refuerzo)', groupTitle: 'Refuerzo de rigidez', qty: d.piezasBloque, unit: 'pzas' });
+  }
+
+  lineas.push({ key: 'taquete_canal', label: 'Taquete/clavo + fulminante (canal)', groupTitle: 'Fijaciones y tornillería', qty: d.fijacionesCanal, unit: 'pzas' });
+  lineas.push({ key: 'minipija_8x12', label: 'Mini pija 8 × 1/2"', groupTitle: 'Fijaciones y tornillería', qty: d.miniPija, unit: 'pzas' });
+  lineas.push({ key: 'tornillo_6x114', label: 'Tornillo 6 × 1 1/4"', groupTitle: 'Fijaciones y tornillería', qty: d.tornillo614, unit: 'pzas' });
+
+  if(d.sistema === 'interior'){
+    lineas.push({ key: 'cinta_juntas', label: 'Cinta para juntas', groupTitle: 'Acabado de juntas', qty: d.mlCinta, unit: 'ml', presentacion: { divisor: 12.70, label: 'rollos' } });
+    const pastaKey = d.acabado === 'nivel5' ? 'pasta_nivel5' : 'pasta_juntas';
+    const pastaLabel = d.acabado === 'nivel5' ? 'Pasta Ready Mix · Nivel 5' : 'Pasta Ready Mix · Solo juntas';
+    lineas.push({ key: pastaKey, label: pastaLabel, groupTitle: 'Acabado de juntas', qty: d.kgPasta, unit: 'kg', presentacion: { divisor: 28, label: 'cubetas' } });
+    lineas.push({ key: 'lija_muro_int', label: 'Lija', groupTitle: 'Acabado de juntas', qty: d.lija, unit: 'hojas' });
+  } else {
+    const ACABADO_LABELS = { basecoat: 'Basecoat', cemenquin: 'Cemenquin', econotex: 'Econotex grueso' };
+    lineas.push({ key: `acabado_${d.acabadoExt}`, label: ACABADO_LABELS[d.acabadoExt], groupTitle: 'Acabado de superficie', qty: d.kgAcabado, unit: 'kg', presentacion: { divisor: 20, label: 'sacos' } });
+    if(d.capasExt.includes('membrana')){
+      lineas.push({ key: 'membrana_hidrofuga', label: 'Membrana hidrófuga', groupTitle: 'Capas de protección', qty: d.m2Membrana, unit: 'm²' });
+    }
+    if(d.capasExt.includes('malla')){
+      lineas.push({ key: 'malla_fibra_vidrio', label: 'Malla de fibra de vidrio', groupTitle: 'Capas de protección', qty: d.m2Malla, unit: 'm²', presentacion: { divisor: 50, label: 'rollos' } });
+    }
+  }
+
+  if(d.opcionales.includes('esquineros') && d.cantos > 0){
+    lineas.push({ key: 'esquinero_metalico', label: 'Esquinero metálico', groupTitle: 'Esquineros', qty: d.piezasEsquinero, unit: 'pzas (3.05 m)' });
+  }
+
+  if(d.opcionales.includes('aislante')){
+    lineas.push({ key: 'aislante_lana', label: 'Lana de fibra de vidrio / mineral', groupTitle: 'Aislante', qty: d.m2Aislante, unit: 'm²' });
+  }
+
+  return lineas;
+}
+
+function extraerLineasPlafon(d){
+  const espesorLabel = d.espesor === '16' ? '5/8"' : '1/2"';
+  const acabadoLabel = d.acabado === 'nivel5' ? 'Pasta Ready Mix · Nivel 5' : 'Pasta Ready Mix · Solo juntas';
+  const pastaKey = d.acabado === 'nivel5' ? 'pasta_nivel5' : 'pasta_juntas';
+
+  const lineas = [];
+
+  if(d.sistema === 'interior'){
+    const placaLabel = d.tipoPlaca === 'antimoho' ? 'Placa de yeso antimoho' : 'Placa de yeso normal';
+    lineas.push({ key: `placa_${d.tipoPlaca}_${d.espesor}`, label: `${placaLabel} ${espesorLabel}`, groupTitle: 'Placa / Panel', qty: d.hojas, unit: 'hojas' });
+  } else {
+    const PANEL_LABELS = {
+      permabase: 'Panel Permabase', durock: 'Panel Durock',
+      densglass: 'Panel DensGlass', glasrey: 'Panel Glasrey', securock: 'Panel Securock'
+    };
+    lineas.push({ key: `panel_${d.panelExt}_${d.espesor}`, label: `${PANEL_LABELS[d.panelExt]} ${espesorLabel}`, groupTitle: 'Placa / Panel', qty: d.hojas, unit: 'paneles' });
+  }
+
+  lineas.push(
+    { key: `canalistón_cal${d.calibre}`, label: `Canalistón / listón metálico cal.${d.calibre}`, groupTitle: 'Estructura metálica', qty: d.piezasCanalistón, unit: 'pzas (3.05 m)' },
+    { key: `canaleta_carga_cal${d.calibre}`, label: `Canaleta de carga cal.${d.calibre}`, groupTitle: 'Estructura metálica', qty: d.piezasCanaleta, unit: 'pzas (3.05 m)' },
+    { key: `angulo_perimetral_cal${d.calibre}`, label: `Ángulo perimetral cal.${d.calibre}`, groupTitle: 'Estructura metálica', qty: d.piezasAngulo, unit: 'pzas (3.05 m)' },
+    { key: 'colgante_alambre12', label: 'Colgantes alambre cal. 12', groupTitle: 'Suspensión y amarres', qty: d.colgantes, unit: 'pzas' },
+    { key: 'alambre_galv_12', label: 'Alambre galvanizado cal. 12', groupTitle: 'Suspensión y amarres', qty: d.mlAlambre12, unit: 'ml' },
+    { key: 'amarre_alambre16', label: 'Amarres alambre cal. 16', groupTitle: 'Suspensión y amarres', qty: d.amarres, unit: 'pzas' },
+    { key: 'alambre_galv_16', label: 'Alambre galvanizado cal. 16', groupTitle: 'Suspensión y amarres', qty: d.mlAlambre16, unit: 'ml' },
+    { key: 'taquete_angulo', label: 'Taquete/clavo + fulminante (ángulo perimetral)', groupTitle: 'Fijaciones', qty: d.fijacionesAngulo, unit: 'pzas' },
+    { key: 'fijacion_colgante', label: 'Clavo/fulminante o taquete (colgantes a losa)', groupTitle: 'Fijaciones', qty: d.fijacionesSuperiores, unit: 'pzas' },
+    { key: 'tornillo_6x114', label: 'Tornillo 6 × 1 1/4"', groupTitle: 'Tornillería', qty: d.tornillo614, unit: 'pzas' },
+    { key: 'minipija_8x12', label: 'Mini pija 8 × 1/2"', groupTitle: 'Tornillería', qty: d.miniPija, unit: 'pzas' },
+    { key: 'cinta_juntas', label: 'Cinta para juntas', groupTitle: 'Acabado de juntas', qty: d.mlCinta, unit: 'ml', presentacion: { divisor: 12.70, label: 'rollos' } },
+    { key: pastaKey, label: acabadoLabel, groupTitle: 'Acabado de juntas', qty: d.kgPasta, unit: 'kg', presentacion: { divisor: 28, label: 'cubetas' } },
+    { key: 'lija_plafon', label: 'Lija', groupTitle: 'Acabado de juntas', qty: d.lijaFinal, unit: 'hojas' }
+  );
+
+  if(d.sistema === 'exterior'){
+    const ACABADO_LABELS = { basecoat: 'Basecoat', cemenquin: 'Cemenquin', econotex: 'Econotex grueso' };
+    lineas.push({ key: `acabado_${d.acabadoExt}`, label: ACABADO_LABELS[d.acabadoExt], groupTitle: 'Acabado de superficie', qty: d.kgAcabado, unit: 'kg', presentacion: { divisor: 20, label: 'sacos' } });
+    if(d.capasExt.includes('membrana')){
+      lineas.push({ key: 'membrana_hidrofuga', label: 'Membrana hidrófuga', groupTitle: 'Capas de protección', qty: d.m2Membrana, unit: 'm²' });
+    }
+    if(d.capasExt.includes('malla')){
+      lineas.push({ key: 'malla_fibra_vidrio', label: 'Malla de fibra de vidrio', groupTitle: 'Capas de protección', qty: d.m2Malla, unit: 'm²', presentacion: { divisor: 50, label: 'rollos' } });
+    }
+  }
+
+  return lineas;
+}
+
+function extraerLineas(calc){
+  return calc.tipo === 'muro' ? extraerLineasMuro(calc.data) : extraerLineasPlafon(calc.data);
+}
+
+function renderInsumosMuro(d){
+  let html = '';
+  let numGrupos = 0;
+
+  // --- Bloque AD Panel (sistema especial sin estructura) ---
+  if(d.sistema === 'adpanel'){
+    const espesorLabel = d.espesorAdp === '16' ? '5/8"' : '1/2"';
+    const placaLabel = d.tipoPlacaAdp === 'antimoho' ? 'Hoja antimoho' : 'Hoja normal';
+    const acabadoLabel = d.acabado === 'nivel5' ? 'Nivel 5 (1.80 kg/m²)' : 'Solo juntas (1.00 kg/m²)';
+
+    html += `<div class="group">
+      <p class="group-title">Hojas de yeso · Sistema AD Panel</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin:0 0 8px; line-height:1.4;">Pegado directo sobre muro de bloque — sin estructura metálica.</p>
+      ${item(placaLabel, `${espesorLabel} · ${fmt(d.areaMuro)} m² · +10%`, d.hojas, 'hojas')}
+    </div>`;
+    numGrupos++;
+
+    html += `<div class="group">
+      <p class="group-title">AD Panel adhesivo</p>
+      ${item('AD Panel saco 25 kg', `Ratio 30 sacos/80 hojas · ${d.hojas} hojas`, d.sacosAdpanel, 'sacos')}
+    </div>`;
+    numGrupos++;
+
+    html += `<div class="group">
+      <p class="group-title">Acabado de juntas</p>
+      ${item('Cinta para juntas', `1.35 ml/m²`, d.mlCinta, 'ml', 2)}
+      ${item('Rollos de cinta (ref.)', `Perfacinta 500 · 12.70 ml/rollo`, Math.ceil(d.mlCinta/12.70), 'rollos')}
+      ${item('Pasta Ready Mix', acabadoLabel, d.kgPasta, 'kg', 2)}
+      ${item('Cajas/cubetas 28 kg (ref.)', '', d.cubetasPasta, 'cubetas')}
+      ${item('Lija', `1 hoja / 5 m² + reserva`, d.lija, 'hojas')}
+    </div>`;
+    numGrupos++;
+
+    document.getElementById('insumos-count').textContent = `${numGrupos} grupos`;
+    document.getElementById('insumos-body').innerHTML = html;
+    return;
+  }
+
+  // --- Bloque 1: Placa / Panel (interior y exterior) ---
+  if(d.sistema === 'interior'){
+    const placaLabel = d.tipoPlaca === 'antimoho' ? 'Placa antimoho' : 'Placa normal';
+    const espesorLabel = d.espesor === '16' ? '5/8"' : '1/2"';
+    html += `<div class="group">
+      <p class="group-title">Placa de yeso</p>
+      ${item(placaLabel, `${espesorLabel} · ${d.caras} cara${d.caras>1?'s':''} · ${fmt(d.areaPlaca)} m² instalados · +10%`, d.hojas, 'hojas')}
+    </div>`;
+  } else {
+    const PANEL_LABELS = {
+      permabase: 'Panel Permabase (cementicio)',
+      durock: 'Panel Durock (cementicio)',
+      densglass: 'Panel DensGlass (fibra de vidrio)',
+      glasrey: 'Panel Glasrey (fibra de vidrio)',
+      securock: 'Panel Securock (yeso reforzado ext.)'
+    };
+    const espesorLabel = d.espesor === '16' ? '5/8"' : '1/2"';
+    html += `<div class="group">
+      <p class="group-title">Panel exterior</p>
+      ${item(PANEL_LABELS[d.panelExt], `${espesorLabel} · ${d.caras} cara${d.caras>1?'s':''} · ${fmt(d.areaPlaca)} m² instalados · +10%`, d.hojas, 'paneles')}
+    </div>`;
+  }
+  numGrupos++;
+
+  // --- Bloque 2: Estructura metálica ---
+  html += `<div class="group">
+    <p class="group-title">Estructura metálica · Cal. ${d.calibre} · ${fmt(d.anchoPerfil,2)} cm</p>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin:0 0 8px; line-height:1.4;">La estructura se calcula una sola vez, sin importar el número de caras.</p>
+    ${item('Postes metálicos', `c/${fmt(d.espaciamiento,2)} m · ${d.numPostes} postes`, d.piezasPostes, 'pzas (3.05 m)')}
+    ${item('Canal superior/inferior', `${fmt(d.mlCanal,2)} ml · +5%`, d.piezasCanal, 'pzas (3.05 m)')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 3: Refuerzo de rigidez (bloque sólido) ---
+  if(d.conBloque){
+    html += `<div class="group">
+      <p class="group-title">Refuerzo de rigidez</p>
+      ${item('Bloque sólido', `2/cavidad (0.61 m y 1.22 m) · ${d.piezasBloque/2} cavidades · 0.77 ml c/u`, d.piezasBloque, 'pzas')}
+      ${item('ML equivalente', '', d.mlBloque, 'ml', 2)}
+    </div>`;
+    numGrupos++;
+  }
+
+  // --- Bloque 4: Fijaciones y tornillería ---
+  html += `<div class="group">
+    <p class="group-title">Fijaciones y tornillería</p>
+    ${item('Taquete/clavo + fulminante (canal)', `c/0.60 m · +5%`, d.fijacionesCanal, 'pzas')}
+    ${item('Mini pija 8 × 1/2"', `4/poste · +5% · mult. de 5`, d.miniPija, 'pzas')}
+    ${item('Tornillo 6 × 1 1/4"', `50/${d.sistema === 'interior' ? 'hoja' : 'panel'} · +5% · ${d.hojas} ${d.sistema === 'interior' ? 'hojas' : 'paneles'}`, d.tornillo614, 'pzas')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 5: Acabados ---
+  if(d.sistema === 'interior'){
+    const acabadoLabel = d.acabado === 'nivel5' ? 'Nivel 5 (1.80 kg/m²)' : 'Solo juntas (1.00 kg/m²)';
+    html += `<div class="group">
+      <p class="group-title">Acabado de juntas</p>
+      ${item('Cinta para juntas', `1.35 ml/m² instalados`, d.mlCinta, 'ml', 2)}
+      ${item('Rollos de cinta (ref.)', '', d.rollosCinta, 'rollos')}
+      ${item('Pasta Ready Mix', acabadoLabel, d.kgPasta, 'kg', 2)}
+      ${item('Cubetas de 28 kg (ref.)', '', d.cubetasPasta, 'cubetas')}
+      ${item('Lija', `1 hoja / 5 m² instalados`, d.lija, 'hojas')}
+    </div>`;
+    numGrupos++;
+  } else {
+    const ACABADO_LABELS = {
+      basecoat: 'Basecoat (3.33 kg/m²)',
+      cemenquin: 'Cemenquin (2.86 kg/m²)',
+      econotex: 'Econotex grueso (3.57 kg/m²)'
+    };
+    html += `<div class="group">
+      <p class="group-title">Acabado de superficie</p>
+      ${item(ACABADO_LABELS[d.acabadoExt], `Sobre ${fmt(d.areaPlaca)} m² instalados`, d.kgAcabado, 'kg', 2)}
+      ${item('Sacos de 20 kg (ref.)', '', d.sacosAcabado, 'sacos')}
+    </div>`;
+    numGrupos++;
+
+    if(d.capasExt.includes('membrana') || d.capasExt.includes('malla')){
+      let capasHtml = '';
+      if(d.capasExt.includes('membrana')){
+        capasHtml += item('Membrana hidrófuga', '1 capa · +5%', d.m2Membrana, 'm²', 2);
+      }
+      if(d.capasExt.includes('malla')){
+        capasHtml += item('Malla de fibra de vidrio', 'Rollo 50 m² · rinde 45 m² (traslape)', d.m2Malla, 'm²', 2);
+        capasHtml += item('Rollos de malla (ref.)', '', d.rollosMalla, 'rollos');
+      }
+      html += `<div class="group">
+        <p class="group-title">Capas de protección</p>
+        ${capasHtml}
+      </div>`;
+      numGrupos++;
+    }
+  }
+
+  // --- Bloque opcional: Esquineros ---
+  if(d.opcionales.includes('esquineros') && d.cantos > 0){
+    html += `<div class="group">
+      <p class="group-title">Esquineros</p>
+      ${item('Esquinero metálico', `${d.cantos} canto${d.cantos>1?'s':''} libre${d.cantos>1?'s':''} · ${fmt(d.mlEsquinero,2)} ml · +5%`, d.piezasEsquinero, 'pzas (3.05 m)')}
+    </div>`;
+    numGrupos++;
+  }
+
+  // --- Bloque opcional: Aislante ---
+  if(d.opcionales.includes('aislante')){
+    html += `<div class="group">
+      <p class="group-title">Aislante</p>
+      ${item('Lana de fibra de vidrio / mineral', `Largo × altura · +5%`, d.m2Aislante, 'm²', 2)}
+    </div>`;
+    numGrupos++;
+  }
+
+  document.getElementById('insumos-count').textContent = `${numGrupos} grupos`;
+  document.getElementById('insumos-body').innerHTML = html;
+}
+
+function renderInsumosPlafon(d){
+  const espesorLabel = d.espesor === '16' ? '5/8"' : '1/2"';
+  const acabadoLabel = d.acabado === 'nivel5' ? 'Nivel 5 (1.80 kg/m²)' : 'Solo juntas (1.00 kg/m²)';
+
+  let html = '';
+  let numGrupos = 0;
+
+  // --- Bloque 1: Placa / Panel ---
+  if(d.sistema === 'interior'){
+    const placaLabel = d.tipoPlaca === 'antimoho' ? 'Placa antimoho' : 'Placa normal';
+    html += `<div class="group">
+      <p class="group-title">Placa de yeso</p>
+      ${item(placaLabel, `${espesorLabel} · 1.22×2.44 m · +10% desperdicio`, d.hojas, 'hojas')}
+    </div>`;
+  } else {
+    const PANEL_LABELS = {
+      permabase: 'Panel Permabase (cementicio)',
+      durock: 'Panel Durock (cementicio)',
+      densglass: 'Panel DensGlass (fibra de vidrio)',
+      glasrey: 'Panel Glasrey (fibra de vidrio)',
+      securock: 'Panel Securock (yeso reforzado ext.)'
+    };
+    html += `<div class="group">
+      <p class="group-title">Panel exterior</p>
+      ${item(PANEL_LABELS[d.panelExt], `${espesorLabel} · 1.22×2.44 m · +10% desperdicio`, d.hojas, 'paneles')}
+    </div>`;
+  }
+  numGrupos++;
+
+  // --- Bloque 2: Estructura metálica ---
+  html += `<div class="group">
+    <p class="group-title">Estructura metálica · Cal. ${d.calibre}</p>
+    ${item('Canalistón / listón metálico', `Sent. ancho · c/${fmt(d.sepCanalistón,2)} m · ${d.lineasCanalistón} líneas · ${fmt(d.mlCanalistón,2)} ml`, d.piezasCanalistón, 'pzas (3.05 m)')}
+    ${item('Canaleta de carga', `Sent. largo · c/${fmt(d.sepCanaleta,2)} m · ${d.lineasCanaleta} líneas · ${fmt(d.mlCanaleta,2)} ml`, d.piezasCanaleta, 'pzas (3.05 m)')}
+    ${item('Ángulo perimetral', `Contorno · ${fmt(d.mlAngulo,2)} ml`, d.piezasAngulo, 'pzas (3.05 m)')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 3: Suspensión y amarres ---
+  html += `<div class="group">
+    <p class="group-title">Suspensión y amarres</p>
+    ${item('Colgantes alambre cal. 12', `${d.lineasCanaleta} canaletas × ${d.puntosPorCanaleta} puntos`, d.colgantes, 'pzas')}
+    ${item('Alambre galv. cal. 12', `0.70 ml/colgante`, d.mlAlambre12, 'ml', 2)}
+    ${item('Amarres alambre cal. 16', `${d.lineasCanalistón} canalistón × ${d.lineasCanaleta} canaleta`, d.amarres, 'pzas')}
+    ${item('Alambre galv. cal. 16', `0.70 ml/amarre`, d.mlAlambre16, 'ml', 2)}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 4: Fijaciones ---
+  html += `<div class="group">
+    <p class="group-title">Fijaciones</p>
+    ${item('Taquete/clavo + fulminante (ángulo perimetral)', `c/0.60 m · +5%`, d.fijacionesAngulo, 'pzas')}
+    ${item('Clavo/fulminante o taquete (colgantes a losa)', `1 por colgante`, d.fijacionesSuperiores, 'pzas')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 5: Tornillería ---
+  html += `<div class="group">
+    <p class="group-title">Tornillería</p>
+    ${item('Tornillo 6 × 1 1/4"', `50/${d.sistema === 'interior' ? 'hoja' : 'panel'} · +5% · ${d.hojas} ${d.sistema === 'interior' ? 'hojas' : 'paneles'}`, d.tornillo614, 'pzas')}
+    ${item('Mini pija 8 × 1/2"', `8/m² · +5%`, d.miniPija, 'pzas')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 6: Acabado de juntas (igual para ambos sistemas) ---
+  html += `<div class="group">
+    <p class="group-title">Acabado de juntas</p>
+    ${item('Cinta para juntas', `1.35 ml/m²`, d.mlCinta, 'ml', 2)}
+    ${item('Rollos de cinta (ref.)', '', d.rollosCinta, 'rollos')}
+    ${item('Pasta Ready Mix', acabadoLabel, d.kgPasta, 'kg', 2)}
+    ${item('Cubetas de 28 kg (ref.)', '', d.cubetasPasta, 'cubetas')}
+    ${item('Lija', `1 hoja / 5 m² + reserva`, d.lijaFinal, 'hojas')}
+  </div>`;
+  numGrupos++;
+
+  // --- Bloque 7: Acabado de superficie exterior (solo exterior) ---
+  if(d.sistema === 'exterior'){
+    const ACABADO_LABELS = {
+      basecoat: 'Basecoat (3.33 kg/m²)',
+      cemenquin: 'Cemenquin (2.86 kg/m²)',
+      econotex: 'Econotex grueso (3.57 kg/m²)'
+    };
+    html += `<div class="group">
+      <p class="group-title">Acabado de superficie</p>
+      ${item(ACABADO_LABELS[d.acabadoExt], `Sobre ${fmt(d.areaTotal)} m²`, d.kgAcabado, 'kg', 2)}
+      ${item('Sacos de 20 kg (ref.)', '', d.sacosAcabado, 'sacos')}
+    </div>`;
+    numGrupos++;
+
+    if(d.capasExt.includes('membrana') || d.capasExt.includes('malla')){
+      let capasHtml = '';
+      if(d.capasExt.includes('membrana')){
+        capasHtml += item('Membrana hidrófuga', '1 capa · +5%', d.m2Membrana, 'm²', 2);
+      }
+      if(d.capasExt.includes('malla')){
+        capasHtml += item('Malla de fibra de vidrio', 'Rollo 50 m² · rinde 45 m² (traslape)', d.m2Malla, 'm²', 2);
+        capasHtml += item('Rollos de malla (ref.)', '', d.rollosMalla, 'rollos');
+      }
+      html += `<div class="group">
+        <p class="group-title">Capas de protección</p>
+        ${capasHtml}
+      </div>`;
+      numGrupos++;
+    }
+  }
+
+  document.getElementById('insumos-count').textContent = `${numGrupos} grupos`;
+  document.getElementById('insumos-body').innerHTML = html;
+}
+
+/* ============================================================
+   ÁREAS GUARDADAS Y CONSOLIDADO
+   ============================================================ */
+const STORAGE_KEY = 'rempro_areas_guardadas';
+const STORAGE_KEY_MUROS = 'rempro_lista_muros';
+const STORAGE_KEY_PLAFONES = 'rempro_lista_plafones';
+const STORAGE_KEY_PRECIOS = 'rempro_precios_acyma';
+
+// Precios de referencia Acyma del Noroeste La Paz (sin IVA)
+// Fuente: Cotización LP11463 — GCIS — 15/06/2026
+// Confirmar precio directo con Acyma antes de compra
+const PRECIOS_ACYMA_DEFAULT = {
+  // Hojas de recubrimiento (LP11463)
+  'placa_normal_12.5':     222.00,  // HYU1248PR Hoja Light Rey 1/2"
+  'placa_antimoho_12.5':   332.56,  // AC807609 Guard Rey 1/2"
+  'panel_glasrey_12.5':    656.20,  // GR1248PR Glass Rey 1/2"
+  // Perfiles plafón (LP11463)
+  'canalistón_cal20':       92.12,  // CAL1020 Canal listón C20 10 pies
+  'canaleta_carga_cal20':   69.74,  // CA1020 Canal de carga C20 10 pies
+  'angulo_perimetral_cal20': 57.06, // AN1141020 Ángulo 1-1/4" C20 10 pies
+  // Cinta (LP11463 — Perfacinta 500plg = 12.70 ml/rollo)
+  'cinta_juntas':          132.04,  // PER500 Perfacinta 500plg rollo
+  // Alambre (LP11463)
+  'alambre_galv_16':        75.40,  // ALGA16N No.16 kg
+  'alambre_galv_12':        88.50,  // AL125N No.12 kg
+  // Membrana (LP11463)
+  'membrana_hidrofuga':   2550.00,  // AC527460 Membrana Elite PR rollo
+  // Acabados (LP11463)
+  'acabado_cemenquin':     246.59,  // CEHT20KG Hi Tech gris 20 kg
+  // Perfiles adicionales (cotización previa, sin dato LP11463)
+  'canalistón_cal26':       54.56,
+  'canalistón_cal24':       54.56,
+  'canaleta_carga_cal26':   54.56,
+  'canaleta_carga_cal24':   69.74,
+  'angulo_perimetral_cal24': 47.92,
+  'angulo_perimetral_cal26': 47.92,
+  'poste_cal20_6.35':      116.98,
+  'canal_cal20_6.35':       93.37,
+  'poste_cal26_6.35':       60.62,
+  'canal_cal26_6.35':       60.62,
+  // Tornillería (cotización previa)
+  'tornillo_6x114':        265.61,
+  'minipija_8x12':         219.81,
+  'taquete_canal':         164.29,
+  'taquete_angulo':        164.29,
+  'fijacion_colgante':     272.71,
+  // Pasta (cotización previa)
+  'pasta_juntas':          250.96,
+  'pasta_nivel5':          250.96,
+  // Acabados cementicios adicionales (cotización previa)
+  'acabado_basecoat':      661.33,
+  // Placa adicional (cotización previa)
+  'panel_permabase_12.5':  867.00,
+  // AD Panel — precio del saco 25 kg (AC805699 LP11463)
+  'adpanel_saco':          661.33,
+  // Placas AD Panel (mismos precios que tablaroca estándar)
+  'placa_adp_normal_12.5':  222.00,
+  'placa_adp_normal_16':    222.00,
+  'placa_adp_antimoho_12.5': 332.56,
+  'placa_adp_antimoho_16':   332.56,
+};
+
+function cargarPrecios(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY_PRECIOS);
+    if(raw){
+      preciosAcyma = JSON.parse(raw);
+    } else {
+      // Primera vez: carga los precios Acyma como punto de partida
+      preciosAcyma = { ...PRECIOS_ACYMA_DEFAULT };
+    }
+  } catch(e){
+    preciosAcyma = { ...PRECIOS_ACYMA_DEFAULT };
+  }
+}
+
+function guardarPrecios(){
+  try{
+    localStorage.setItem(STORAGE_KEY_PRECIOS, JSON.stringify(preciosAcyma));
+  } catch(e){
+    console.error('No se pudieron guardar los precios:', e);
+  }
+}
+
+function cargarAreas(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    savedAreas = raw ? JSON.parse(raw) : [];
+  } catch(e){
+    savedAreas = [];
+  }
+  try{
+    const rawM = localStorage.getItem(STORAGE_KEY_MUROS);
+    listaMuros = rawM ? JSON.parse(rawM) : [];
+  } catch(e){
+    listaMuros = [];
+  }
+  try{
+    const rawP = localStorage.getItem(STORAGE_KEY_PLAFONES);
+    listaPlafones = rawP ? JSON.parse(rawP) : [];
+  } catch(e){
+    listaPlafones = [];
+  }
+  renderAreas();
+  renderConsolidado();
+  renderListaMuros();
+  renderListaPlafones();
+  renderCatalogo();
+  renderCosto();
+}
+
+function guardarAreasEnStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAreas));
+  } catch(e){
+    console.error('No se pudo guardar:', e);
+  }
+}
+
+function guardarListasEnStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY_MUROS, JSON.stringify(listaMuros));
+    localStorage.setItem(STORAGE_KEY_PLAFONES, JSON.stringify(listaPlafones));
+  } catch(e){
+    console.error('No se pudo guardar:', e);
+  }
+}
+
+function guardarAreaActual(){
+  if(!currentCalc){
+    alert('Primero ingresa las medidas para calcular un área.');
+    return;
+  }
+  const nombreInput = document.getElementById('area-nombre');
+  const ubicacionInput = document.getElementById('area-ubicacion');
+  let nombre = nombreInput.value.trim();
+  const ubicacion = ubicacionInput.value.trim();
+  if(!nombre){
+    nombre = currentCalc.tipo === 'muro' ? `Muro #${savedAreas.length + 1}` : `Plafón #${savedAreas.length + 1}`;
+  }
+
+  const entry = {
+    id: 'a_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    nombre,
+    ubicacion,
+    tipo: currentCalc.tipo,
+    areaResumen: currentCalc.areaResumen,
+    data: currentCalc.data,
+    fecha: new Date().toISOString()
+  };
+
+  savedAreas.push(entry);
+  guardarAreasEnStorage();
+
+  // Agregar a la lista de muros o plafones (solo nombre + ubicación + m²)
+  const listEntry = {
+    id: entry.id,
+    nombre,
+    ubicacion,
+    m2: currentCalc.areaResumen
+  };
+  if(currentCalc.tipo === 'muro'){
+    listaMuros.push(listEntry);
+  } else {
+    listaPlafones.push(listEntry);
+  }
+  guardarListasEnStorage();
+
+  nombreInput.value = '';
+  ubicacionInput.value = '';
+  renderAreas();
+  renderConsolidado();
+  renderListaMuros();
+  renderListaPlafones();
+}
+
+function eliminarArea(id){
+  savedAreas = savedAreas.filter(a => a.id !== id);
+  guardarAreasEnStorage();
+  renderAreas();
+  renderConsolidado();
+}
+
+function renderAreas(){
+  const body = document.getElementById('areas-body');
+  const countEl = document.getElementById('areas-count');
+
+  if(savedAreas.length === 0){
+    countEl.textContent = '';
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="glyph">＋</div>
+        Aún no has guardado ningún área. Calcula arriba y presiona "Guardar cálculo".
+      </div>`;
+    return;
+  }
+
+  countEl.textContent = `${savedAreas.length} ${savedAreas.length === 1 ? 'área' : 'áreas'}`;
+
+  body.innerHTML = savedAreas.map(a => {
+    const tagLabel = a.tipo === 'muro' ? 'Muro' : 'Plafón';
+    let meta = '';
+    if(a.tipo === 'muro'){
+      const sistemaLabel = a.data.sistema === 'exterior' ? 'Exterior' : 'Interior';
+      meta = `${fmt(a.areaResumen)} m² · ${a.data.caras} cara${a.data.caras>1?'s':''} · ${sistemaLabel}`;
+    } else {
+      const sistemaLabel = a.data.sistema === 'exterior' ? 'Exterior' : 'Interior';
+      meta = `${fmt(a.areaResumen)} m² · ${sistemaLabel}`;
+    }
+    return `<div class="area-card">
+      <div class="area-info">
+        <p class="area-name"><span class="area-tag ${a.tipo}">${tagLabel}</span>${escapeHtml(a.nombre)}</p>
+        <p class="area-meta">${meta}${a.ubicacion ? ' · ' + escapeHtml(a.ubicacion) : ''}</p>
+      </div>
+      <button class="area-delete" data-id="${a.id}" title="Eliminar">✕</button>
+    </div>`;
+  }).join('');
+
+  body.querySelectorAll('.area-delete').forEach(btn => {
+    btn.addEventListener('click', () => eliminarArea(btn.dataset.id));
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function eliminarMuroLista(id){
+  listaMuros = listaMuros.filter(m => m.id !== id);
+  guardarListasEnStorage();
+  renderListaMuros();
+}
+
+function eliminarPlafonLista(id){
+  listaPlafones = listaPlafones.filter(p => p.id !== id);
+  guardarListasEnStorage();
+  renderListaPlafones();
+}
+
+function renderListaSimple(lista, bodyId, countId, emptyMsg, deleteFn){
+  const body = document.getElementById(bodyId);
+  const countEl = document.getElementById(countId);
+
+  if(lista.length === 0){
+    countEl.textContent = '';
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="glyph">＋</div>
+        ${emptyMsg}
+      </div>`;
+    return;
+  }
+
+  countEl.textContent = `${lista.length} ${lista.length === 1 ? 'registro' : 'registros'}`;
+
+  let html = lista.map(r => `
+    <div class="lista-row">
+      <div class="lista-info">
+        <p class="lista-nombre">${escapeHtml(r.nombre)}</p>
+        ${r.ubicacion ? `<p class="lista-ubicacion">${escapeHtml(r.ubicacion)}</p>` : ''}
+      </div>
+      <div class="lista-m2">${fmt(r.m2)}<span class="u">m²</span></div>
+      <button class="lista-delete" data-id="${r.id}" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+
+  const total = lista.reduce((sum, r) => sum + r.m2, 0);
+  html += `<div class="lista-total">
+    <div>Total</div>
+    <div class="qty">${fmt(total)}<span class="u">m²</span></div>
+  </div>`;
+
+  body.innerHTML = html;
+
+  body.querySelectorAll('.lista-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteFn(btn.dataset.id));
+  });
+}
+
+function renderListaMuros(){
+  renderListaSimple(listaMuros, 'lista-muros-body', 'lista-muros-count', 'Aún no hay muros en la lista.', eliminarMuroLista);
+}
+
+function renderListaPlafones(){
+  renderListaSimple(listaPlafones, 'lista-plafones-body', 'lista-plafones-count', 'Aún no hay plafones en la lista.', eliminarPlafonLista);
+}
+
+/* ============================================================
+   APU — ANÁLISIS DE PRECIOS UNITARIOS
+   ============================================================ */
+const STORAGE_KEY_MO = 'rempro_tarifas_mo';
+let tarifasMO = {};
+
+const MO_DEFAULT = {
+  'muro_int_1cara':    145,
+  'muro_int_2caras':   210,
+  'muro_ext':          180,
+  'muro_adpanel_normal':   120,
+  'muro_adpanel_antimoho': 120,
+  'plafon_int':        160,
+  'plafon_ext':        195,
+};
+
+function cargarTarifasMO(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY_MO);
+    tarifasMO = raw ? JSON.parse(raw) : { ...MO_DEFAULT };
+  } catch(e){
+    tarifasMO = { ...MO_DEFAULT };
+  }
+}
+
+function guardarTarifasMO(){
+  try{ localStorage.setItem(STORAGE_KEY_MO, JSON.stringify(tarifasMO)); }
+  catch(e){ console.error(e); }
+}
+
+// Detecta la clave de tarifa MO según el currentCalc actual
+function claveConceptoMO(calc){
+  if(!calc) return null;
+  if(calc.tipo === 'plafon'){
+    return calc.data.sistema === 'exterior' ? 'plafon_ext' : 'plafon_int';
+  }
+  const d = calc.data;
+  if(d.sistema === 'adpanel'){
+    return d.tipoPlacaAdp === 'antimoho' ? 'muro_adpanel_antimoho' : 'muro_adpanel_normal';
+  }
+  if(d.sistema === 'exterior') return 'muro_ext';
+  return d.caras === 2 ? 'muro_int_2caras' : 'muro_int_1cara';
+}
+
+function labelConceptoMO(clave){
+  return {
+    muro_int_1cara:         'Muro interior tablaroca 1 cara',
+    muro_int_2caras:        'Muro interior tablaroca 2 caras',
+    muro_ext:               'Muro exterior cementicio',
+    muro_adpanel_normal:    'Muro AD Panel · hoja normal',
+    muro_adpanel_antimoho:  'Muro AD Panel · hoja antimoho',
+    plafon_int:             'Plafón interior tablaroca',
+    plafon_ext:             'Plafón exterior cementicio',
+  }[clave] || clave;
+}
+
+function calcularAPU(calc){
+  if(!calc) return null;
+  const d = calc.data;
+  const area = calc.areaResumen; // m² del concepto
+  if(!area || area <= 0) return null;
+
+  // ---- Materiales: rendimiento por m² × precio unitario ----
+  const lineas = extraerLineas(calc);
+  const materialesAPU = [];
+  let totalMaterial = 0;
+
+  lineas.forEach(linea => {
+    const catEntry = CATALOGO_MAESTRO.find(c => c.key === linea.key);
+    const precio = preciosAcyma[linea.key] || 0;
+
+    // rendimiento = cantidad técnica por m² (antes de redondear)
+    let rendPorM2, unidad, precioUnitario;
+
+    if(catEntry && catEntry.factorKg){
+      // alambre: qty = ml total, convert to kg, div by area
+      rendPorM2 = (linea.qty * catEntry.factorKg) / area;
+      unidad = 'kg';
+      precioUnitario = precio;
+    } else if(catEntry && catEntry.presentacion){
+      // presentación (millares, rollos, cajas, sacos): precio es por esa unidad
+      rendPorM2 = linea.qty / (catEntry.presentacion.divisor * area);
+      unidad = catEntry.unidad;
+      precioUnitario = precio;
+    } else {
+      rendPorM2 = linea.qty / area;
+      unidad = catEntry ? catEntry.unidad : linea.unit;
+      precioUnitario = precio;
+    }
+
+    const importeLinea = rendPorM2 * precioUnitario;
+    totalMaterial += importeLinea;
+
+    materialesAPU.push({
+      descripcion: linea.label,
+      unidad,
+      rendimiento: rendPorM2,
+      precio: precioUnitario,
+      importe: importeLinea,
+      sinPrecio: precio <= 0
+    });
+  });
+
+  // ---- Mano de obra ----
+  const claveMO = claveConceptoMO(calc);
+  const tarifaMO = tarifasMO[claveMO] || MO_DEFAULT[claveMO] || 145;
+
+  // ---- Herramienta y equipo (3% sobre MO, referencia estándar) ----
+  const pctHE = 0.03;
+  const totalHE = tarifaMO * pctHE;
+
+  // ---- Totales ----
+  const totalDirecto = totalMaterial + tarifaMO + totalHE;
+
+  return {
+    materialesAPU, totalMaterial,
+    tarifaMO, claveMO, totalHE, pctHE,
+    totalDirecto,
+    area
+  };
+}
+
+function renderAPU(){
+  const card = document.getElementById('card-apu');
+  const body = document.getElementById('apu-body');
+  const concepto = document.getElementById('apu-concepto');
+
+  if(!currentCalc || !currentCalc.areaResumen){
+    card.style.display = 'none'; return;
+  }
+
+  const apu = calcularAPU(currentCalc);
+  if(!apu){ card.style.display = 'none'; return; }
+
+  const d = currentCalc.data;
+  const claveMO = claveConceptoMO(currentCalc);
+  const tarifaMO = tarifasMO[claveMO] || MO_DEFAULT[claveMO] || 145;
+
+  // Metadatos
+  const sistemaLabel = labelConceptoMO(claveMO);
+  concepto.textContent = sistemaLabel;
+
+  const materialesSinPrecio = apu.materialesAPU.filter(m => m.sinPrecio).length;
+
+  let html = `
+    <div class="apu-meta">
+      <span><b>Concepto:</b> ${sistemaLabel}</span>
+      <span><b>Unidad:</b> m²</span>
+      <span><b>Área:</b> ${fmt(apu.area)} m²</span>
+    </div>
+
+    <!-- Campo editable de MO -->
+    <div class="apu-mo-input-row">
+      <label>Tarifa MO destajo (${labelConceptoMO(claveMO)})</label>
+      <span class="cat-peso">$/m²</span>
+      <input type="number" id="apu-mo-input" min="0" step="1" value="${tarifaMO}">
+    </div>
+
+    <div class="apu-seccion">
+      <p class="apu-seccion-titulo">Materiales</p>
+      <table class="apu-tabla">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Unid.</th>
+            <th>Rend./m²</th>
+            <th>P.U.</th>
+            <th>Importe/m²</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  apu.materialesAPU.forEach(m => {
+    html += `<tr>
+      <td>${m.descripcion}</td>
+      <td>${m.unidad}</td>
+      <td>${m.rendimiento >= 0.001 ? m.rendimiento.toFixed(4) : '—'}</td>
+      <td>${m.sinPrecio ? '<span style="color:var(--accent);font-size:11px;">sin precio</span>' : '$' + fmt(m.precio, 2)}</td>
+      <td>${m.sinPrecio ? '—' : '$' + fmt(m.importe, 2)}</td>
+    </tr>`;
+  });
+
+  html += `
+        <tr class="apu-subtotal">
+          <td colspan="4">Subtotal materiales</td>
+          <td>$${fmt(apu.totalMaterial, 2)}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="apu-seccion">
+      <p class="apu-seccion-titulo">Mano de obra</p>
+      <table class="apu-tabla">
+        <thead><tr><th>Descripción</th><th>Unid.</th><th></th><th>P.U.</th><th>Importe/m²</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Instalación y acabado<span class="sub">Cuadrilla tablaroquero + ayudante · destajo</span></td>
+            <td>m²</td><td>1.0000</td>
+            <td>$${fmt(apu.tarifaMO, 2)}</td>
+            <td>$${fmt(apu.tarifaMO, 2)}</td>
+          </tr>
+          <tr class="apu-subtotal">
+            <td colspan="4">Subtotal mano de obra</td>
+            <td>$${fmt(apu.tarifaMO, 2)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="apu-seccion">
+      <p class="apu-seccion-titulo">Herramienta y equipo</p>
+      <table class="apu-tabla">
+        <thead><tr><th>Descripción</th><th></th><th>%</th><th></th><th>Importe/m²</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Herramienta menor<span class="sub">${(apu.pctHE*100).toFixed(0)}% sobre mano de obra</span></td>
+            <td></td><td>${(apu.pctHE*100).toFixed(0)}%</td><td></td>
+            <td>$${fmt(apu.totalHE, 2)}</td>
+          </tr>
+          <tr class="apu-subtotal">
+            <td colspan="4">Subtotal herramienta</td>
+            <td>$${fmt(apu.totalHE, 2)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="apu-total-directo">
+      <span>COSTO DIRECTO / m²</span>
+      <span class="qty">$${fmt(apu.totalDirecto, 2)}</span>
+    </div>
+
+    <div class="apu-pu">
+      <span>PRECIO UNITARIO s/IVA</span>
+      <span class="qty">$${fmt(apu.totalDirecto, 2)}/m²</span>
+    </div>`;
+
+  if(materialesSinPrecio > 0){
+    html += `<p class="costo-aviso" style="margin-top:10px;">⚠ ${materialesSinPrecio} material${materialesSinPrecio>1?'es sin precio':' sin precio'} — total de materiales es parcial. Actualiza el Catálogo de precios.</p>`;
+  }
+
+  card.style.display = 'block';
+  body.innerHTML = html;
+
+  // Binding: actualizar APU en tiempo real al cambiar tarifa MO
+  document.getElementById('apu-mo-input').addEventListener('input', e => {
+    const val = parseFloat(e.target.value);
+    if(!isNaN(val) && val >= 0){
+      tarifasMO[claveMO] = val;
+      guardarTarifasMO();
+      renderAPU();
+      renderPrecioNeto();
+      // Sincronizar con módulo de destajo si el concepto coincide
+      const conceptoDestajo = document.getElementById('destajo-concepto').value;
+      if(conceptoDestajo === claveMO){
+        document.getElementById('destajo-tarifa').value = val;
+        renderDestajo();
+      }
+    }
+  });
+}
+
+/* ============================================================
+   PRECIO NETO — Material + MO sin incrementos
+   ============================================================ */
+function renderPrecioNeto(){
+  const card = document.getElementById('card-precio-neto');
+  const body = document.getElementById('precio-neto-body');
+
+  if(!currentCalc || !currentCalc.areaResumen){
+    card.style.display = 'none'; return;
+  }
+  const apu = calcularAPU(currentCalc);
+  if(!apu){ card.style.display = 'none'; return; }
+
+  const totalNeto = apu.totalMaterial + apu.tarifaMO;
+  const totalNetoObra = totalNeto * apu.area;
+
+  let html = `
+    <div class="pneto-row">
+      <span class="label">Materiales (por m²)</span>
+      <span class="qty">$${fmt(apu.totalMaterial, 2)}</span>
+    </div>
+    <div class="pneto-row">
+      <span class="label">Mano de obra (por m²)</span>
+      <span class="qty">$${fmt(apu.tarifaMO, 2)}</span>
+    </div>
+    <div class="pneto-total">
+      <span>Precio neto / m²</span>
+      <span class="qty">$${fmt(totalNeto, 2)}</span>
+    </div>
+    <div style="height:1px; background:var(--line); margin:10px 0;"></div>
+    <div class="pneto-row" style="font-size:12.5px; color:var(--ink-soft);">
+      <span class="label">Área del concepto</span>
+      <span class="qty" style="font-size:12.5px;">${fmt(apu.area)} m²</span>
+    </div>
+    <div class="pneto-row" style="font-weight:700;">
+      <span class="label">Total neto del concepto</span>
+      <span class="qty">$${fmt(totalNetoObra, 2)}</span>
+    </div>
+    <p class="costo-aviso" style="margin-top:10px;">Sin indirectos · Sin utilidad · Sin IVA · Referencia interna RemPro</p>`;
+
+  card.style.display = 'block';
+  body.innerHTML = html;
+}
+
+/* ============================================================
+   MÓDULO DE DESTAJO
+   ============================================================ */
+const DESTAJO_PARTIDAS = [
+  { key: 'armado',  label: 'Armado de estructura',      pct: 0.35, cls: 'destajo-p1' },
+  { key: 'tapado',  label: 'Colocación y tapado',       pct: 0.35, cls: 'destajo-p2' },
+  { key: 'pasta',   label: 'Pasta nivel 3',             pct: 0.30, cls: 'destajo-p3' },
+];
+
+function renderDestajo(){
+  const body = document.getElementById('destajo-body');
+  const conceptoSel = document.getElementById('destajo-concepto').value;
+  const m2Input = parseFloat(document.getElementById('destajo-m2').value) || 0;
+  const tarifaInput = parseFloat(document.getElementById('destajo-tarifa').value) || 0;
+
+  if(m2Input <= 0 || tarifaInput <= 0){
+    body.innerHTML = `<div class="destajo-empty">Ingresa los m² y la tarifa para generar el desglose.</div>`;
+    return;
+  }
+
+  const totalBruto = m2Input * tarifaInput;
+
+  let html = '';
+  DESTAJO_PARTIDAS.forEach(p => {
+    const monto = totalBruto * p.pct;
+    const m2Equiv = m2Input * p.pct;
+    html += `<div class="destajo-partida">
+      <div class="destajo-header ${p.cls}">
+        <div>
+          <span class="pct">${(p.pct*100).toFixed(0)}% · ${p.label}</span>
+        </div>
+        <div class="monto">$${fmt(monto, 2)}</div>
+      </div>
+      <div class="destajo-detail ${p.cls}" style="opacity:0.85;">
+        <span>${fmt(m2Equiv, 2)} m²</span>
+        <span>$${fmt(tarifaInput, 2)}/m²</span>
+        <span>${(p.pct*100).toFixed(0)}% del total</span>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="destajo-total-wrap">
+    <span>TOTAL DESTAJO</span>
+    <span class="qty">$${fmt(totalBruto, 2)}</span>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:6px;text-align:right;">
+    ${fmt(m2Input, 2)} m² × $${fmt(tarifaInput, 2)}/m²
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+function sincronizarTarifaDestajo(){
+  const conceptoSel = document.getElementById('destajo-concepto').value;
+  const tarifaInput = document.getElementById('destajo-tarifa');
+  const tarifa = tarifasMO[conceptoSel] || MO_DEFAULT[conceptoSel] || 0;
+  if(!tarifaInput.value || parseFloat(tarifaInput.value) === 0){
+    tarifaInput.value = tarifa;
+  }
+  renderDestajo();
+}
+
+function renderConsolidado(){
+  const card = document.getElementById('card-consolidado');
+  const body = document.getElementById('consolidado-body');
+  const countEl = document.getElementById('consolidado-count');
+
+  if(savedAreas.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  // Sumar qty por key, agrupado por groupTitle
+  const acumulado = {}; // key -> { label, groupTitle, qty, unit, presentacion }
+
+  savedAreas.forEach(area => {
+    const lineas = extraerLineas(area);
+    lineas.forEach(linea => {
+      if(!acumulado[linea.key]){
+        acumulado[linea.key] = { ...linea, qty: 0 };
+      }
+      acumulado[linea.key].qty += linea.qty;
+    });
+  });
+
+  // Agrupar por groupTitle, preservando orden de aparición
+  const grupos = {}; // groupTitle -> [lineas]
+  const ordenGrupos = [];
+  Object.values(acumulado).forEach(linea => {
+    if(!grupos[linea.groupTitle]){
+      grupos[linea.groupTitle] = [];
+      ordenGrupos.push(linea.groupTitle);
+    }
+    grupos[linea.groupTitle].push(linea);
+  });
+
+  let html = '';
+  ordenGrupos.forEach(groupTitle => {
+    html += `<div class="consol-group">
+      <p class="group-title">${groupTitle}</p>`;
+    grupos[groupTitle].forEach(linea => {
+      const dec = linea.unit === 'pzas' || linea.unit.startsWith('pzas') || linea.unit === 'hojas' || linea.unit === 'paneles' ? 0 : 2;
+      html += `<div class="consol-row">
+        <div class="name">${linea.label}</div>
+        <div class="qty">${fmt(linea.qty, dec)}<span class="u">${linea.unit}</span></div>
+      </div>`;
+      if(linea.presentacion){
+        const cantPresentacion = Math.ceil(linea.qty / linea.presentacion.divisor);
+        html += `<div class="consol-row">
+          <div class="name" style="color:var(--ink-soft); font-size:12.5px;">↳ ${linea.presentacion.label} de compra (ref.)</div>
+          <div class="qty">${fmt(cantPresentacion, 0)}<span class="u">${linea.presentacion.label}</span></div>
+        </div>`;
+      }
+    });
+    html += `</div>`;
+  });
+
+  countEl.textContent = `${savedAreas.length} ${savedAreas.length === 1 ? 'área' : 'áreas'}`;
+  body.innerHTML = html;
+}
+
+/* ============================================================
+   CATÁLOGO DE PRECIOS Y COSTO DE COMPRA
+   ============================================================ */
+function renderCatalogo(){
+  const body = document.getElementById('catalogo-body');
+  const card = document.getElementById('card-catalogo');
+  if(!body) return;
+  card.style.display = 'block';
+
+  // Agrupar por grupo
+  const grupos = {};
+  CATALOGO_MAESTRO.forEach(mat => {
+    if(!grupos[mat.grupo]) grupos[mat.grupo] = [];
+    grupos[mat.grupo].push(mat);
+  });
+
+  let html = '';
+  for(const [grupo, mats] of Object.entries(grupos)){
+    html += `<div class="catalogo-grupo">
+      <p class="group-title">${grupo}</p>`;
+    mats.forEach(mat => {
+      const precio = preciosAcyma[mat.key] || '';
+      html += `<div class="catalogo-row">
+        <div class="cat-nombre">${mat.label}</div>
+        <div class="cat-unidad">/${mat.unidad}</div>
+        <div class="cat-precio-wrap">
+          <span class="cat-peso">$</span>
+          <input class="cat-input" type="number" min="0" step="0.01"
+            data-key="${mat.key}" placeholder="0.00"
+            value="${precio}">
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+function leerPreciosDelForm(){
+  document.querySelectorAll('.cat-input').forEach(inp => {
+    const val = parseFloat(inp.value);
+    if(!isNaN(val) && val > 0){
+      preciosAcyma[inp.dataset.key] = val;
+    } else {
+      delete preciosAcyma[inp.dataset.key];
+    }
+  });
+}
+
+function renderCosto(){
+  const card = document.getElementById('card-costo');
+  const body = document.getElementById('costo-body');
+  const printDiv = document.getElementById('costo-compra-print');
+  const printBody = document.getElementById('costo-compra-print-body');
+  if(!body || savedAreas.length === 0){
+    if(card) card.style.display = 'none';
+    if(printDiv) printDiv.style.display = 'none';
+    return;
+  }
+
+  // Reconstruir acumulado
+  const acumulado = {};
+  savedAreas.forEach(area => {
+    extraerLineas(area).forEach(linea => {
+      if(!acumulado[linea.key]) acumulado[linea.key] = { ...linea, qty: 0 };
+      acumulado[linea.key].qty += linea.qty;
+    });
+  });
+
+  let granTotal = 0;
+  let faltanPrecios = 0;
+  const grupos = {};
+  const ordenGrupos = [];
+  Object.values(acumulado).forEach(linea => {
+    if(!grupos[linea.groupTitle]){ grupos[linea.groupTitle] = []; ordenGrupos.push(linea.groupTitle); }
+    grupos[linea.groupTitle].push(linea);
+  });
+
+  let html = '';
+  ordenGrupos.forEach(groupTitle => {
+    let subtotal = 0;
+    let rowsHtml = '';
+
+    grupos[groupTitle].forEach(linea => {
+      const catEntry = CATALOGO_MAESTRO.find(c => c.key === linea.key);
+      const precio = preciosAcyma[linea.key] || 0;
+
+      // Calcular cantidad de compra y unidad según catálogo maestro
+      let qtyCompra, unidadCompra;
+      if(catEntry && catEntry.factorKg){
+        // Alambre: ml → kg
+        qtyCompra = Math.ceil(linea.qty * catEntry.factorKg * 10) / 10;
+        unidadCompra = 'kg';
+      } else if(catEntry && catEntry.presentacion){
+        // Tornillos (piezas→millares), cinta (ml→rollos), pasta (kg→cajas), etc.
+        qtyCompra = Math.ceil(linea.qty / catEntry.presentacion.divisor);
+        unidadCompra = catEntry.unidad;
+      } else {
+        qtyCompra = Math.ceil(linea.qty);
+        unidadCompra = catEntry ? catEntry.unidad : linea.unit;
+      }
+
+      if(precio > 0){
+        const totalLinea = precio * qtyCompra;
+        subtotal += totalLinea;
+        rowsHtml += `<div class="costo-row">
+          <div class="costo-nombre">${linea.label}</div>
+          <div class="costo-calc">${fmt(qtyCompra, catEntry && catEntry.factorKg ? 1 : 0)} ${unidadCompra} × $${fmt(precio,2)}</div>
+          <div class="costo-total">$${fmt(totalLinea,2)}</div>
+        </div>`;
+      } else {
+        faltanPrecios++;
+        rowsHtml += `<div class="costo-row">
+          <div class="costo-nombre">${linea.label}</div>
+          <div class="costo-calc">${fmt(qtyCompra, catEntry && catEntry.factorKg ? 1 : 0)} ${unidadCompra}</div>
+          <span class="costo-sin-precio">sin precio</span>
+        </div>`;
+      }
+    });
+
+    granTotal += subtotal;
+    html += `<div class="consol-group">
+      <p class="group-title">${groupTitle}</p>
+      ${rowsHtml}
+      <div class="costo-subtotal">
+        <span>Subtotal ${groupTitle}</span>
+        <span class="qty">${subtotal > 0 ? '$' + fmt(subtotal,2) : '—'}</span>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="costo-gran-total">
+    <span>TOTAL ESTIMADO</span>
+    <span class="qty">$${fmt(granTotal,2)}</span>
+  </div>`;
+
+  if(faltanPrecios > 0){
+    html += `<p class="costo-aviso">⚠ ${faltanPrecios} material${faltanPrecios>1?'es':''} sin precio. Actualiza el Catálogo de precios para completar el estimado.</p>`;
+  }
+
+  html += `<p class="costo-aviso" style="margin-top:6px;">Precios sin IVA · Referencia Acyma del Noroeste La Paz · Confirmar con cotización directa antes de compra.</p>`;
+
+  card.style.display = 'block';
+  body.innerHTML = html;
+  if(printDiv && printBody){
+    printDiv.style.display = 'block';
+    printBody.innerHTML = html;
+  }
+}
+
+
+['muro-largo','muro-altura','muro-espesor','muro-espaciamiento','muro-cantos',
+ 'muro-ancho-perfil','muro-espesor-ext','muro-espaciamiento-ext','muro-ancho-perfil-ext',
+ 'muro-panel-exterior','muro-acabado-ext','muro-espesor-adp'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', calcular);
+  document.getElementById(id).addEventListener('change', calcular);
+});
+['plafon-largo','plafon-ancho','plafon-espesor','plafon-calibre-sel','plafon-sep-canalistón','plafon-sep-canaleta',
+ 'plafon-espesor-ext','plafon-panel-exterior','plafon-acabado-ext'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', calcular);
+  document.getElementById(id).addEventListener('change', calcular);
+});
+setupPills('muro-caras');
+setupPills('muro-placa');
+setupPills('muro-calibre');
+setupPills('muro-calibre-ext');
+setupPills('muro-acabado');
+setupPills('muro-bloque');
+setupPills('plafon-placa');
+setupPills('plafon-acabado');
+setupPills('plafon-calibre-ext');
+
+setupMultiPills('muro-opcionales', ()=>{
+  const active = activeOpcionales('muro-opcionales');
+  document.getElementById('card-esquineros').style.display = active.includes('esquineros') ? 'block' : 'none';
+  document.getElementById('card-aislante').style.display = active.includes('aislante') ? 'block' : 'none';
+});
+
+setupMultiPills('muro-capas-ext');
+setupMultiPills('plafon-capas-ext');
+
+setupPills('muro-placa-adp');
+setupPills('muro-acabado-adp');
+
+// Sistema de muro: Interior / Exterior / AD Panel
+setupPills('muro-sistema', ()=>{
+  const sistema = selected('muro-sistema');
+  document.getElementById('muro-placa-interior').style.display  = sistema === 'interior' ? 'block' : 'none';
+  document.getElementById('muro-placa-exterior').style.display  = sistema === 'exterior' ? 'block' : 'none';
+  document.getElementById('muro-placa-adpanel').style.display   = sistema === 'adpanel'  ? 'block' : 'none';
+  // Ocultar Caras y Bloque/Opcionales cuando es AD Panel
+  document.getElementById('muro-caras-wrap').style.display      = sistema === 'adpanel'  ? 'none'  : 'block';
+  document.getElementById('muro-extra-wrap').style.display      = sistema === 'adpanel'  ? 'none'  : 'block';
+});
+
+// Sistema de plafón: Interior (tablaroca) vs Exterior (cementicio)
+setupPills('plafon-sistema', ()=>{
+  const sistema = selected('plafon-sistema');
+  document.getElementById('plafon-placa-interior').style.display = sistema === 'interior' ? 'block' : 'none';
+  document.getElementById('plafon-placa-exterior').style.display = sistema === 'exterior' ? 'block' : 'none';
+});
+
+
+calcular();
+
+// Botones de áreas guardadas y consolidado
+document.getElementById('btn-guardar-area').addEventListener('click', guardarAreaActual);
+document.getElementById('btn-imprimir').addEventListener('click', () => window.print());
+
+// Botón guardar precios del catálogo
+document.getElementById('btn-guardar-precios').addEventListener('click', () => {
+  leerPreciosDelForm();
+  guardarPrecios();
+  renderCosto();
+  // Feedback visual
+  const btn = document.getElementById('btn-guardar-precios');
+  btn.textContent = '✓ Precios guardados';
+  btn.style.background = 'var(--ok)';
+  setTimeout(() => {
+    btn.textContent = 'Guardar precios';
+    btn.style.background = '';
+  }, 2000);
+});
+
+// Cargar precios y áreas guardadas al iniciar
+cargarPrecios();
+cargarTarifasMO();
+cargarAreas();
+
+// Módulo de Destajo — bindings
+['destajo-m2', 'destajo-tarifa'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderDestajo);
+  document.getElementById(id).addEventListener('change', renderDestajo);
+});
+document.getElementById('destajo-concepto').addEventListener('change', sincronizarTarifaDestajo);
+
+// Pre-cargar tarifa del concepto por defecto al iniciar
+window.addEventListener('DOMContentLoaded', () => {
+  sincronizarTarifaDestajo();
+});
+
+/* ============================================================
+   PWA: registro de service worker
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+
+
+</body></html>

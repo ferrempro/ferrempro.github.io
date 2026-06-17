@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<!-- saved from url=(0064)file:///C:/Users/rempr/Downloads/SimuladorDestajo_RemPro_v1.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Simulador Destajo — RemPro</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #181c27;
+    --bg3: #1e2333;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f2f8;
+    --text2: #8b90a8;
+    --text3: #5a5f75;
+    --blue: #4a8fff;
+    --blue-dim: rgba(74,143,255,0.12);
+    --teal: #29c48a;
+    --teal-dim: rgba(41,196,138,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --red: #ff5c5c;
+    --red-dim: rgba(255,92,92,0.12);
+    --green: #3dd68c;
+    --green-dim: rgba(61,214,140,0.10);
+    --accent: #4a8fff;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #4a8fff, #29c48a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+  }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 11px; color: var(--text2); }
+  .version-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,143,255,0.25);
+    font-weight: 500;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 1rem;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* MAIN */
+  .main { padding: 1rem; max-width: 680px; margin: 0 auto; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .kpi-grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  @media (min-width: 480px) { .kpi-grid-4 { grid-template-columns: repeat(4, 1fr); } }
+  .kpi {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .kpi-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .kpi-val { font-size: 20px; font-weight: 700; color: var(--text); }
+  .kpi-val.ok  { color: var(--green); }
+  .kpi-val.mid { color: var(--amber); }
+  .kpi-val.bad { color: var(--red); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* FASE SELECTOR */
+  .fase-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .fase-pill {
+    font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border2); background: var(--bg3);
+    color: var(--text2); cursor: pointer; transition: all 0.15s;
+    user-select: none;
+  }
+  .fase-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+  .fase-pill.sel-blue { background: var(--blue-dim); color: var(--blue); border-color: rgba(74,143,255,0.4); }
+  .fase-pill.sel-teal { background: var(--teal-dim); color: var(--teal); border-color: rgba(41,196,138,0.4); }
+  .fase-pill.sel-amber { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,166,35,0.4); }
+
+  /* INFO FASE */
+  .info-fase {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .info-item-label { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .info-item-val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* SLIDER */
+  .slider-block { margin-bottom: 16px; }
+  .slider-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider-label { font-size: 13px; color: var(--text2); }
+  .slider-readout { font-size: 20px; font-weight: 700; color: var(--text); }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: var(--bg3); border-radius: 2px; outline: none;
+    border: 1px solid var(--border2);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--blue); cursor: pointer; border: 2px solid var(--bg2);
+    box-shadow: 0 0 0 3px rgba(74,143,255,0.2);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--blue); cursor: pointer; border: 2px solid var(--bg2);
+  }
+  .slider-track-wrap { position: relative; }
+  .slider-marks { display: flex; justify-content: space-between; margin-top: 4px; }
+  .slider-mark { font-size: 10px; color: var(--text3); }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; margin-top: 12px;
+  }
+  .status-bar.ok  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(61,214,140,0.2); }
+  .status-bar.mid { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+  .status-bar.bad { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,92,92,0.2); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-bar.ok .status-dot  { background: var(--green); }
+  .status-bar.mid .status-dot { background: var(--amber); }
+  .status-bar.bad .status-dot { background: var(--red); }
+
+  /* PE GRID */
+  .pe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .pe-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+  }
+  .pe-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .pe-val { font-size: 18px; font-weight: 700; }
+  .pe-val.mid { color: var(--amber); }
+  .pe-val.ok  { color: var(--green); }
+
+  /* CONCEPTOS TABS */
+  .concepto-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .concepto-tab {
+    flex: 1; min-width: 90px; padding: 8px 10px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; text-align: center;
+    border: 1px solid var(--border2); background: var(--bg3);
+    color: var(--text2); cursor: pointer; transition: all 0.15s;
+    user-select: none;
+  }
+  .concepto-tab:hover { color: var(--text); }
+  .concepto-tab.active-adp { background: var(--blue-dim); color: var(--blue); border-color: rgba(74,143,255,0.4); }
+  .concepto-tab.active-pla { background: var(--teal-dim); color: var(--teal); border-color: rgba(41,196,138,0.4); }
+  .concepto-tab.active-mix { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,166,35,0.4); }
+
+  /* TABLA PRECIOS */
+  .price-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .price-table th {
+    font-size: 10px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 8px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .price-table th.r, .price-table td.r { text-align: right; }
+  .price-table td {
+    padding: 10px 8px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: middle;
+  }
+  .price-table tr:last-child td { border-bottom: none; }
+  .price-table tr.total-row td { background: var(--bg3); font-weight: 600; }
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600; white-space: nowrap;
+  }
+  .tag-blue  { background: var(--blue-dim); color: var(--blue); }
+  .tag-blue2 { background: rgba(74,143,255,0.22); color: #7fb3ff; }
+  .tag-teal  { background: var(--teal-dim); color: var(--teal); }
+  .tag-teal2 { background: rgba(41,196,138,0.22); color: #5dd8a8; }
+  .tag-teal3 { background: rgba(41,196,138,0.35); color: #29c48a; }
+  .ok-text  { color: var(--green); font-weight: 600; }
+  .mid-text { color: var(--amber); font-weight: 600; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  /* MIX LABELS */
+  .mix-concept-label {
+    font-size: 11px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin: 14px 0 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mix-concept-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .dot-blue  { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); display: inline-block; }
+  .dot-teal  { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); display: inline-block; }
+
+  /* NOMINA INFO */
+  .nomina-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .nomina-row:last-child { border-bottom: none; }
+  .nomina-name { font-size: 13px; color: var(--text); }
+  .nomina-role { font-size: 11px; color: var(--text3); }
+  .nomina-amount { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* PROGRESS BAR */
+  .prog-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 8px; }
+  .prog-bar { height: 6px; border-radius: 4px; transition: width 0.3s; }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    font-size: 11px; color: var(--text3); text-align: center;
+    padding: 1.5rem 1rem 2rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">RP</div>
+    <div>
+      <div class="header-title">Simulador Destajo</div>
+      <div class="header-sub">Torre D9 · Pedregal La Paz</div>
+    </div>
+  </div>
+  <span class="version-badge">v1.0</span>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showScreen(&#39;simulador&#39;)">Simulador</div>
+  <div class="nav-tab" onclick="showScreen(&#39;precios&#39;)">Tabla de precios</div>
+  <div class="nav-tab" onclick="showScreen(&#39;nomina&#39;)">Nómina</div>
+</div>
+
+<div class="main">
+
+  <!-- ===================== SIMULADOR ===================== -->
+  <div class="screen active" id="screen-simulador">
+
+    <div class="card">
+      <div class="card-title">¿Qué produce el equipo esta semana?</div>
+      <div class="concepto-tabs">
+        <div class="concepto-tab" id="ctab-adp" onclick="setConcepto(&#39;adp&#39;)">ADPanel<br><span style="font-weight:400;font-size:10px;opacity:0.8;">muros</span></div>
+        <div class="concepto-tab active-pla" id="ctab-pla" onclick="setConcepto(&#39;pla&#39;)">Plafón</div>
+        <div class="concepto-tab" id="ctab-mix" onclick="setConcepto(&#39;mix&#39;)">Mix<br><span style="font-weight:400;font-size:10px;opacity:0.8;">semana real</span></div>
+      </div>
+
+      <!-- ADPANEL -->
+      <div id="panel-adp" style="display: none;">
+        <div class="card-title" style="margin-bottom:8px;">Fase activa</div>
+        <div class="fase-pills">
+          <div class="fase-pill sel-blue" id="fp-adp1" onclick="setFaseAdp(1)">Fase 1 — forrado (50%)</div>
+          <div class="fase-pill" id="fp-adp2" onclick="setFaseAdp(2)">Fase 2 — pasteado (50%)</div>
+        </div>
+        <div class="info-fase">
+          <div><div class="info-item-label">Cobro a GCIS</div><div class="info-item-val" id="adp-gcis-fase">$95/m²</div></div>
+          <div><div class="info-item-label">Destajo Sergio</div><div class="info-item-val" id="adp-dest-fase">$63/m²</div></div>
+          <div><div class="info-item-label">Utilidad RemPro</div><div class="info-item-val" id="adp-util-fase">$33/m²</div></div>
+        </div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">m² ADPanel producidos</span>
+            <span class="slider-readout" id="adp-m-out">250 m²</span>
+          </div>
+          <input type="range" min="0" max="600" step="10" value="250" id="sl-adp" oninput="calc()">
+          <div class="slider-marks">
+            <span class="slider-mark">0</span>
+            <span class="slider-mark">150</span>
+            <span class="slider-mark">300</span>
+            <span class="slider-mark">450</span>
+            <span class="slider-mark">600</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAFON -->
+      <div id="panel-pla" style="">
+        <div class="card-title" style="margin-bottom:8px;">Fase activa</div>
+        <div class="fase-pills">
+          <div class="fase-pill sel-teal" id="fp-pla1" onclick="setFasePla(1)">Fase 1 — armado (35%)</div>
+          <div class="fase-pill" id="fp-pla2" onclick="setFasePla(2)">Fase 2 — forrado (35%)</div>
+          <div class="fase-pill" id="fp-pla3" onclick="setFasePla(3)">Fase 3 — pasteado (30%)</div>
+        </div>
+        <div class="info-fase">
+          <div><div class="info-item-label">Cobro a GCIS</div><div class="info-item-val" id="pla-gcis-fase">$122/m²</div></div>
+          <div><div class="info-item-label">Destajo Sergio</div><div class="info-item-val" id="pla-dest-fase">$88/m²</div></div>
+          <div><div class="info-item-label">Utilidad RemPro</div><div class="info-item-val" id="pla-util-fase">$35/m²</div></div>
+        </div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">m² Plafón producidos</span>
+            <span class="slider-readout" id="pla-m-out">400 m²</span>
+          </div>
+          <input type="range" min="0" max="500" step="10" value="200" id="sl-pla" oninput="calc()">
+          <div class="slider-marks">
+            <span class="slider-mark">0</span>
+            <span class="slider-mark">125</span>
+            <span class="slider-mark">250</span>
+            <span class="slider-mark">375</span>
+            <span class="slider-mark">500</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIX -->
+      <div id="panel-mix" style="display:none;">
+        <div class="mix-concept-label"><span class="dot-blue"></span>ADPanel</div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">Forrado</span>
+            <span class="slider-readout" id="mx-adp1-out">150 m²</span>
+          </div>
+          <input type="range" min="0" max="400" step="10" value="150" id="sl-mx-adp1" oninput="calc()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">Pasteado</span>
+            <span class="slider-readout" id="mx-adp2-out">100 m²</span>
+          </div>
+          <input type="range" min="0" max="400" step="10" value="100" id="sl-mx-adp2" oninput="calc()">
+        </div>
+        <div class="mix-concept-label"><span class="dot-teal"></span>Plafón</div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">Armado</span>
+            <span class="slider-readout" id="mx-pla1-out">80 m²</span>
+          </div>
+          <input type="range" min="0" max="300" step="10" value="80" id="sl-mx-pla1" oninput="calc()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">Forrado</span>
+            <span class="slider-readout" id="mx-pla2-out">60 m²</span>
+          </div>
+          <input type="range" min="0" max="300" step="10" value="60" id="sl-mx-pla2" oninput="calc()">
+        </div>
+        <div class="slider-block">
+          <div class="slider-top">
+            <span class="slider-label">Pasteado</span>
+            <span class="slider-readout" id="mx-pla3-out">40 m²</span>
+          </div>
+          <input type="range" min="0" max="300" step="10" value="40" id="sl-mx-pla3" oninput="calc()">
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="card">
+      <div class="card-title">Resultado de la semana</div>
+      <div class="kpi-grid-4">
+        <div class="kpi">
+          <div class="kpi-label">Cobro a GCIS</div>
+          <div class="kpi-val" id="k-gcis">$49,000</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Destajo Sergio</div>
+          <div class="kpi-val" id="k-dest">$35,000</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Le queda a Sergio</div>
+          <div class="kpi-val ok" id="k-sergio">$10,000</div>
+          <div class="kpi-sub" id="k-sergio-sub">después de pagar equipo</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Utilidad RemPro</div>
+          <div class="kpi-val ok" id="k-rempro">$14,000</div>
+          <div class="kpi-sub" id="k-rempro-sub">28.6% de margen</div>
+        </div>
+      </div>
+
+      <!-- Barra nómina -->
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:11px;color:var(--text3);">Avance vs nómina fija ($25,000)</span>
+          <span style="font-size:11px;color:var(--text2);" id="prog-pct">100%</span>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-bar" id="prog-bar" style="width: 100%; background: var(--green);"></div>
+        </div>
+      </div>
+
+      <div class="status-bar ok" id="status-bar">
+        <div class="status-dot"></div>
+        <span id="status-msg">Semana sana — nómina cubierta, Sergio con $7k+, RemPro con utilidad</span>
+      </div>
+    </div>
+
+    <!-- PUNTOS DE EQUILIBRIO -->
+    <div class="card">
+      <div class="card-title">Puntos de equilibrio</div>
+      <div class="pe-grid">
+        <div class="pe-card">
+          <div class="pe-label">Solo cubrir nómina ($25k)</div>
+          <div class="pe-val mid" id="pe-nom">286 m²</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="pe-nom-sub">a $87.50/m² · Fase 1 — armado</div>
+        </div>
+        <div class="pe-card">
+          <div class="pe-label">Nómina + $7k para Sergio</div>
+          <div class="pe-val ok" id="pe-ser">366 m²</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="pe-ser-sub">a $87.50/m² · Fase 1 — armado</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== PRECIOS ===================== -->
+  <div class="screen" id="screen-precios">
+    <div class="card">
+      <div class="card-title">ADPanel — todos los muros</div>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Fase</th>
+            <th class="r">% cobro</th>
+            <th class="r">GCIS/m²</th>
+            <th class="r">Destajo/m²</th>
+            <th class="r">RemPro/m²</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-blue">Fase 1 — forrado</span></td>
+            <td class="r">50%</td>
+            <td class="r">$95.00</td>
+            <td class="r">$62.50</td>
+            <td class="r">$32.50</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-blue2">Fase 2 — pasteado</span></td>
+            <td class="r">50%</td>
+            <td class="r">$95.00</td>
+            <td class="r">$62.50</td>
+            <td class="r">$32.50</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="2">Total por m²</td>
+            <td class="r">$190</td>
+            <td class="r">$125</td>
+            <td class="r ok-text">$65 · 34.2%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Plafón</div>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Fase</th>
+            <th class="r">% cobro</th>
+            <th class="r">GCIS/m²</th>
+            <th class="r">Destajo/m²</th>
+            <th class="r">RemPro/m²</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-teal">Fase 1 — armado</span></td>
+            <td class="r">35%</td>
+            <td class="r">$122.50</td>
+            <td class="r">$87.50</td>
+            <td class="r">$35.00</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-teal2">Fase 2 — forrado</span></td>
+            <td class="r">35%</td>
+            <td class="r">$122.50</td>
+            <td class="r">$87.50</td>
+            <td class="r">$35.00</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-teal3">Fase 3 — pasteado</span></td>
+            <td class="r">30%</td>
+            <td class="r">$105.00</td>
+            <td class="r">$75.00</td>
+            <td class="r">$30.00</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="2">Total por m²</td>
+            <td class="r">$350</td>
+            <td class="r">$250</td>
+            <td class="r ok-text">$100 · 28.6%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Comparativo por concepto — m² completo</div>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th class="r">GCIS total</th>
+            <th class="r">Destajo total</th>
+            <th class="r">RemPro</th>
+            <th class="r">Margen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ADPanel</td>
+            <td class="r">$190</td>
+            <td class="r">$125</td>
+            <td class="r">$65</td>
+            <td class="r ok-text">34.2%</td>
+          </tr>
+          <tr>
+            <td>Plafón</td>
+            <td class="r">$350</td>
+            <td class="r">$250</td>
+            <td class="r">$100</td>
+            <td class="r ok-text">28.6%</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.7;">
+        El plafón genera <span style="color:var(--green);font-weight:600;">$100/m²</span> de utilidad para RemPro vs <span style="color:var(--blue);font-weight:600;">$65/m²</span> del ADPanel — es el concepto más rentable aunque requiere 3 exhibiciones para liquidarse.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== NOMINA ===================== -->
+  <div class="screen" id="screen-nomina">
+    <div class="card">
+      <div class="card-title">Estructura de pago semanal</div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Sergio</div>
+          <div class="nomina-role">Oficial tablaroquero · recibe el destajo de RemPro</div>
+        </div>
+        <div class="nomina-amount" style="color:var(--amber);">Residual</div>
+      </div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Carlos</div>
+          <div class="nomina-role">Cabo</div>
+        </div>
+        <div class="nomina-amount">$5,000</div>
+      </div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Gaen</div>
+          <div class="nomina-role">Ayudante tablaroca</div>
+        </div>
+        <div class="nomina-amount">$4,000</div>
+      </div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Jorge</div>
+          <div class="nomina-role">Ayudante ADPanel</div>
+        </div>
+        <div class="nomina-amount">$4,000</div>
+      </div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Román</div>
+          <div class="nomina-role">Pastero</div>
+        </div>
+        <div class="nomina-amount">$6,000</div>
+      </div>
+      <div class="nomina-row">
+        <div>
+          <div class="nomina-name">Francisco</div>
+          <div class="nomina-role">Pastero</div>
+        </div>
+        <div class="nomina-amount">$6,000</div>
+      </div>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2);">Nómina fija total</span>
+        <span style="font-size:18px;font-weight:700;color:var(--red);">$25,000</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Flujo del dinero</div>
+      <div style="font-size:13px;color:var(--text2);line-height:2.0;">
+        <div style="color:var(--blue);font-weight:600;">GCIS → RemPro</div>
+        <div style="padding-left:16px;border-left:2px solid var(--border2);margin-left:6px;">
+          cobro por mano de obra pura · IVA tasa cero
+        </div>
+        <div style="margin-top:8px;color:var(--amber);font-weight:600;">RemPro → Sergio (destajo)</div>
+        <div style="padding-left:16px;border-left:2px solid var(--border2);margin-left:6px;">
+          pago semanal por avance · RemPro retiene su utilidad antes
+        </div>
+        <div style="margin-top:8px;color:var(--teal);font-weight:600;">Sergio → equipo (nómina)</div>
+        <div style="padding-left:16px;border-left:2px solid var(--border2);margin-left:6px;">
+          $5k Carlos · $4k Gaen · $4k Jorge · $6k Román · $6k Francisco<br>
+          <span style="color:var(--text3);">Sergio se queda con el residual</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Meta semanal para semana sana</div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Destajo mínimo (solo nómina)</div>
+          <div class="kpi-val mid">$25,000</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Destajo objetivo (Sergio +$7k)</div>
+          <div class="kpi-val ok">$32,000</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">m² ADPanel mínimos</div>
+          <div class="kpi-val mid">200 m²</div>
+          <div class="kpi-sub">solo nómina · cualquier fase</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">m² Plafón mínimos</div>
+          <div class="kpi-val mid">286 m²</div>
+          <div class="kpi-sub">solo armado · fase más exigente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">Remodelaciones Profesionales · Torre D9 Pedregal La Paz · uso interno</div>
+
+<script>
+  let concepto = 'adp';
+  let faseAdp = 1;
+  let fasePla = 1;
+
+  const fasesAdp = {
+    1: { label: 'Fase 1 — forrado',   pct: 0.50 },
+    2: { label: 'Fase 2 — pasteado',  pct: 0.50 }
+  };
+  const fasesPla = {
+    1: { label: 'Fase 1 — armado',   pct: 0.35 },
+    2: { label: 'Fase 2 — forrado',  pct: 0.35 },
+    3: { label: 'Fase 3 — pasteado', pct: 0.30 }
+  };
+
+  const GCIS_ADP = 190, DEST_ADP = 125;
+  const GCIS_PLA = 350, DEST_PLA = 250;
+  const NOMINA = 25000, META_SERGIO = 7000;
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('es-MX');
+  }
+  function fmtPct(u, t) {
+    return t > 0 ? (u / t * 100).toFixed(1) + '%' : '0%';
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function setConcepto(c) {
+    concepto = c;
+    document.getElementById('panel-adp').style.display = c === 'adp' ? '' : 'none';
+    document.getElementById('panel-pla').style.display = c === 'pla' ? '' : 'none';
+    document.getElementById('panel-mix').style.display = c === 'mix' ? '' : 'none';
+    document.getElementById('ctab-adp').className = 'concepto-tab' + (c === 'adp' ? ' active-adp' : '');
+    document.getElementById('ctab-pla').className = 'concepto-tab' + (c === 'pla' ? ' active-pla' : '');
+    document.getElementById('ctab-mix').className = 'concepto-tab' + (c === 'mix' ? ' active-mix' : '');
+    calc();
+  }
+
+  function setFaseAdp(f) {
+    faseAdp = f;
+    ['fp-adp1','fp-adp2'].forEach((id,i) => {
+      document.getElementById(id).className = 'fase-pill' + (i+1 === f ? ' sel-blue' : '');
+    });
+    const fa = fasesAdp[f];
+    const gF = GCIS_ADP * fa.pct;
+    const dF = DEST_ADP * fa.pct;
+    const uF = gF - dF;
+    document.getElementById('adp-gcis-fase').textContent = fmt(gF) + '/m²';
+    document.getElementById('adp-dest-fase').textContent = fmt(dF) + '/m²';
+    document.getElementById('adp-util-fase').textContent = fmt(uF) + '/m²';
+    calc();
+  }
+
+  function setFasePla(f) {
+    fasePla = f;
+    const styles = ['sel-teal', 'sel-teal', 'sel-amber'];
+    ['fp-pla1','fp-pla2','fp-pla3'].forEach((id,i) => {
+      document.getElementById(id).className = 'fase-pill' + (i+1 === f ? ' ' + styles[i] : '');
+    });
+    const fp = fasesPla[f];
+    const gF = GCIS_PLA * fp.pct;
+    const dF = DEST_PLA * fp.pct;
+    const uF = gF - dF;
+    document.getElementById('pla-gcis-fase').textContent = fmt(gF) + '/m²';
+    document.getElementById('pla-dest-fase').textContent = fmt(dF) + '/m²';
+    document.getElementById('pla-util-fase').textContent = fmt(uF) + '/m²';
+    calc();
+  }
+
+  function calc() {
+    let gcis = 0, dest = 0;
+    let peNomLabel = '', peSerLabel = '';
+    let peNom = 0, peSer = 0;
+
+    if (concepto === 'adp') {
+      const m = parseInt(document.getElementById('sl-adp').value);
+      document.getElementById('adp-m-out').textContent = m + ' m²';
+      const fa = fasesAdp[faseAdp];
+      const dF = DEST_ADP * fa.pct;
+      const gF = GCIS_ADP * fa.pct;
+      gcis = m * gF;
+      dest = m * dF;
+      peNom = Math.ceil(NOMINA / dF);
+      peSer = Math.ceil((NOMINA + META_SERGIO) / dF);
+      peNomLabel = 'a $' + dF + '/m² · ' + fasesAdp[faseAdp].label;
+      peSerLabel = 'a $' + dF + '/m² · ' + fasesAdp[faseAdp].label;
+
+    } else if (concepto === 'pla') {
+      const m = parseInt(document.getElementById('sl-pla').value);
+      document.getElementById('pla-m-out').textContent = m + ' m²';
+      const fp = fasesPla[fasePla];
+      const dF = DEST_PLA * fp.pct;
+      const gF = GCIS_PLA * fp.pct;
+      gcis = m * gF;
+      dest = m * dF;
+      peNom = Math.ceil(NOMINA / dF);
+      peSer = Math.ceil((NOMINA + META_SERGIO) / dF);
+      peNomLabel = 'a $' + dF.toFixed(2) + '/m² · ' + fasesPla[fasePla].label;
+      peSerLabel = 'a $' + dF.toFixed(2) + '/m² · ' + fasesPla[fasePla].label;
+
+    } else {
+      const a1 = parseInt(document.getElementById('sl-mx-adp1').value);
+      const a2 = parseInt(document.getElementById('sl-mx-adp2').value);
+      const p1 = parseInt(document.getElementById('sl-mx-pla1').value);
+      const p2 = parseInt(document.getElementById('sl-mx-pla2').value);
+      const p3 = parseInt(document.getElementById('sl-mx-pla3').value);
+      document.getElementById('mx-adp1-out').textContent = a1 + ' m²';
+      document.getElementById('mx-adp2-out').textContent = a2 + ' m²';
+      document.getElementById('mx-pla1-out').textContent = p1 + ' m²';
+      document.getElementById('mx-pla2-out').textContent = p2 + ' m²';
+      document.getElementById('mx-pla3-out').textContent = p3 + ' m²';
+      gcis = a1*95 + a2*95 + p1*122.5 + p2*122.5 + p3*105;
+      dest = a1*62.5 + a2*62.5 + p1*87.5 + p2*87.5 + p3*75;
+      peNomLabel = 'mix de conceptos';
+      peSerLabel = 'mix de conceptos';
+      peNom = null; peSer = null;
+    }
+
+    const rempro = gcis - dest;
+    const sergio = dest - NOMINA;
+    const progPct = Math.min(100, Math.round(dest / NOMINA * 100));
+
+    document.getElementById('k-gcis').textContent   = fmt(gcis);
+    document.getElementById('k-dest').textContent   = fmt(dest);
+    document.getElementById('k-sergio').textContent = fmt(sergio);
+    document.getElementById('k-sergio').className   = 'kpi-val ' + (sergio >= META_SERGIO ? 'ok' : sergio >= 0 ? 'mid' : 'bad');
+    document.getElementById('k-sergio-sub').textContent = sergio >= 0 ? 'después de pagar equipo' : 'no alcanza la nómina';
+    document.getElementById('k-rempro').textContent = fmt(rempro);
+    document.getElementById('k-rempro-sub').textContent = fmtPct(rempro, gcis) + ' de margen';
+    document.getElementById('k-rempro').className   = 'kpi-val ' + (rempro > 0 ? 'ok' : 'bad');
+
+    // Barra progreso
+    const bar = document.getElementById('prog-bar');
+    bar.style.width = progPct + '%';
+    bar.style.background = progPct >= 100 ? 'var(--green)' : progPct >= 70 ? 'var(--amber)' : 'var(--red)';
+    document.getElementById('prog-pct').textContent = progPct + '%';
+
+    // Puntos de equilibrio
+    document.getElementById('pe-nom').textContent = peNom !== null ? peNom + ' m²' : '— mix';
+    document.getElementById('pe-ser').textContent = peSer !== null ? peSer + ' m²' : '— mix';
+    document.getElementById('pe-nom-sub').textContent = peNomLabel;
+    document.getElementById('pe-ser-sub').textContent = peSerLabel;
+
+    // Status
+    const sb = document.getElementById('status-bar');
+    const sm = document.getElementById('status-msg');
+    if (sergio >= META_SERGIO && rempro > 0) {
+      sb.className = 'status-bar ok';
+      sm.textContent = 'Semana sana — nómina cubierta, Sergio con $7k+, RemPro con utilidad';
+    } else if (sergio >= 0 && rempro > 0) {
+      sb.className = 'status-bar mid';
+      sm.textContent = 'Nómina cubierta — Sergio queda por debajo de $7,000 esta semana';
+    } else {
+      sb.className = 'status-bar bad';
+      sm.textContent = 'Semana en pérdida — el destajo no alcanza para cubrir la nómina fija';
+    }
+  }
+
+  // Init
+  setFaseAdp(1);
+  setFasePla(1);
+  calc();
+</script>
+
+
+</body></html>
