@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RemPro — Apps</title>
+<style>
+:root{
+  --bg:#0f1117;--bg2:#181c27;--bg3:#1e2333;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#f0f2f8;--text2:#8b90a8;--text3:#5a5f75;
+  --blue:#4a8fff;--teal:#29c48a;--amber:#f5a623;--violet:#a78bfa;
+  --green:#3dd68c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
+
+/* HEADER */
+.header{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:20px 24px 20px;
+  padding-top:calc(20px + env(safe-area-inset-top));
+  text-align:center;
+}
+.logo{
+  width:56px;height:56px;border-radius:16px;
+  background:linear-gradient(135deg,#4a8fff,#29c48a);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;
+  margin:0 auto 12px;
+}
+.brand{font-size:22px;font-weight:700;letter-spacing:-.3px;}
+.brand span{color:var(--teal);}
+.tagline{font-size:13px;color:var(--text2);margin-top:4px;}
+
+/* MAIN */
+.main{padding:24px 16px;max-width:480px;margin:0 auto;}
+
+.section-label{
+  font-size:11px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:12px;
+}
+
+/* APP CARDS */
+.app-card{
+  display:flex;align-items:center;gap:16px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:16px;margin-bottom:12px;
+  text-decoration:none;color:var(--text);
+  transition:border-color .15s, background .15s;
+  touch-action:manipulation;
+  cursor:pointer;
+}
+.app-card:active{background:var(--bg3);border-color:var(--border2);}
+.app-icon{
+  width:52px;height:52px;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.app-info{flex:1;min-width:0;}
+.app-name{font-size:15px;font-weight:700;margin-bottom:3px;}
+.app-desc{font-size:12px;color:var(--text2);line-height:1.4;}
+.app-arrow{font-size:18px;color:var(--text3);flex-shrink:0;}
+
+/* COLORES POR APP */
+.icon-sim{background:linear-gradient(135deg,rgba(41,196,138,.25),rgba(41,196,138,.1));border:1px solid rgba(41,196,138,.3);}
+.icon-torre{background:linear-gradient(135deg,rgba(74,143,255,.25),rgba(74,143,255,.1));border:1px solid rgba(74,143,255,.3);}
+.icon-calc{background:linear-gradient(135deg,rgba(245,166,35,.25),rgba(245,166,35,.1));border:1px solid rgba(245,166,35,.3);}
+
+.border-sim{border-left:3px solid var(--teal);}
+.border-torre{border-left:3px solid var(--blue);}
+.border-calc{border-left:3px solid var(--amber);}
+
+/* VERSION CHIPS */
+.chip{
+  display:inline-block;font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:20px;margin-left:6px;
+  vertical-align:middle;
+}
+.chip-teal{background:rgba(41,196,138,.12);color:var(--teal);border:1px solid rgba(41,196,138,.3);}
+.chip-blue{background:rgba(74,143,255,.12);color:var(--blue);border:1px solid rgba(74,143,255,.3);}
+.chip-amber{background:rgba(245,166,35,.12);color:var(--amber);border:1px solid rgba(245,166,35,.3);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+/* INFO BOX */
+.info-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px;
+  font-size:12px;color:var(--text2);line-height:1.8;
+  margin-bottom:16px;
+}
+.info-box strong{color:var(--text);}
+
+/* FOOTER */
+.footer{
+  text-align:center;padding:20px 16px;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  font-size:11px;color:var(--text3);
+}
+.footer a{color:var(--text3);text-decoration:none;}
+
+/* PULSE DOT */
+.pulse{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--green);display:inline-block;
+  margin-right:5px;vertical-align:middle;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.5;transform:scale(.8);}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">RP</div>
+  <div class="brand">Rem<span>Pro</span></div>
+  <div class="tagline">Torre D9 · Pedregal La Paz · Herramientas de obra</div>
+</div>
+
+<div class="main">
+
+  <div class="section-label"><span class="pulse"></span>Apps activas</div>
+
+  <a class="app-card border-sim" href="Simulador%20Destajo%20—%20RemPro.html">
+    <div class="app-icon icon-sim">📊</div>
+    <div class="app-info">
+      <div class="app-name">Simulador Destajo <span class="chip chip-teal">v3.5</span></div>
+      <div class="app-desc">Calcula destajo semanal, nómina proporcional, asistencia y puntos de equilibrio por concepto</div>
+    </div>
+    <div class="app-arrow">›</div>
+  </a>
+
+  <a class="app-card border-torre" href="Torre%20D-9%20·%20RemPro%20Estimaciones.html">
+    <div class="app-icon icon-torre">🏗</div>
+    <div class="app-info">
+      <div class="app-name">Torre D-9 <span class="chip chip-blue">Estimaciones</span></div>
+      <div class="app-desc">Control de estimaciones por condominio, avance por partida y cálculo de destajo GCIS</div>
+    </div>
+    <div class="app-arrow">›</div>
+  </a>
+
+  <a class="app-card border-calc" href="RemPro%20·%20Calculadora%20de%20Insumos.html">
+    <div class="app-icon icon-calc">🧮</div>
+    <div class="app-info">
+      <div class="app-name">Calculadora RemPro <span class="chip chip-amber">Insumos</span></div>
+      <div class="app-desc">Cuantificación de materiales, explosión de insumos y APU por sistema constructivo</div>
+    </div>
+    <div class="app-arrow">›</div>
+  </a>
+
+  <div class="divider"></div>
+
+  <div class="info-box">
+    <strong>¿Cómo usar desde iPhone?</strong><br>
+    Abre esta página en Safari → toca el botón compartir → <strong>Agregar a pantalla de inicio</strong> → tendrás acceso directo como una app sin instalar nada.<br><br>
+    <strong>Funciona en:</strong> iPhone · iPad · Windows · Mac · Android
+  </div>
+
+</div>
+
+<div class="footer">
+  Remodelaciones Profesionales · La Paz BCS · uso interno<br>
+  <a href="https://github.com/ferrempro/ferrempro.github.io">ferrempro.github.io</a>
+</div>
+
+</body>
+</html>
