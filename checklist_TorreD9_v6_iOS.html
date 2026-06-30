@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torre D9">
+<meta name="theme-color" content="#0d1117">
+<title>Torre D9 · RemPro</title>
+<style>
+:root{
+  --bg:#0d1117;--sur:#161b22;--sur2:#1c2330;--brd:#30363d;
+  --ac:#58a6ff;--ok:#3fb950;--warn:#d29922;--dan:#f85149;--pur:#a371f7;
+  --txt:#e6edf3;--mut:#8b949e;--r:10px;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px);
+  --sar:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+  font-size:15px;
+  padding-bottom:calc(80px + var(--sab));
+  -webkit-overflow-scrolling:touch;
+}
+.hdr{
+  background:rgba(22,27,34,.97);
+  border-bottom:1px solid var(--brd);
+  padding:calc(14px + var(--sat)) 16px 12px;
+  position:sticky;top:0;z-index:100;
+}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.brand{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--mut)}
+.pill{background:var(--sur2);border:1px solid var(--brd);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--mut)}
+.pill.live{border-color:var(--ok);color:var(--ok)}
+.ptitle{font-size:24px;font-weight:800;letter-spacing:-1px}
+.ptitle span{color:var(--ac)}
+.hmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.gbar{padding:10px 16px;background:var(--sur);border-bottom:1px solid var(--brd)}
+.glbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:5px}
+.glbl strong{color:var(--ac);font-size:13px}
+.track{background:var(--sur2);border-radius:4px;height:7px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ok));border-radius:4px;transition:width .4s}
+.fin-bar{background:var(--sur2);border-bottom:1px solid var(--brd);padding:10px 16px;display:flex;gap:20px;overflow-x:auto;scrollbar-width:none}
+.fin-bar::-webkit-scrollbar{display:none}
+.fi{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.fi-l{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.fi-v{font-size:16px;font-weight:800}
+.filt{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--brd);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.filt::-webkit-scrollbar{display:none}
+.fb{background:var(--sur);border:1px solid var(--brd);color:var(--mut);padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap;min-height:36px;-webkit-appearance:none;font-family:inherit}
+.fb.on{background:var(--ac);border-color:var(--ac);color:#0d1117;font-weight:700}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;padding:8px 16px;background:var(--sur);border-bottom:1px solid var(--brd)}
+.ley{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--mut)}
+.ley-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.lvl{margin:14px 12px 0}
+.lvlhdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 4px}
+.lvltag{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.lvldiv{flex:1;height:1px;background:var(--brd)}
+.lvlcnt{font-size:11px;color:var(--mut)}
+.card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.chdr{display:flex;align-items:flex-start;padding:14px;cursor:pointer;gap:10px;user-select:none;-webkit-user-select:none;transition:background .12s;min-height:60px}
+.chdr:active{background:var(--sur2)}
+.cid{font-size:22px;font-weight:800;color:var(--ac);min-width:46px;letter-spacing:-1px;padding-top:2px}
+.cinfo{flex:1;min-width:0}
+.cpro{font-size:11px;color:var(--mut);margin-bottom:5px}
+/* Resumen m² */
+.m2-summary{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.m2-line{display:flex;align-items:center;gap:6px}
+.m2-lbl{font-size:10px;color:var(--mut);width:80px;flex-shrink:0}
+.m2-bar-wrap{flex:1;display:flex;flex-direction:column;gap:3px}
+.m2-sub-row{display:flex;align-items:center;gap:4px}
+.m2-sub-lbl{font-size:9px;color:var(--mut);width:44px;flex-shrink:0}
+.m2-track{flex:1;height:3px;background:var(--sur2);border-radius:2px;overflow:hidden}
+.m2-fill{height:100%;border-radius:2px}
+.m2-pct{font-size:9px;color:var(--mut);min-width:14px;text-align:center}
+.m2-val{font-size:11px;font-weight:700;min-width:52px;text-align:right;flex-shrink:0}
+/* Derecha header */
+.cright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.cpct{font-size:24px;font-weight:800;letter-spacing:-1px}
+.sbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase}
+.sp{background:#1c2330;color:var(--mut);border:1px solid var(--brd)}
+.sw{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid rgba(210,153,34,.3)}
+.sd{background:rgba(63,185,80,.15);color:var(--ok);border:1px solid rgba(63,185,80,.3)}
+.se{background:rgba(248,81,73,.15);color:var(--dan);border:1px solid rgba(248,81,73,.3)}
+.chv{font-size:12px;color:var(--mut);transition:transform .2s;padding-top:5px}
+.card.open .chv{transform:rotate(90deg)}
+/* Body */
+.cbody{display:none;border-top:1px solid var(--brd)}
+.card.open .cbody{display:block}
+/* Bloques de concepto */
+.cblk{padding:14px 14px 0}
+.cpthdr{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.cptlbl{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.cptdiv{flex:1;height:1px;background:var(--brd)}
+.cptpct{font-size:13px;font-weight:800}
+.cptm2{font-size:11px;color:var(--mut);margin-left:3px}
+/* Bloque de hoja */
+.hoja{background:var(--sur2);border:1px solid var(--brd);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.hoja-top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--brd)}
+.hoja-name{display:flex;align-items:center;gap:7px}
+.hoja-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.hoja-lbl{font-size:12px;font-weight:700;color:var(--txt)}
+.hoja-meta{display:flex;align-items:center;gap:6px}
+.hoja-m2{font-size:12px;font-weight:800;color:var(--ac)}
+.hoja-pct{font-size:12px;font-weight:800}
+/* Fases */
+.fase-list{padding:4px 12px 8px}
+.fase-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(48,54,61,.5);min-height:50px}
+.fase-row:last-child{border-bottom:none}
+/* Checkbox — area táctil 44pt via padding */
+.fchk{
+  width:26px;height:26px;border-radius:6px;border:2px solid var(--brd);
+  background:transparent;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;transition:all .15s;
+  padding:9px;margin:-9px;box-sizing:content-box;
+}
+.fchk.ck{background:var(--ok);border-color:var(--ok)}
+.fchk.ck::after{content:'checkmark';font-size:0;width:10px;height:6px;border-left:2px solid #0d1117;border-bottom:2px solid #0d1117;transform:rotate(-45deg);margin-top:-3px;display:block}
+.fchk.bl{background:rgba(248,81,73,.1);border-color:var(--dan)}
+.fchk.bl::after{content:'';width:12px;height:2px;background:var(--dan);display:block}
+.finfo{flex:1;min-width:0}
+.fnombre{font-size:14px;color:var(--txt);font-weight:600;line-height:1.3}
+.fpeso{font-size:11px;color:var(--mut);margin-top:2px}
+.fase-row.done .fnombre{color:var(--mut);text-decoration:line-through}
+.fase-row.bloq .fnombre{color:var(--dan)}
+.cbadge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(63,185,80,.15);color:var(--ok);font-weight:700;margin-left:5px}
+.bbadge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(248,81,73,.1);color:var(--dan);font-weight:700;margin-left:5px}
+.fbar{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ftrk{width:44px;height:4px;background:rgba(48,54,61,.8);border-radius:2px;overflow:hidden}
+.ffil{height:100%;border-radius:2px}
+.fpct{font-size:11px;color:var(--mut);min-width:30px;text-align:right}
+/* Piezas */
+.pzblk{background:var(--sur2);border:1px solid var(--brd);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.pztop{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--brd)}
+.pzlbl{font-size:12px;font-weight:700;color:var(--txt)}
+.pzrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(48,54,61,.4);min-height:46px}
+.pzrow:last-child{border-bottom:none}
+.pzchk{width:24px;height:24px;border-radius:5px;border:2px solid var(--brd);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:8px;margin:-8px;box-sizing:content-box}
+.pzchk.ck{background:var(--ok);border-color:var(--ok)}
+.pzchk.ck::after{content:'';width:9px;height:5px;border-left:2px solid #0d1117;border-bottom:2px solid #0d1117;transform:rotate(-45deg);margin-top:-2px;display:block}
+.pzlbl2{flex:1;font-size:13px;color:var(--txt)}
+.pzrow.done .pzlbl2{color:var(--mut);text-decoration:line-through}
+.pzcant{font-size:12px;color:var(--warn);font-weight:700}
+/* Divider */
+.divider{height:1px;background:var(--brd);margin:2px 14px 0}
+/* Pie */
+.foot{padding:14px}
+.fecha-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fecha-lbl{font-size:12px;color:var(--mut);flex-shrink:0}
+.fecha-inp{background:var(--sur2);border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:8px 10px;flex:1;min-height:40px;-webkit-appearance:none}
+.fecha-inp:focus{outline:none;border-color:var(--ac)}
+.nbtn{background:var(--sur2);border:1px dashed var(--brd);color:var(--mut);padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;width:100%;text-align:left;font-family:inherit;min-height:44px;-webkit-appearance:none}
+.ntxt{display:none;margin-top:8px;width:100%;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:10px;resize:vertical;min-height:80px;-webkit-appearance:none}
+.ntxt:focus{outline:none;border-color:var(--ac)}
+.ntxt.vis{display:block}
+/* FAB */
+.fab{position:fixed;bottom:calc(20px + var(--sab));right:calc(16px + var(--sar));background:var(--ac);color:#0d1117;border:none;border-radius:28px;padding:14px 22px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 24px rgba(88,166,255,.35);z-index:200;min-height:50px;-webkit-appearance:none}
+.fab:active{opacity:.85}
+.toast{position:fixed;bottom:calc(82px + var(--sab));right:calc(16px + var(--sar));background:var(--sur2);border:1px solid var(--brd);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:300;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px}
+/* Banner */
+.banner{display:none;background:var(--sur2);border-bottom:1px solid var(--brd);padding:10px 16px;align-items:center;gap:10px}
+.banner.show{display:flex}
+.bico{width:36px;height:36px;background:var(--ac);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.btxt{flex:1;font-size:12px;color:var(--mut);line-height:1.4}
+.btxt strong{color:var(--txt)}
+.bclose{background:none;border:none;color:var(--mut);font-size:20px;cursor:pointer;padding:4px;min-width:32px;min-height:32px;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="banner" id="banner">
+  <div class="bico">&#127959;</div>
+  <div class="btxt"><strong>Agregar a pantalla de inicio</strong><br>Toca <strong>Compartir</strong> luego "Agregar a inicio" para usar como app.</div>
+  <button class="bclose" id="btnBanner">&#10005;</button>
+</div>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">RemPro</div>
+    <div id="fechaHoy" class="pill live"></div>
+  </div>
+  <div class="ptitle">Torre <span>D9</span></div>
+  <div class="hmeta">
+    <span class="pill">Pedregal La Paz</span>
+    <span class="pill">12 condominios</span>
+    <span id="metaAv" class="pill live">0% global</span>
+  </div>
+</div>
+
+<div class="gbar">
+  <div class="glbl"><span>Avance global de obra</span><strong id="pctG">0%</strong></div>
+  <div class="track"><div class="fill" id="barG" style="width:0%"></div></div>
+</div>
+
+<div class="fin-bar">
+  <div class="fi"><span class="fi-l">Total estimado</span><span class="fi-v" id="totalEst" style="color:#3fb950">$0</span></div>
+  <div class="fi"><span class="fi-l">Condominios</span><span class="fi-v" id="condEst" style="color:#d29922">0 de 12</span></div>
+  <div class="fi"><span class="fi-l">Anticipo C104</span><span class="fi-v" style="color:#58a6ff">$100,000</span></div>
+</div>
+
+<div class="leyenda">
+  <div class="ley"><div class="ley-dot" style="background:#3fb950"></div>Terminado</div>
+  <div class="ley"><div class="ley-dot" style="background:#f85149"></div>Bloqueado</div>
+  <div class="ley"><div class="ley-dot" style="background:#d29922"></div>En proceso</div>
+  <div class="ley"><div class="ley-dot" style="background:#8b949e"></div>Pendiente</div>
+</div>
+
+<div class="filt" id="filt">
+  <button class="fb on" data-fil="todos">Todos</button>
+  <button class="fb" data-fil="L1">Nivel 1</button>
+  <button class="fb" data-fil="L2">Nivel 2</button>
+  <button class="fb" data-fil="L3">Nivel 3</button>
+  <button class="fb" data-fil="pend">Pendiente</button>
+  <button class="fb" data-fil="proc">En proceso</button>
+  <button class="fb" data-fil="done">Terminado</button>
+  <button class="fb" data-fil="bloq">Bloqueado</button>
+  <button class="fb" data-fil="est">Con estimacion</button>
+</div>
+
+<div id="main"></div>
+
+<button class="fab" id="btnExportar">&#8595; Exportar reporte</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DATOS
+// ════════════════════════════════════════════
+var CONDOS = [
+  {id:'101',nivel:'L1',proto:'P1',est:19245.28,ant:0,
+   pl:{reg:{m2:98.39, a:1,t:0,p:0,cob:'a'}, anti:{m2:20.55, a:1,t:0,p:0,cob:'a'}},
+   ad:{reg:{m2:0,    pg:0,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Plafon armado cobrado 24/04. Muros pendientes 2a cara y pasteado.'},
+
+  {id:'102',nivel:'L1',proto:'P1',est:5029.50,ant:0,
+   pl:{reg:{m2:131.97, a:1,t:1,p:0,cob:null}, anti:{m2:0, a:0,t:0,p:0,cob:null}},
+   ad:{reg:{m2:125.00, pg:1,p:0,cob:'pg'}, anti:{m2:50.14, pg:1,p:0,cob:'pg'}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Muros varios cobrados 14/05. Faltan pasta de plafon y pasteado de muros.'},
+
+  {id:'103',nivel:'L1',proto:'P1',est:48254.68,ant:0,
+   pl:{reg:{m2:101.72, a:1,t:1,p:1,cob:'a'}, anti:{m2:20.55, a:1,t:1,p:0,cob:'a'}},
+   ad:{reg:{m2:125.00, pg:1,p:1,cob:'pg'}, anti:{m2:50.14, pg:1,p:1,cob:'pg'}},
+   pz:{s:{n:7,ok:1}, l:{n:0,ok:0}, c:{n:14.36,ok:1}},
+   bpl:[],bad:[],
+   nota:'90% - Solo falta pasta final plafon antimoho y cajillo luz indirecta.'},
+
+  {id:'104',nivel:'L1',proto:'P1',est:116597.80,ant:100000,
+   pl:{reg:{m2:124.54, a:1,t:1,p:1,cob:'p'}, anti:{m2:30.78, a:1,t:1,p:1,cob:'p'}},
+   ad:{reg:{m2:167.57, pg:1,p:1,cob:'p'}, anti:{m2:71.95, pg:1,p:1,cob:'p'}},
+   pz:{s:{n:5,ok:1}, l:{n:16.6,ok:1}, c:{n:13,ok:1}},
+   bpl:[],bad:[],
+   nota:'ENTREGADO. Anticipo $100,000 aplicado. Saldo -$32,597.80 a favor del cliente.'},
+
+  {id:'201',nivel:'L2',proto:'P2',est:16166.33,ant:0,
+   pl:{reg:{m2:101.35, a:1,t:1,p:0,cob:'a'}, anti:{m2:30.62, a:1,t:1,p:0,cob:'a'}},
+   ad:{reg:{m2:0, pg:1,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Plafon armado cobrado 28/05. Pasta y detalles tapado pendientes.'},
+
+  {id:'202',nivel:'L2',proto:'P2',est:14492.98,ant:0,
+   pl:{reg:{m2:97.22, a:1,t:1,p:0,cob:'t'}, anti:{m2:21.09, a:1,t:1,p:0,cob:'t'}},
+   ad:{reg:{m2:0, pg:1,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Plafon forrado cobrado 11/06. Pasta pendiente.'},
+
+  {id:'203',nivel:'L2',proto:'P3',est:14255.33,ant:0,
+   pl:{reg:{m2:95.54, a:1,t:1,p:0,cob:'a'}, anti:{m2:20.83, a:1,t:1,p:0,cob:'a'}},
+   ad:{reg:{m2:0, pg:1,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:['p'],bad:['p'],
+   nota:'Pasteado bloqueado - espera material (pasta y hoja verde).'},
+
+  {id:'204',nivel:'L2',proto:'P3',est:31438.05,ant:0,
+   pl:{reg:{m2:104.47, a:1,t:1,p:0,cob:'a'}, anti:{m2:28.45, a:1,t:1,p:0,cob:'a'}},
+   ad:{reg:{m2:92.17, pg:1,p:0,cob:'pg'}, anti:{m2:67.36, pg:1,p:0,cob:'pg'}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Boquillas y afinado cajillos; limpieza. Plafon 14/05 + muros 19/06.'},
+
+  {id:'301',nivel:'L3',proto:'P4',est:16166.33,ant:0,
+   pl:{reg:{m2:101.35, a:1,t:1,p:0,cob:'t'}, anti:{m2:30.62, a:1,t:1,p:0,cob:'t'}},
+   ad:{reg:{m2:0, pg:0,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:['pg','p'],
+   nota:'Plafon forrado cobrado 11/06. Muros bloqueados - falta hoja verde y estructura.'},
+
+  {id:'302',nivel:'L3',proto:'P4',est:0,ant:0,
+   pl:{reg:{m2:0, a:1,t:0,p:0,cob:null}, anti:{m2:0, a:0,t:0,p:0,cob:null}},
+   ad:{reg:{m2:0, pg:0,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Ya se puede armar - estructura autorizada. Sin estimacion cobrada.'},
+
+  {id:'303',nivel:'L3',proto:'P4',est:14255.33,ant:0,
+   pl:{reg:{m2:95.54, a:1,t:0,p:0,cob:'a'}, anti:{m2:20.83, a:1,t:0,p:0,cob:'a'}},
+   ad:{reg:{m2:0, pg:1,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:[],
+   nota:'Forrado sala/cocina completo. Falta banos y recamaras. Plafon armado 19/06.'},
+
+  {id:'304',nivel:'L3',proto:'P4',est:16282.70,ant:0,
+   pl:{reg:{m2:102.22, a:1,t:1,p:0,cob:'t'}, anti:{m2:30.70, a:1,t:1,p:0,cob:'t'}},
+   ad:{reg:{m2:0, pg:1,p:0,cob:null}, anti:{m2:0, pg:0,p:0,cob:null}},
+   pz:{s:{n:0,ok:0}, l:{n:0,ok:0}, c:{n:0,ok:0}},
+   bpl:[],bad:['p'],
+   nota:'Plafon forrado cobrado 19/06. Falta hoja verde banos y cuarto servicio.'}
+];
+
+// ════════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════════
+var ST = {}, NT = {}, FT = {};
+
+function initState(){
+  var raw = localStorage.getItem('d9v6');
+  if(raw){ try{ var o=JSON.parse(raw); ST=o.s||{}; NT=o.n||{}; FT=o.f||{}; }catch(e){} }
+  var i, c;
+  for(i=0;i<CONDOS.length;i++){
+    c = CONDOS[i];
+    if(!ST[c.id]){
+      ST[c.id]={
+        pr:{a:c.pl.reg.a, t:c.pl.reg.t, p:c.pl.reg.p},
+        pa:{a:c.pl.anti.a,t:c.pl.anti.t,p:c.pl.anti.p},
+        ar:{pg:c.ad.reg.pg, p:c.ad.reg.p},
+        aa:{pg:c.ad.anti.pg,p:c.ad.anti.p},
+        s:c.pz.s.ok, l:c.pz.l.ok, cc:c.pz.c.ok
+      };
+      NT[c.id] = c.nota||'';
+    }
+  }
+  save();
+}
+function save(){ localStorage.setItem('d9v6',JSON.stringify({s:ST,n:NT,f:FT})); }
+
+// ════════════════════════════════════════════
+// CALCULOS
+// ════════════════════════════════════════════
+function pH(st, tipo){
+  if(tipo==='pl') return Math.round(st.a*35 + st.t*35 + st.p*30);
+  return Math.round(st.pg*50 + st.p*50);
+}
+function pCondo(cid){
+  var c=gC(cid), s=ST[cid];
+  var m=c.pl.reg.m2+c.pl.anti.m2+c.ad.reg.m2+c.ad.anti.m2;
+  if(m===0) return Math.round((pH(s.pr,'pl')+pH(s.pa,'pl')+pH(s.ar,'ad')+pH(s.aa,'ad'))/4);
+  var sum=0;
+  if(c.pl.reg.m2>0)  sum+=pH(s.pr,'pl')*c.pl.reg.m2;
+  if(c.pl.anti.m2>0) sum+=pH(s.pa,'pl')*c.pl.anti.m2;
+  if(c.ad.reg.m2>0)  sum+=pH(s.ar,'ad')*c.ad.reg.m2;
+  if(c.ad.anti.m2>0) sum+=pH(s.aa,'ad')*c.ad.anti.m2;
+  return Math.round(sum/m);
+}
+function pPl(c,s){
+  var m=c.pl.reg.m2+c.pl.anti.m2;
+  if(!m) return 0;
+  return Math.round((pH(s.pr,'pl')*c.pl.reg.m2+pH(s.pa,'pl')*c.pl.anti.m2)/m);
+}
+function pAd(c,s){
+  var m=c.ad.reg.m2+c.ad.anti.m2;
+  if(!m) return 0;
+  return Math.round((pH(s.ar,'ad')*c.ad.reg.m2+pH(s.aa,'ad')*c.ad.anti.m2)/m);
+}
+function stC(cid){
+  var p=pCondo(cid), c=gC(cid);
+  var bl=(c.bpl&&c.bpl.length)||(c.bad&&c.bad.length);
+  if(p>=100) return 'done';
+  if(bl) return 'bloq';
+  if(p>0) return 'proc';
+  return 'pend';
+}
+function gC(cid){ var i; for(i=0;i<CONDOS.length;i++) if(CONDOS[i].id===cid) return CONDOS[i]; return null; }
+function inA(arr,v){ var i; for(i=0;i<arr.length;i++) if(arr[i]===v) return true; return false; }
+
+var SL={done:'Terminado',bloq:'Bloqueado',proc:'En proceso',pend:'Pendiente'};
+var SC={done:'sd',bloq:'se',proc:'sw',pend:'sp'};
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+var filAct='todos';
+
+function render(){
+  var cont=document.getElementById('main');
+  cont.innerHTML='';
+  var nvs=['L1','L2','L3'], nms={L1:'Nivel 1',L2:'Nivel 2',L3:'Nivel 3'};
+  var i,j,c,sec,cds;
+  for(i=0;i<nvs.length;i++){
+    var nv=nvs[i];
+    cds=[];
+    for(j=0;j<CONDOS.length;j++){
+      c=CONDOS[j];
+      if(c.nivel!==nv) continue;
+      if(filAct==='todos'||filAct===nv){cds.push(c);continue;}
+      if(filAct==='L1'||filAct==='L2'||filAct==='L3') continue;
+      if(filAct==='est'&&c.est>0){cds.push(c);continue;}
+      if(stC(c.id)===filAct) cds.push(c);
+    }
+    if(!cds.length) continue;
+    var done=0;
+    for(j=0;j<cds.length;j++) if(stC(cds[j].id)==='done') done++;
+    sec=document.createElement('div');
+    sec.className='lvl';
+    sec.innerHTML='<div class="lvlhdr"><span class="lvltag">'+nms[nv]+'</span><div class="lvldiv"></div><span class="lvlcnt">'+done+'/'+cds.length+' terminados</span></div>';
+    for(j=0;j<cds.length;j++) sec.appendChild(mkCard(cds[j]));
+    cont.appendChild(sec);
+  }
+  if(!cont.innerHTML) cont.innerHTML='<div class="empty">Sin condominios en esta vista</div>';
+  updGlobal();
+}
+
+function mkCard(c){
+  var div=document.createElement('div');
+  div.className='card';
+  div.id='card_'+c.id;
+  div.innerHTML=mkHdr(c)+mkBdy(c);
+  return div;
+}
+
+// ── HEADER ──
+function mkHdr(c){
+  var s=ST[c.id], st=stC(c.id), p=pCondo(c.id);
+  var pc=p>=100?'#3fb950':p>0?'#d29922':'#8b949e';
+  var imp=c.est>0?(' <span style="color:#3fb950;font-weight:700">$'+fmt(c.est)+'</span>'):'';
+
+  var sum='<div class="m2-summary">';
+  if(c.pl.reg.m2>0)  sum+=m2L('Plafon normal', c.pl.reg.m2, s.pr,'pl','#58a6ff',c.bpl);
+  if(c.pl.anti.m2>0) sum+=m2L('Plafon antimoho',c.pl.anti.m2,s.pa,'pl','#7ee787',c.bpl);
+  if(c.ad.reg.m2>0)  sum+=m2L('ADPanel normal', c.ad.reg.m2, s.ar,'ad','#a371f7',c.bad);
+  if(c.ad.anti.m2>0) sum+=m2L('ADPanel antimoho',c.ad.anti.m2,s.aa,'ad','#d2a8ff',c.bad);
+  sum+='</div>';
+
+  return '<div class="chdr" data-action="tog" data-cid="'+c.id+'">'+
+    '<div class="cid">'+c.id+'</div>'+
+    '<div class="cinfo">'+
+      '<div class="cpro">Proto '+c.proto+imp+'</div>'+
+      sum+
+    '</div>'+
+    '<div class="cright">'+
+      '<div class="cpct" style="color:'+pc+'">'+p+'%</div>'+
+      '<span class="sbadge '+SC[st]+'">'+SL[st]+'</span>'+
+    '</div>'+
+    '<span class="chv">&#9654;</span>'+
+  '</div>';
+}
+
+function m2L(lbl,m2,st,tipo,col,bl){
+  var fases=tipo==='pl'
+    ?[{k:'a',l:'Armado 35%'},{k:'t',l:'Tapado 35%'},{k:'p',l:'Pasta 30%'}]
+    :[{k:'pg',l:'Pegado 50%'},{k:'p',l:'Pasta 50%'}];
+  var rows='',i,f,ck,isbl,ic,w,mk;
+  for(i=0;i<fases.length;i++){
+    f=fases[i];
+    ck=st[f.k]; isbl=bl&&inA(bl,f.k);
+    ic=isbl?'#f85149':col; w=ck?100:0; mk=ck?'&#10003;':isbl?'&#10007;':'&#8212;';
+    rows+='<div class="m2-sub-row">'+
+      '<span class="m2-sub-lbl">'+f.l+'</span>'+
+      '<div class="m2-track"><div class="m2-fill" style="width:'+w+'%;background:'+ic+'"></div></div>'+
+      '<span class="m2-pct">'+mk+'</span>'+
+    '</div>';
+  }
+  return '<div class="m2-line">'+
+    '<span class="m2-lbl">'+lbl+'</span>'+
+    '<div class="m2-bar-wrap">'+rows+'</div>'+
+    '<span class="m2-val" style="color:'+col+'">'+m2+' m&#178;</span>'+
+  '</div>';
+}
+
+// ── BODY ──
+function mkBdy(c){
+  var s=ST[c.id], fecha=FT[c.id]||'', nota=NT[c.id]||'';
+  var html='<div class="cbody" id="body_'+c.id+'">';
+
+  // PLAFON
+  html+='<div class="cblk">';
+  html+=cHdr('&#9312; Plafon','#58a6ff',pPl(c,s),rnd(c.pl.reg.m2+c.pl.anti.m2)+' m&#178;');
+  if(c.pl.reg.m2>0)  html+=mkHoja(c,'pr','pl','#58a6ff','Plafon hoja normal',  c.pl.reg.m2, c.pl.reg.cob, c.bpl);
+  if(c.pl.anti.m2>0) html+=mkHoja(c,'pa','pl','#7ee787','Plafon hoja antimoho',c.pl.anti.m2,c.pl.anti.cob,c.bpl);
+  html+='</div>';
+
+  // ADPANEL
+  html+='<div class="divider"></div>';
+  html+='<div class="cblk">';
+  html+=cHdr('&#9313; ADPanel','#a371f7',pAd(c,s),rnd(c.ad.reg.m2+c.ad.anti.m2)+' m&#178;');
+  if(c.ad.reg.m2>0)  html+=mkHojaAd(c,'ar','#a371f7','ADPanel hoja normal',  c.ad.reg.m2, c.ad.reg.cob, c.bad);
+  if(c.ad.anti.m2>0) html+=mkHojaAd(c,'aa','#d2a8ff','ADPanel hoja antimoho',c.ad.anti.m2,c.ad.anti.cob,c.bad);
+  if(!c.ad.reg.m2&&!c.ad.anti.m2) html+='<div style="padding:8px 0 12px;font-size:12px;color:#8b949e">Sin metros de ADPanel en estimaciones</div>';
+  html+='</div>';
+
+  // PIEZAS
+  var hasPz=c.pz.s.n>0||c.pz.l.n>0||c.pz.c.n>0;
+  if(hasPz){
+    html+='<div class="divider"></div>';
+    html+='<div class="cblk">';
+    html+=cHdr('&#9314; Piezas','#d29922',pPz(c,s),'');
+    html+='<div class="pzblk"><div class="pztop"><span class="pzlbl">Componentes adicionales</span></div>';
+    if(c.pz.s.n>0) html+=mkPz(c.id,'s',s.s,'Soportes de plafon',c.pz.s.n+' pzas');
+    if(c.pz.l.n>0) html+=mkPz(c.id,'l',s.l,'Cajillo luz indirecta',c.pz.l.n+' ml');
+    if(c.pz.c.n>0) html+=mkPz(c.id,'cc',s.cc,'Cajillo cortinero',c.pz.c.n+' ml');
+    html+='</div></div>';
+  }
+
+  // PIE
+  html+='<div class="foot">'+
+    '<div class="fecha-row">'+
+      '<span class="fecha-lbl">Fecha termino:</span>'+
+      '<input type="date" class="fecha-inp" value="'+fecha+'" data-action="fecha" data-cid="'+c.id+'">'+
+    '</div>'+
+    '<button class="nbtn" data-action="nota" data-cid="'+c.id+'">&#9998; Nota de campo</button>'+
+    '<textarea class="ntxt'+(nota?' vis':'')+'" id="nota_'+c.id+'" '+
+    'data-action="savenota" data-cid="'+c.id+'" '+
+    'placeholder="Observaciones, pendientes, materiales faltantes...">'+esc(nota)+'</textarea>'+
+  '</div>';
+
+  html+='</div>';
+  return html;
+}
+
+function cHdr(t,col,pct,m2){
+  return '<div class="cpthdr">'+
+    '<span class="cptlbl" style="color:'+col+'">'+t+'</span>'+
+    (m2?'<span class="cptm2">'+m2+'</span>':'')+
+    '<div class="cptdiv"></div>'+
+    '<span class="cptpct" style="color:'+col+'">'+pct+'%</span>'+
+  '</div>';
+}
+
+function mkHoja(c,stKey,tipo,dotCol,lbl,m2,cobrado,bl){
+  var s=ST[c.id][stKey];
+  var p=pH(s,'pl');
+  var pc=p>=100?'#3fb950':p>0?'#d29922':'#8b949e';
+  var fases=[
+    {k:'a',l:'Armado',peso:'35% del concepto',col:'#58a6ff',ck:'a'},
+    {k:'t',l:'Tapado',peso:'35% del concepto',col:'#3fb950',ck:'t'},
+    {k:'p',l:'Pasta', peso:'30% del concepto',col:'#d29922',ck:'p'}
+  ];
+  return mkHojaHTML(c,stKey,fases,dotCol,lbl,m2,cobrado,bl,p,pc);
+}
+
+function mkHojaAd(c,stKey,dotCol,lbl,m2,cobrado,bl){
+  var s=ST[c.id][stKey];
+  var p=pH(s,'ad');
+  var pc=p>=100?'#3fb950':p>0?'#d29922':'#8b949e';
+  var fases=[
+    {k:'pg',l:'Pegado de hoja',peso:'50% del concepto',col:'#a371f7'},
+    {k:'p', l:'Pasta',         peso:'50% del concepto',col:'#d29922'}
+  ];
+  return mkHojaHTML(c,stKey,fases,dotCol,lbl,m2,cobrado,bl,p,pc);
+}
+
+function mkHojaHTML(c,stKey,fases,dotCol,lbl,m2,cobrado,bl,p,pc){
+  var s=ST[c.id][stKey];
+  var html='<div class="hoja">'+
+    '<div class="hoja-top">'+
+      '<div class="hoja-name"><div class="hoja-dot" style="background:'+dotCol+'"></div><span class="hoja-lbl">'+lbl+'</span></div>'+
+      '<div class="hoja-meta"><span class="hoja-m2">'+m2+' m&#178;</span><span class="hoja-pct" style="color:'+pc+'">'+p+'%</span></div>'+
+    '</div>'+
+    '<div class="fase-list">';
+  var i,f,ck,isbl,rowCls,boxCls,isCob,fc;
+  for(i=0;i<fases.length;i++){
+    f=fases[i]; ck=s[f.k]?1:0; isbl=bl&&inA(bl,f.k);
+    rowCls='fase-row'+(ck?' done':'')+(isbl&&!ck?' bloq':'');
+    boxCls='fchk'+(ck?' ck':'')+(isbl&&!ck?' bl':'');
+    isCob=(cobrado===f.k)||(cobrado==='pg'&&f.k==='pg')||(cobrado==='a'&&f.k==='a')||(cobrado==='t'&&f.k==='t')||(cobrado==='p'&&f.k==='p');
+    fc=isbl?'#f85149':f.col;
+    html+='<div class="'+rowCls+'">'+
+      '<div class="'+boxCls+'" data-action="fase" data-cid="'+c.id+'" data-key="'+stKey+'" data-fase="'+f.k+'"></div>'+
+      '<div class="finfo">'+
+        '<div class="fnombre">'+f.l+
+          (isCob?'<span class="cbadge">&#10003; Cobrado</span>':'')+
+          (isbl&&!ck?'<span class="bbadge">Bloqueado</span>':'')+
+        '</div>'+
+        '<div class="fpeso">'+f.peso+'</div>'+
+      '</div>'+
+      '<div class="fbar">'+
+        '<div class="ftrk"><div class="ffil" style="width:'+(ck?100:0)+'%;background:'+fc+'"></div></div>'+
+        '<span class="fpct">'+(ck?'100%':isbl?'&#8212;':'0%')+'</span>'+
+      '</div>'+
+    '</div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+
+function mkPz(cid,key,done,lbl,cant){
+  return '<div class="pzrow'+(done?' done':'')+'">'+
+    '<div class="pzchk'+(done?' ck':'')+'" data-action="pz" data-cid="'+cid+'" data-key="'+key+'"></div>'+
+    '<span class="pzlbl2">'+lbl+'</span>'+
+    '<span class="pzcant">'+cant+'</span>'+
+  '</div>';
+}
+
+function pPz(c,s){
+  var its=[],t=0;
+  if(c.pz.s.n>0){its.push(s.s);t++;}
+  if(c.pz.l.n>0){its.push(s.l);t++;}
+  if(c.pz.c.n>0){its.push(s.cc);t++;}
+  if(!t) return 0;
+  var sum=0,i; for(i=0;i<its.length;i++) sum+=its[i]?1:0;
+  return Math.round(sum/t*100);
+}
+
+// ════════════════════════════════════════════
+// EVENT DELEGATION — sin onclick dinámicos
+// ════════════════════════════════════════════
+function reBuild(cid){
+  var card=document.getElementById('card_'+cid);
+  if(!card) return;
+  var isOpen=card.classList.contains('open');
+  var c=gC(cid);
+  card.innerHTML=mkHdr(c)+mkBdy(c);
+  if(isOpen){ card.classList.add('open'); var chv=card.querySelector('.chv'); if(chv) chv.style.transform='rotate(90deg)'; }
+}
+
+document.addEventListener('click',function(e){
+  var el=e.target;
+  // subir hasta encontrar data-action
+  while(el && el!==document.body){
+    var act=el.getAttribute('data-action');
+    if(act) break;
+    el=el.parentNode;
+  }
+  if(!el||el===document.body) return;
+
+  var act=el.getAttribute('data-action');
+  var cid=el.getAttribute('data-cid');
+
+  if(act==='tog'){
+    var card=document.getElementById('card_'+cid);
+    if(!card) return;
+    card.classList.toggle('open');
+    var chv=card.querySelector('.chv');
+    if(chv) chv.style.transform=card.classList.contains('open')?'rotate(90deg)':'';
+    return;
+  }
+
+  if(act==='fase'){
+    var key=el.getAttribute('data-key');
+    var fase=el.getAttribute('data-fase');
+    if(!ST[cid]) return;
+    ST[cid][key][fase]=ST[cid][key][fase]?0:1;
+    save(); reBuild(cid); updGlobal();
+    return;
+  }
+
+  if(act==='pz'){
+    var pkey=el.getAttribute('data-key');
+    if(!ST[cid]) return;
+    ST[cid][pkey]=ST[cid][pkey]?0:1;
+    save(); reBuild(cid); updGlobal();
+    return;
+  }
+
+  if(act==='nota'){
+    var ntx=document.getElementById('nota_'+cid);
+    if(ntx) ntx.classList.toggle('vis');
+    return;
+  }
+},false);
+
+document.addEventListener('change',function(e){
+  var el=e.target;
+  var act=el.getAttribute('data-action');
+  var cid=el.getAttribute('data-cid');
+  if(act==='fecha'){ FT[cid]=el.value; save(); return; }
+  if(act==='savenota'){ NT[cid]=el.value; save(); return; }
+},false);
+
+// ════════════════════════════════════════════
+// FILTROS
+// ════════════════════════════════════════════
+document.getElementById('filt').addEventListener('click',function(e){
+  var btn=e.target;
+  if(!btn.getAttribute('data-fil')) return;
+  filAct=btn.getAttribute('data-fil');
+  var btns=document.querySelectorAll('.fb');
+  var i; for(i=0;i<btns.length;i++) btns[i].classList.remove('on');
+  btn.classList.add('on');
+  render();
+},false);
+
+// ════════════════════════════════════════════
+// GLOBAL + EXPORTAR
+// ════════════════════════════════════════════
+function updGlobal(){
+  var tot=0,i;
+  for(i=0;i<CONDOS.length;i++) tot+=pCondo(CONDOS[i].id);
+  var p=Math.round(tot/CONDOS.length);
+  document.getElementById('pctG').textContent=p+'%';
+  document.getElementById('barG').style.width=p+'%';
+  document.getElementById('metaAv').textContent=p+'% global';
+  var te=0,cnt=0;
+  for(i=0;i<CONDOS.length;i++){if(CONDOS[i].est>0){te+=CONDOS[i].est;cnt++;}}
+  document.getElementById('totalEst').textContent='$'+fmt(te);
+  document.getElementById('condEst').textContent=cnt+' de 12';
+}
+
+document.getElementById('btnExportar').addEventListener('click',function(){
+  var lines=['REPORTE DE AVANCE - TORRE D9 - PEDREGAL LA PAZ'];
+  lines.push('Generado: '+new Date().toLocaleString('es-MX'));
+  lines.push('');
+  var nvs=['L1','L2','L3'],i,j,c,s,st,stT;
+  for(i=0;i<nvs.length;i++){
+    lines.push('-- '+{L1:'NIVEL 1',L2:'NIVEL 2',L3:'NIVEL 3'}[nvs[i]]+' --');
+    for(j=0;j<CONDOS.length;j++){
+      c=CONDOS[j]; if(c.nivel!==nvs[i]) continue;
+      s=ST[c.id]; st=stC(c.id);
+      stT={done:'TERMINADO',bloq:'BLOQUEADO',proc:'EN PROCESO',pend:'PENDIENTE'}[st];
+      lines.push('  C'+c.id+' ['+c.proto+'] '+stT+' - '+pCondo(c.id)+'%'+(c.est>0?' - $'+fmt(c.est):''));
+      if(c.pl.reg.m2>0) lines.push('    Plafon normal '+c.pl.reg.m2+'m2 > Arm:'+(s.pr.a?'OK':'--')+' Tap:'+(s.pr.t?'OK':'--')+' Pas:'+(s.pr.p?'OK':'--')+' ['+pH(s.pr,'pl')+'%]');
+      if(c.pl.anti.m2>0) lines.push('    Plafon antimoho '+c.pl.anti.m2+'m2 > Arm:'+(s.pa.a?'OK':'--')+' Tap:'+(s.pa.t?'OK':'--')+' Pas:'+(s.pa.p?'OK':'--')+' ['+pH(s.pa,'pl')+'%]');
+      if(c.ad.reg.m2>0) lines.push('    ADPanel normal '+c.ad.reg.m2+'m2 > Peg:'+(s.ar.pg?'OK':'--')+' Pas:'+(s.ar.p?'OK':'--')+' ['+pH(s.ar,'ad')+'%]');
+      if(c.ad.anti.m2>0) lines.push('    ADPanel antimoho '+c.ad.anti.m2+'m2 > Peg:'+(s.aa.pg?'OK':'--')+' Pas:'+(s.aa.p?'OK':'--')+' ['+pH(s.aa,'ad')+'%]');
+      if(FT[c.id]) lines.push('    Fecha: '+FT[c.id]);
+      if(NT[c.id]) lines.push('    Nota: '+NT[c.id]);
+    }
+    lines.push('');
+  }
+  var txt=lines.join('\n');
+  if(navigator.share){
+    navigator.share({title:'Avance Torre D9',text:txt}).catch(function(){cpText(txt);});
+  } else { cpText(txt); }
+},false);
+
+function cpText(txt){
+  var ta=document.createElement('textarea');
+  ta.value=txt; ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); showToast('Copiado al portapapeles'); }
+  catch(e){ showToast('Listo para compartir'); }
+  document.body.removeChild(ta);
+}
+
+// ════════════════════════════════════════════
+// BANNER + UTILS
+// ════════════════════════════════════════════
+document.getElementById('btnBanner').addEventListener('click',function(){
+  document.getElementById('banner').classList.remove('show');
+  localStorage.setItem('d9_bn','1');
+},false);
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2200);
+}
+function fmt(n){ return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function rnd(n){ return Math.round(n*100)/100; }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setFecha(){
+  var d=new Date();
+  document.getElementById('fechaHoy').textContent=d.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+}
+function checkBanner(){
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isSA=window.navigator.standalone;
+  if(isIOS&&!isSA&&!localStorage.getItem('d9_bn')) document.getElementById('banner').classList.add('show');
+}
+
+// INIT
+initState();
+setFecha();
+render();
+checkBanner();
+</script>
+</body>
+</html>
