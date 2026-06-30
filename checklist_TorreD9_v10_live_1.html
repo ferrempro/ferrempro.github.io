@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torre D9">
+<meta name="theme-color" content="#0d1117">
+<title>Torre D9 · Live · RemPro</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTl0SNUWvcoC1abNMg3oMr-G2-kQ9qXLk",
+    authDomain: "torre-d9.firebaseapp.com",
+    databaseURL: "https://torre-d9-default-rtdb.firebaseio.com",
+    projectId: "torre-d9",
+    storageBucket: "torre-d9.firebasestorage.app",
+    messagingSenderId: "978503460498",
+    appId: "1:978503460498:web:c4044f70e6a8f77cffe84b"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getDatabase(fbApp);
+
+  // Exponer un wrapper simple compatible con el resto del código,
+  // para no tener que reescribir toda la lógica de la app.
+  window.fbStorage = {
+    get: async function(key){
+      var snap = await get(ref(db, key));
+      if(!snap.exists()) return null;
+      return { value: snap.val() };
+    },
+    set: async function(key, value){
+      await set(ref(db, key), value);
+      return { key:key, value:value };
+    },
+    onChange: function(key, cb){
+      onValue(ref(db, key), function(snap){
+        cb(snap.exists() ? snap.val() : null);
+      });
+    }
+  };
+  window.fbReady = true;
+  window.dispatchEvent(new Event('fbready'));
+</script>
+<style>
+:root{
+  --bg:#0d1117;--sur:#161b22;--sur2:#1c2330;--brd:#30363d;
+  --ac:#58a6ff;--ok:#3fb950;--warn:#d29922;--dan:#f85149;--pur:#a371f7;
+  --txt:#e6edf3;--mut:#8b949e;--r:10px;
+  --f:-apple-system,'SF Pro Text','Segoe UI',system-ui,sans-serif;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:14px;padding-bottom:calc(80px + var(--sab))}
+.hdr{background:rgba(22,27,34,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--brd);padding:calc(14px + var(--sat)) 16px 12px;position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.brand{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--mut)}
+.pill{background:var(--sur2);border:1px solid var(--brd);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.pill.live{border-color:var(--ok);color:var(--ok)}
+.pill.warn{border-color:var(--warn);color:var(--warn)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ptitle{font-size:22px;font-weight:800;letter-spacing:-1px}
+.ptitle span{color:var(--ac)}
+.hmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.src-note{background:rgba(63,185,80,.08);border-bottom:1px solid rgba(63,185,80,.2);padding:8px 16px;font-size:11px;color:var(--ok);line-height:1.5}
+.filt{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--brd);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.filt::-webkit-scrollbar{display:none}
+.fb{background:var(--sur);border:1px solid var(--brd);color:var(--mut);padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:var(--f);min-height:36px;display:flex;align-items:center;-webkit-appearance:none}
+.fb.on{background:var(--ac);border-color:var(--ac);color:#0d1117;font-weight:700}
+.lvl{margin:14px 12px 0}
+.lvlhdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 4px}
+.lvltag{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.lvldiv{flex:1;height:1px;background:var(--brd)}
+.card{background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.chdr{display:flex;align-items:center;padding:14px;cursor:pointer;gap:10px;user-select:none;min-height:56px}
+.chdr:active{background:var(--sur2)}
+.cid{font-size:22px;font-weight:800;color:var(--ac);min-width:46px}
+.cinfo{flex:1;min-width:0}
+.cpro{font-size:11px;color:var(--mut)}
+.cstat{font-size:11px;font-weight:700;margin-top:2px}
+.cgt{font-size:10px;color:var(--mut);margin-top:1px}
+.chv{font-size:12px;color:var(--mut);transition:transform .2s}
+.card.open .chv{transform:rotate(90deg)}
+.cbody{display:none;border-top:1px solid var(--brd);padding:4px 0}
+.card.open .cbody{display:block}
+.concepto-row{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(48,54,61,.4)}
+.concepto-row:last-child{border-bottom:none}
+.cc-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--brd);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;margin-top:2px}
+.cc-check::before{content:'';position:absolute;top:-9px;left:-9px;right:-9px;bottom:-9px}
+.cc-check.ck{background:var(--ok);border-color:var(--ok)}
+.cc-check.ck::after{content:'✓';color:#0d1117;font-size:14px;font-weight:900}
+.cc-info{flex:1;min-width:0}
+.cc-name{font-size:13px;font-weight:600;color:var(--txt);line-height:1.3}
+.cc-meta{font-size:11px;color:var(--mut);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.src-badge{font-size:9px;padding:1px 5px;border-radius:6px;font-weight:700}
+.sb-lev{background:rgba(63,185,80,.15);color:var(--ok)}
+.sb-rep{background:rgba(88,166,255,.15);color:var(--ac)}
+.fab-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.fab-lbl{font-size:11px;color:var(--mut);min-width:74px}
+.fab-inp{
+  background:var(--sur2);border:1px solid var(--brd);border-radius:6px;
+  color:var(--ac);font-family:var(--f);font-size:13px;font-weight:700;
+  padding:6px 8px;width:70px;text-align:right;-webkit-appearance:none;
+}
+.fab-inp:focus{outline:none;border-color:var(--ac)}
+.fab-unit{font-size:11px;color:var(--mut)}
+.fab-fabricable{font-size:11px;color:var(--mut);margin-left:auto}
+.fab-pct{font-size:11px;font-weight:800;padding:2px 7px;border-radius:8px;min-width:42px;text-align:center}
+.fp-ok{background:rgba(63,185,80,.15);color:var(--ok)}
+.fp-warn{background:rgba(210,153,34,.15);color:var(--warn)}
+.fp-over{background:rgba(88,166,255,.15);color:var(--ac)}
+.fab-track{height:4px;background:rgba(48,54,61,.8);border-radius:2px;margin-top:6px;overflow:hidden}
+.fab-fill{height:100%;border-radius:2px;transition:width .3s}
+.sync-note{font-size:10px;color:var(--mut);text-align:center;padding:6px 0}
+.log-line{font-size:10px;color:var(--mut);margin-top:6px;padding-top:6px;border-top:1px dashed rgba(48,54,61,.6);line-height:1.4}
+.log-line strong{color:var(--ac)}
+.userpill{cursor:pointer}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--sur);border:1px solid var(--brd);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + var(--sab));width:100%;max-width:480px}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5}
+.modal-inp{width:100%;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:15px;padding:12px;margin-bottom:12px;-webkit-appearance:none}
+.modal-inp:focus{outline:none;border-color:var(--ac)}
+.modal-btn{width:100%;background:var(--ac);color:#0d1117;border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:700;font-family:var(--f);cursor:pointer;min-height:48px}
+.bitacora-panel{margin:14px 12px 0;background:var(--sur);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px}
+.bitacora-title{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.bitacora-item{font-size:12px;padding:6px 0;border-bottom:1px solid rgba(48,54,61,.4);line-height:1.5}
+.bitacora-item:last-child{border-bottom:none}
+.bitacora-item strong{color:var(--ac)}
+.bitacora-empty{font-size:12px;color:var(--mut);text-align:center;padding:10px 0}
+.fab{position:fixed;bottom:calc(20px + var(--sab));right:16px;background:var(--ac);color:#0d1117;border:none;border-radius:28px;padding:14px 22px;font-size:14px;font-weight:700;font-family:var(--f);cursor:pointer;box-shadow:0 4px 24px rgba(88,166,255,.35);z-index:200;min-height:50px}
+.toast{position:fixed;bottom:calc(82px + var(--sab));right:16px;background:var(--sur2);border:1px solid var(--brd);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:300;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.loading{text-align:center;padding:40px 20px;color:var(--mut)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">RemPro · Torre D9</div>
+    <div class="pill live"><span class="dot"></span>En vivo</div>
+  </div>
+  <div class="ptitle">Conceptos <span>Live</span></div>
+  <div class="hmeta">
+    <span class="pill">12 condominios</span>
+    <span class="pill warn" id="lastSync">Cargando...</span>
+    <span class="pill userpill" id="userPill" onclick="openUserModal()">👤 ...</span>
+  </div>
+</div>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <div class="modal-title">¿Quién eres?</div>
+    <div class="modal-sub">Tu nombre se guarda en este dispositivo y queda firmado en cada cambio que hagas, para que el equipo sepa quién marcó qué.</div>
+    <input type="text" class="modal-inp" id="userNameInput" placeholder="Tu nombre (ej. Fernando, Sergio, Carlos)">
+    <button class="modal-btn" onclick="saveUserName()">Guardar y continuar</button>
+  </div>
+</div>
+
+<div class="src-note">
+  ✓ Datos compartidos — cualquiera con este link ve y edita en tiempo real. <strong>101,102,103,104</strong> con levantamiento propio. <strong>201–304</strong> con m² de su prototipo (P1→201/301, P2→202/302, P3→203/303, P4→204/304) hasta levantarse en sitio.
+</div>
+
+<div class="filt">
+  <button class="fb on" onclick="fil('todos',this)">Todos</button>
+  <button class="fb" onclick="fil('L1',this)">Nivel 1</button>
+  <button class="fb" onclick="fil('L2',this)">Nivel 2</button>
+  <button class="fb" onclick="fil('L3',this)">Nivel 3</button>
+  <button class="fb" onclick="fil('rep',this)">Repetido (sin medir)</button>
+  <button class="fb" onclick="fil('propio',this)">Levantamiento propio</button>
+</div>
+
+<div class="bitacora-panel">
+  <div class="bitacora-title">📋 Actividad reciente</div>
+  <div id="bitacoraList"><div class="bitacora-empty">Cargando actividad...</div></div>
+</div>
+
+<div id="main"><div class="loading">Cargando datos compartidos…</div></div>
+<div class="sync-note" id="syncNote"></div>
+
+<button class="fab" onclick="exportar()">↓ Exportar reporte</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATOS MAESTROS — fabricable (fijo, fuente de verdad geométrica)
+// ════════════════════════════════════════════════════════
+var data101 = [
+   {c:'ADPanel hoja normal',     v:145.74,u:'m²',src:'lev'},
+   {c:'ADPanel hoja antimoho',   v:78.62, u:'m²',src:'lev'},
+   {c:'Muro 2 caras antimoho',   v:2.73,  u:'m²',src:'lev'},
+   {c:'Muro 1 cara antimoho',    v:8.70,  u:'m²',src:'lev'},
+   {c:'Plafón hoja normal',      v:101.36,u:'m²',src:'lev'},
+   {c:'Plafón hoja antimoho',    v:29.98, u:'m²',src:'lev'},
+   {c:'Cajillo luz indirecta',   v:20.23, u:'ml', src:'lev'},
+   {c:'Cajillo cortinero',       v:19.52, u:'ml', src:'lev'},
+   {c:'Soportes ventilador',     v:4,     u:'pza',src:'lev'},
+   {c:'Soportes candelabro',     v:3,     u:'pza',src:'lev'}
+];
+var data102 = [
+   {c:'ADPanel hoja normal',     v:91.13, u:'m²',src:'lev'},
+   {c:'ADPanel hoja antimoho',   v:46.54, u:'m²',src:'lev'},
+   {c:'Muro 2 caras antimoho',   v:2.71,  u:'m²',src:'lev'},
+   {c:'Muro 1 cara normal',      v:2.66,  u:'m²',src:'lev'},
+   {c:'Muro 1 cara antimoho',    v:5.67,  u:'m²',src:'lev'},
+   {c:'Plafón hoja normal',      v:99.23, u:'m²',src:'lev'},
+   {c:'Plafón hoja antimoho',    v:17.86, u:'m²',src:'lev'},
+   {c:'Cajillo luz indirecta',   v:20.23, u:'ml', src:'lev'},
+   {c:'Cajillo cortinero',       v:14.06, u:'ml', src:'lev'},
+   {c:'Soportes ventilador',     v:4,     u:'pza',src:'lev'},
+   {c:'Soportes candelabro',     v:3,     u:'pza',src:'lev'}
+];
+var data103 = [
+   {c:'ADPanel hoja normal',     v:174.58,u:'m²',src:'lev'},
+   {c:'ADPanel hoja antimoho',   v:46.44, u:'m²',src:'lev'},
+   {c:'Muro 2 caras antimoho',   v:2.71,  u:'m²',src:'lev'},
+   {c:'Muro 1 cara normal',      v:6.90,  u:'m²',src:'lev'},
+   {c:'Plafón hoja normal',      v:99.45, u:'m²',src:'lev'},
+   {c:'Plafón hoja antimoho',    v:18.64, u:'m²',src:'lev'},
+   {c:'Cajillo luz indirecta',   v:20.23, u:'ml', src:'lev'},
+   {c:'Cajillo cortinero',       v:12.47, u:'ml', src:'lev'},
+   {c:'Soportes ventilador',     v:4,     u:'pza',src:'lev'},
+   {c:'Soportes candelabro',     v:3,     u:'pza',src:'lev'}
+];
+var data104 = [
+   {c:'ADPanel hoja normal',     v:174.47,u:'m²',src:'lev'},
+   {c:'ADPanel hoja antimoho',   v:68.62, u:'m²',src:'lev'},
+   {c:'Muro 2 caras antimoho',   v:2.71,  u:'m²',src:'lev'},
+   {c:'Muro 1 cara antimoho',    v:8.13,  u:'m²',src:'lev'},
+   {c:'Plafón hoja normal',      v:102.95,u:'m²',src:'lev'},
+   {c:'Plafón hoja antimoho',    v:29.56, u:'m²',src:'lev'},
+   {c:'Cajillo luz indirecta',   v:20.23, u:'ml', src:'lev'},
+   {c:'Cajillo cortinero',       v:15.00, u:'ml', src:'lev'},
+   {c:'Soportes ventilador',     v:4,     u:'pza',src:'lev'},
+   {c:'Soportes candelabro',     v:3,     u:'pza',src:'lev'}
+];
+
+function cloneRep(arr){
+  var out=[], i;
+  for(i=0;i<arr.length;i++){
+    out.push({c:arr[i].c, v:arr[i].v, u:arr[i].u, src:'rep'});
+  }
+  return out;
+}
+
+var CONDOS = [
+  {id:'101',nivel:'L1',proto:'P1',gt:421.68,items:data101},
+  {id:'102',nivel:'L1',proto:'P2',gt:386.75,items:data102},
+  {id:'103',nivel:'L1',proto:'P3',gt:380.20,items:data103},
+  {id:'104',nivel:'L1',proto:'P4',gt:421.68,items:data104},
+  {id:'201',nivel:'L2',proto:'P1',gt:421.68,items:cloneRep(data101)},
+  {id:'202',nivel:'L2',proto:'P2',gt:386.75,items:cloneRep(data102)},
+  {id:'203',nivel:'L2',proto:'P3',gt:380.20,items:cloneRep(data103)},
+  {id:'204',nivel:'L2',proto:'P4',gt:421.68,items:cloneRep(data104)},
+  {id:'301',nivel:'L3',proto:'P1',gt:421.68,items:cloneRep(data101)},
+  {id:'302',nivel:'L3',proto:'P2',gt:386.75,items:cloneRep(data102)},
+  {id:'303',nivel:'L3',proto:'P3',gt:380.20,items:cloneRep(data103)},
+  {id:'304',nivel:'L3',proto:'P4',gt:421.68,items:cloneRep(data104)}
+];
+
+// ════════════════════════════════════════════════════════
+// IDENTIDAD DE USUARIO — ID de dispositivo + nombre
+// ════════════════════════════════════════════════════════
+function getDeviceId(){
+  var id = localStorage.getItem('d9_device_id');
+  if(!id){
+    id = 'dev_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
+    localStorage.setItem('d9_device_id', id);
+  }
+  return id;
+}
+var DEVICE_ID = getDeviceId();
+
+function getUserName(){
+  return localStorage.getItem('d9_user_name') || '';
+}
+function setUserName(name){
+  localStorage.setItem('d9_user_name', name);
+  updateUserPill();
+}
+function updateUserPill(){
+  var name = getUserName();
+  document.getElementById('userPill').textContent = '👤 ' + (name || 'Sin nombre');
+}
+function openUserModal(){
+  document.getElementById('userNameInput').value = getUserName();
+  document.getElementById('userModal').classList.add('show');
+}
+function saveUserName(){
+  var val = document.getElementById('userNameInput').value.trim();
+  if(!val){ toast('Escribe tu nombre para continuar'); return; }
+  setUserName(val);
+  document.getElementById('userModal').classList.remove('show');
+  toast('Listo, '+val);
+}
+function currentSigner(){
+  var name = getUserName();
+  return name ? name : DEVICE_ID.slice(0,10);
+}
+
+// ════════════════════════════════════════════════════════
+// BITÁCORA — últimos N eventos, compartida en storage
+// ════════════════════════════════════════════════════════
+var BITACORA = [];
+async function loadBitacora(){
+  try{
+    var res = await window.fbStorage.get('bitacora');
+    BITACORA = res ? JSON.parse(res.value) : [];
+  }catch(e){ BITACORA = []; }
+}
+async function pushBitacora(entry){
+  BITACORA.unshift(entry);
+  if(BITACORA.length > 60) BITACORA = BITACORA.slice(0,60);
+  try{
+    await window.fbStorage.set('bitacora', JSON.stringify(BITACORA));
+  }catch(e){}
+  renderBitacora();
+}
+function renderBitacora(){
+  var el = document.getElementById('bitacoraList');
+  if(!el) return;
+  if(!BITACORA.length){
+    el.innerHTML = '<div class="bitacora-empty">Sin actividad registrada aún</div>';
+    return;
+  }
+  var html = '';
+  var i, max = Math.min(BITACORA.length, 12);
+  for(i=0;i<max;i++){
+    var e = BITACORA[i];
+    html += '<div class="bitacora-item"><strong>'+esc(e.user)+'</strong> '+esc(e.action)+' en <strong>'+esc(e.condo)+'</strong> — '+esc(e.concept)+' <span style="color:var(--mut)">· '+e.time+'</span></div>';
+  }
+  el.innerHTML = html;
+}
+function esc(s){
+  if(s===undefined||s===null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function nowStr(){
+  return new Date().toLocaleString('es-MX',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+
+// STATE[condoId][conceptoKey] = { check:0/1, fab: numero o null }
+// ════════════════════════════════════════════════════════
+var STATE = {};
+var saveTimer = null;
+
+function defaultStateFor(cid){
+  var c = getCondo(cid);
+  var s = {}, i;
+  for(i=0;i<c.items.length;i++){
+    s[c.items[i].c] = {check:0, fab:null};
+  }
+  return s;
+}
+
+async function loadAll(){
+  var i;
+  for(i=0;i<CONDOS.length;i++){
+    var cid = CONDOS[i].id;
+    try{
+      var res = await window.fbStorage.get('condo_'+cid);
+      STATE[cid] = res ? JSON.parse(res.value) : defaultStateFor(cid);
+    }catch(e){
+      STATE[cid] = defaultStateFor(cid);
+    }
+    // asegurar que todas las keys existan (por si se agregaron conceptos nuevos)
+    var defaults = defaultStateFor(cid);
+    var k;
+    for(k in defaults){
+      if(!STATE[cid][k]) STATE[cid][k] = defaults[k];
+    }
+  }
+}
+
+function saveCondo(cid){
+  // debounce: agrupa escrituras rápidas
+  clearTimeout(saveTimer);
+  var dataToSave = JSON.stringify(STATE[cid]);
+  window.fbStorage.set('condo_'+cid, dataToSave).then(function(){
+    updateSyncLabel();
+  }).catch(function(){
+    toast('Error guardando — revisa tu conexión');
+  });
+}
+
+function getCondo(cid){
+  var i;
+  for(i=0;i<CONDOS.length;i++){ if(CONDOS[i].id===cid) return CONDOS[i]; }
+  return null;
+}
+
+function pctCondo(cid){
+  var c = getCondo(cid);
+  var s = STATE[cid];
+  var total=0, done=0, i;
+  for(i=0;i<c.items.length;i++){
+    total++;
+    if(s[c.items[i].c] && s[c.items[i].c].check) done++;
+  }
+  if(!total) return 0;
+  return Math.round(done/total*100);
+}
+
+function tieneTipo(c, tipo){
+  var i;
+  for(i=0;i<c.items.length;i++){ if(c.items[i].src===tipo) return true; }
+  return false;
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════
+var filAct = 'todos';
+
+function render(){
+  var cont = document.getElementById('main');
+  cont.innerHTML = '';
+  var niveles = ['L1','L2','L3'];
+  var nvNames = {L1:'Nivel 1',L2:'Nivel 2',L3:'Nivel 3'};
+  var i,j;
+  for(i=0;i<niveles.length;i++){
+    var nv = niveles[i];
+    var condos = [];
+    for(j=0;j<CONDOS.length;j++){
+      var c = CONDOS[j];
+      if(c.nivel!==nv) continue;
+      if(filAct==='todos'||filAct===nv){ condos.push(c); continue; }
+      if(filAct==='rep' && tieneTipo(c,'rep')){ condos.push(c); continue; }
+      if(filAct==='propio' && tieneTipo(c,'lev')){ condos.push(c); continue; }
+    }
+    if(!condos.length) continue;
+    var sec = document.createElement('div');
+    sec.className='lvl';
+    sec.innerHTML = '<div class="lvlhdr"><span class="lvltag">'+nvNames[nv]+'</span><div class="lvldiv"></div></div>';
+    for(j=0;j<condos.length;j++) sec.appendChild(buildCard(condos[j]));
+    cont.appendChild(sec);
+  }
+}
+
+function buildCard(c){
+  var div = document.createElement('div');
+  div.className = 'card';
+  div.id = 'card_'+c.id;
+  div.innerHTML = hdrHTML(c) + bdyHTML(c);
+  return div;
+}
+
+function hdrHTML(c){
+  var p = pctCondo(c.id);
+  var pc = p>=100?'var(--ok)':p>0?'var(--warn)':'var(--mut)';
+  return '<div class="chdr" onclick="togCard(\''+c.id+'\')">'+
+    '<div class="cid">'+c.id+'</div>'+
+    '<div class="cinfo">'+
+      '<div class="cpro">Prototipo '+c.proto+' · '+c.items.length+' conceptos</div>'+
+      '<div class="cstat" style="color:'+pc+'">'+p+'% completado</div>'+
+      '<div class="cgt">Gran total fabricable: '+c.gt+' m²</div>'+
+    '</div>'+
+    '<span class="chv">▶</span>'+
+  '</div>';
+}
+
+function bdyHTML(c){
+  var s = STATE[c.id];
+  var html = '<div class="cbody" id="body_'+c.id+'">';
+  var i;
+  for(i=0;i<c.items.length;i++){
+    var it = c.items[i];
+    var st = s[it.c] || {check:0,fab:null};
+    var ck = st.check?1:0;
+    var srcLbl = it.src==='lev'?'Levantamiento propio':'Repetido de prototipo';
+    var srcCls = it.src==='lev'?'sb-lev':'sb-rep';
+    var fabVal = (st.fab===null||st.fab===undefined) ? '' : st.fab;
+    var pct = (st.fab!==null && st.fab!==undefined && it.v>0) ? Math.round(st.fab/it.v*100) : null;
+    var pctCls = pct===null?'':pct>=100?'fp-over':pct>=60?'fp-ok':'fp-warn';
+    var barColor = pct===null?'var(--mut)':pct>=100?'var(--ac)':pct>=60?'var(--ok)':'var(--warn)';
+    var barW = pct===null?0:Math.min(pct,100);
+
+    html += '<div class="concepto-row">'+
+      '<div class="cc-check'+(ck?' ck':'')+'" onclick="togCheck(\''+c.id+'\',\''+it.c.replace(/'/g,"\\'")+'\')"></div>'+
+      '<div class="cc-info">'+
+        '<div class="cc-name">'+it.c+'</div>'+
+        '<div class="cc-meta"><span class="src-badge '+srcCls+'">'+srcLbl+'</span></div>'+
+        '<div class="fab-row">'+
+          '<span class="fab-lbl">Fabricado:</span>'+
+          '<input type="number" inputmode="decimal" step="0.01" class="fab-inp" value="'+fabVal+'" '+
+            'placeholder="0" onchange="setFab(\''+c.id+'\',\''+it.c.replace(/'/g,"\\'")+'\',this.value)">'+
+          '<span class="fab-unit">'+it.u+'</span>'+
+          '<span class="fab-fabricable">de '+it.v+' '+it.u+'</span>'+
+          (pct!==null?'<span class="fab-pct '+pctCls+'">'+pct+'%</span>':'')+
+        '</div>'+
+        '<div class="fab-track"><div class="fab-fill" style="width:'+barW+'%;background:'+barColor+'"></div></div>'+
+        (st.lastBy?'<div class="log-line">Último cambio: <strong>'+esc(st.lastBy)+'</strong> · '+esc(st.lastAt)+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ════════════════════════════════════════════════════════
+// ACCIONES
+// ════════════════════════════════════════════════════════
+function togCard(id){
+  var card = document.getElementById('card_'+id);
+  if(!card) return;
+  card.classList.toggle('open');
+  var chv = card.querySelector('.chv');
+  if(chv) chv.style.transform = card.classList.contains('open')?'rotate(90deg)':'';
+}
+
+function togCheck(cid, key){
+  if(!STATE[cid][key]) STATE[cid][key] = {check:0,fab:null};
+  STATE[cid][key].check = STATE[cid][key].check ? 0 : 1;
+  var signer = currentSigner();
+  var ts = nowStr();
+  STATE[cid][key].lastBy = signer;
+  STATE[cid][key].lastAt = ts;
+  saveCondo(cid);
+  pushBitacora({user:signer, action: STATE[cid][key].check?'marcó ✓':'desmarcó', condo:cid, concept:key, time:ts});
+  rebuildCard(cid);
+}
+
+function setFab(cid, key, val){
+  if(!STATE[cid][key]) STATE[cid][key] = {check:0,fab:null};
+  var num = parseFloat(val);
+  STATE[cid][key].fab = isNaN(num) ? null : num;
+  var signer = currentSigner();
+  var ts = nowStr();
+  STATE[cid][key].lastBy = signer;
+  STATE[cid][key].lastAt = ts;
+  saveCondo(cid);
+  pushBitacora({user:signer, action:'capturó '+(isNaN(num)?'(vacío)':num+'')+' en', condo:cid, concept:key, time:ts});
+  rebuildCard(cid);
+}
+
+function rebuildCard(cid){
+  var card = document.getElementById('card_'+cid);
+  if(!card) return;
+  var isOpen = card.classList.contains('open');
+  var c = getCondo(cid);
+  card.innerHTML = hdrHTML(c)+bdyHTML(c);
+  if(isOpen){ card.classList.add('open'); var chv=card.querySelector('.chv'); if(chv) chv.style.transform='rotate(90deg)'; }
+}
+
+function fil(tipo, btn){
+  filAct = tipo;
+  var btns = document.querySelectorAll('.fb');
+  var i;
+  for(i=0;i<btns.length;i++) btns[i].classList.remove('on');
+  btn.classList.add('on');
+  render();
+}
+
+function exportar(){
+  var lines = ['CONCEPTOS COMPLETOS — TORRE D9 (live)','Generado: '+new Date().toLocaleString('es-MX'),''];
+  var i,j;
+  for(i=0;i<CONDOS.length;i++){
+    var c = CONDOS[i];
+    var s = STATE[c.id];
+    lines.push('CONDOMINIO '+c.id+' (Prototipo '+c.proto+') — Gran total: '+c.gt+' m²');
+    for(j=0;j<c.items.length;j++){
+      var it = c.items[j];
+      var st = s[it.c] || {check:0,fab:null};
+      var mark = st.check ? '[✓]' : '[ ]';
+      var fabTxt = (st.fab!==null && st.fab!==undefined) ? st.fab+' '+it.u+' fabricado' : 'sin dato';
+      var firmaTxt = st.lastBy ? ' — últ. cambio: '+st.lastBy+' ('+st.lastAt+')' : '';
+      lines.push('  '+mark+' '+it.c+' — fabricable '+it.v+' '+it.u+' — '+fabTxt+firmaTxt);
+    }
+    lines.push('');
+  }
+  var blob = new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Conceptos_D9_live_'+new Date().toISOString().slice(0,10)+'.txt';
+  a.click();
+  toast('Reporte exportado');
+}
+
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); },2200);
+}
+
+function updateSyncLabel(){
+  var now = new Date();
+  document.getElementById('lastSync').textContent =
+    'Sincronizado ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ════════════════════════════════════════════════════════
+// POLLING — refresca datos de otros dispositivos cada 8s
+// ════════════════════════════════════════════════════════
+var pollInterval = null;
+async function pollUpdates(){
+  var i;
+  for(i=0;i<CONDOS.length;i++){
+    var cid = CONDOS[i].id;
+    var card = document.getElementById('card_'+cid);
+    var isOpen = card && card.classList.contains('open');
+    try{
+      var res = await window.fbStorage.get('condo_'+cid);
+      if(res){
+        var fresh = JSON.parse(res.value);
+        var changed = JSON.stringify(fresh) !== JSON.stringify(STATE[cid]);
+        if(changed){
+          STATE[cid] = fresh;
+          if(card){
+            var c = getCondo(cid);
+            card.innerHTML = hdrHTML(c)+bdyHTML(c);
+            if(isOpen){ card.classList.add('open'); var chv=card.querySelector('.chv'); if(chv) chv.style.transform='rotate(90deg)'; }
+          }
+        }
+      }
+    }catch(e){}
+  }
+  try{
+    var bres = await window.fbStorage.get('bitacora');
+    if(bres){
+      var freshB = JSON.parse(bres.value);
+      if(JSON.stringify(freshB) !== JSON.stringify(BITACORA)){
+        BITACORA = freshB;
+        renderBitacora();
+      }
+    }
+  }catch(e){}
+  updateSyncLabel();
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+async function init(){
+  // Esperar a que el módulo de Firebase termine de cargar
+  if(!window.fbReady){
+    await new Promise(function(resolve){
+      window.addEventListener('fbready', resolve, {once:true});
+      // fallback por si el evento ya disparó antes de registrar el listener
+      setTimeout(resolve, 3000);
+    });
+  }
+  updateUserPill();
+  if(!getUserName()){
+    setTimeout(openUserModal, 400);
+  }
+  await loadAll();
+  await loadBitacora();
+  render();
+  renderBitacora();
+  updateSyncLabel();
+  pollInterval = setInterval(pollUpdates, 8000);
+}
+
+init();
+</script>
+</body>
+</html>
