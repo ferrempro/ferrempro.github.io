@@ -59,4 +59,5 @@ document.getElementById('exportDataBtn').addEventListener('click',exportData);
 document.getElementById('importDataInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f);e.target.value='';});
 
 renderProjects();renderPrices();renderApu();loadRulesForm();calcMaterials();
-if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+if('serviceWorker' in navigator && location.protocol!=='file:')
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
