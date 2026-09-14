@@ -1,175 +1,212 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>RemPro — Apps</title>
-<style>
-:root{
-  --bg:#0f1117;--bg2:#181c27;--bg3:#1e2333;
-  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
-  --text:#f0f2f8;--text2:#8b90a8;--text3:#5a5f75;
-  --blue:#4a8fff;--teal:#29c48a;--amber:#f5a623;--violet:#a78bfa;
-  --green:#3dd68c;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
-
-/* HEADER */
-.header{
-  background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:20px 24px 20px;
-  padding-top:calc(20px + env(safe-area-inset-top));
-  text-align:center;
-}
-.logo{
-  width:56px;height:56px;border-radius:16px;
-  background:linear-gradient(135deg,#4a8fff,#29c48a);
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;
-  margin:0 auto 12px;
-}
-.brand{font-size:22px;font-weight:700;letter-spacing:-.3px;}
-.brand span{color:var(--teal);}
-.tagline{font-size:13px;color:var(--text2);margin-top:4px;}
-
-/* MAIN */
-.main{padding:24px 16px;max-width:480px;margin:0 auto;}
-
-.section-label{
-  font-size:11px;font-weight:600;color:var(--text3);
-  text-transform:uppercase;letter-spacing:.1em;
-  margin-bottom:12px;
-}
-
-/* APP CARDS */
-.app-card{
-  display:flex;align-items:center;gap:16px;
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:16px;padding:16px;margin-bottom:12px;
-  text-decoration:none;color:var(--text);
-  transition:border-color .15s, background .15s;
-  touch-action:manipulation;
-  cursor:pointer;
-}
-.app-card:active{background:var(--bg3);border-color:var(--border2);}
-.app-icon{
-  width:52px;height:52px;border-radius:13px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:24px;flex-shrink:0;
-}
-.app-info{flex:1;min-width:0;}
-.app-name{font-size:15px;font-weight:700;margin-bottom:3px;}
-.app-desc{font-size:12px;color:var(--text2);line-height:1.4;}
-.app-arrow{font-size:18px;color:var(--text3);flex-shrink:0;}
-
-/* COLORES POR APP */
-.icon-sim{background:linear-gradient(135deg,rgba(41,196,138,.25),rgba(41,196,138,.1));border:1px solid rgba(41,196,138,.3);}
-.icon-torre{background:linear-gradient(135deg,rgba(74,143,255,.25),rgba(74,143,255,.1));border:1px solid rgba(74,143,255,.3);}
-.icon-calc{background:linear-gradient(135deg,rgba(245,166,35,.25),rgba(245,166,35,.1));border:1px solid rgba(245,166,35,.3);}
-
-.border-sim{border-left:3px solid var(--teal);}
-.border-torre{border-left:3px solid var(--blue);}
-.border-calc{border-left:3px solid var(--amber);}
-
-/* VERSION CHIPS */
-.chip{
-  display:inline-block;font-size:10px;font-weight:600;
-  padding:2px 8px;border-radius:20px;margin-left:6px;
-  vertical-align:middle;
-}
-.chip-teal{background:rgba(41,196,138,.12);color:var(--teal);border:1px solid rgba(41,196,138,.3);}
-.chip-blue{background:rgba(74,143,255,.12);color:var(--blue);border:1px solid rgba(74,143,255,.3);}
-.chip-amber{background:rgba(245,166,35,.12);color:var(--amber);border:1px solid rgba(245,166,35,.3);}
-
-/* DIVIDER */
-.divider{height:1px;background:var(--border);margin:20px 0;}
-
-/* INFO BOX */
-.info-box{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:12px;padding:14px 16px;
-  font-size:12px;color:var(--text2);line-height:1.8;
-  margin-bottom:16px;
-}
-.info-box strong{color:var(--text);}
-
-/* FOOTER */
-.footer{
-  text-align:center;padding:20px 16px;
-  padding-bottom:calc(20px + env(safe-area-inset-bottom));
-  font-size:11px;color:var(--text3);
-}
-.footer a{color:var(--text3);text-decoration:none;}
-
-/* PULSE DOT */
-.pulse{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--green);display:inline-block;
-  margin-right:5px;vertical-align:middle;
-  animation:pulse 2s infinite;
-}
-@keyframes pulse{
-  0%,100%{opacity:1;transform:scale(1);}
-  50%{opacity:.5;transform:scale(.8);}
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f2f4f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="RemPro Control" />
+  <title>RemPro Control V1</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">RP</div>
+        <div><strong>RemPro Control</strong><span>V1 · Control + APU</span></div>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-view="dashboard">▦ <span>Dashboard</span></button>
+        <button class="nav-btn" data-view="master">⌂ <span>Control Maestro</span></button>
+        <button class="nav-btn" data-view="materials">▤ <span>Muros y plafones</span></button>
+        <button class="nav-btn" data-view="apu">∑ <span>APU rápido</span></button>
+        <button class="nav-btn" data-view="prices">$ <span>Precios</span></button>
+        <button class="nav-btn" data-view="settings">⚙ <span>Reglas</span></button>
+      </nav>
+      <div class="sidebar-note">Datos guardados localmente en este dispositivo.</div>
+    </aside>
 
-<div class="header">
-  <div class="logo">RP</div>
-  <div class="brand">Rem<span>Pro</span></div>
-  <div class="tagline">Torre D9 · Pedregal La Paz · Herramientas de obra</div>
-</div>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Menú">☰</button>
+        <div>
+          <h1 id="viewTitle">Dashboard</h1>
+          <p id="viewSubtitle">Resumen general de RemPro</p>
+        </div>
+        <div class="top-actions">
+          <span class="status-dot"></span><span class="desktop-only">Local / Offline</span>
+        </div>
+      </header>
 
-<div class="main">
+      <section id="dashboard" class="view active">
+        <div class="hero-card">
+          <div>
+            <small>RemPro Control V1</small>
+            <h2>Una sola fuente de verdad para obra, costos y cotizaciones.</h2>
+            <p>Diseñado para iPad, iPhone y Windows. La V1 funciona sin servidor y conserva los datos en el dispositivo.</p>
+          </div>
+          <button class="primary" data-go="master">Nueva obra</button>
+        </div>
 
-  <div class="section-label"><span class="pulse"></span>Apps activas</div>
+        <div class="kpi-grid">
+          <article class="kpi"><span>Obras activas</span><strong id="kpiActive">0</strong><small>registradas</small></article>
+          <article class="kpi"><span>Contratado</span><strong id="kpiContract">$0</strong><small>antes de IVA</small></article>
+          <article class="kpi"><span>Cobrado</span><strong id="kpiCollected">$0</strong><small>flujo recibido</small></article>
+          <article class="kpi"><span>Por cobrar</span><strong id="kpiReceivable">$0</strong><small>saldo comercial</small></article>
+        </div>
 
-  <a class="app-card border-sim" href="Simulador%20Destajo%20—%20RemPro.html">
-    <div class="app-icon icon-sim">📊</div>
-    <div class="app-info">
-      <div class="app-name">Simulador Destajo <span class="chip chip-teal">v3.5</span></div>
-      <div class="app-desc">Calcula destajo semanal, nómina proporcional, asistencia y puntos de equilibrio por concepto</div>
-    </div>
-    <div class="app-arrow">›</div>
-  </a>
+        <div class="grid-2">
+          <article class="panel">
+            <div class="panel-head"><h3>Obras recientes</h3><button class="link-btn" data-go="master">Ver todas</button></div>
+            <div id="recentProjects" class="empty">Aún no hay obras registradas.</div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><h3>Alertas</h3></div>
+            <div id="alerts" class="empty">Sin alertas por ahora.</div>
+          </article>
+        </div>
+      </section>
 
-  <a class="app-card border-torre" href="Torre%20D-9%20·%20RemPro%20Estimaciones.html">
-    <div class="app-icon icon-torre">🏗</div>
-    <div class="app-info">
-      <div class="app-name">Torre D-9 <span class="chip chip-blue">Estimaciones</span></div>
-      <div class="app-desc">Control de estimaciones por condominio, avance por partida y cálculo de destajo GCIS</div>
-    </div>
-    <div class="app-arrow">›</div>
-  </a>
+      <section id="master" class="view">
+        <div class="section-head">
+          <div><h2>Control Maestro</h2><p>Obras, contratación, cobros y costo real.</p></div>
+          <button class="primary" id="addProjectBtn">+ Agregar obra</button>
+        </div>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Obra</th><th>Cliente</th><th>Estatus</th><th>Contratado</th><th>Cobrado</th><th>Costo real</th><th>Saldo</th><th></th></tr></thead>
+            <tbody id="projectsBody"></tbody>
+          </table>
+          <div id="projectsEmpty" class="empty">No hay obras registradas.</div>
+        </div>
+      </section>
 
-  <a class="app-card border-calc" href="RemPro%20·%20Calculadora%20de%20Insumos.html">
-    <div class="app-icon icon-calc">🧮</div>
-    <div class="app-info">
-      <div class="app-name">Calculadora RemPro <span class="chip chip-amber">Insumos</span></div>
-      <div class="app-desc">Cuantificación de materiales, explosión de insumos y APU por sistema constructivo</div>
-    </div>
-    <div class="app-arrow">›</div>
-  </a>
+      <section id="materials" class="view">
+        <div class="section-head"><div><h2>Calculadora de muros y plafones</h2><p>Cuantificación paramétrica con reglas editables RemPro.</p></div></div>
+        <div class="grid-2 materials-layout">
+          <article class="panel form-panel">
+            <label>Sistema
+              <select id="systemType">
+                <option value="wall1">Muro ligero · 1 cara</option>
+                <option value="wall2">Muro ligero · 2 caras</option>
+                <option value="ceiling">Plafón corrido suspendido</option>
+              </select>
+            </label>
+            <div class="form-grid">
+              <label>Largo (m)<input id="matLength" type="number" step="0.01" value="3.00"></label>
+              <label>Alto / ancho (m)<input id="matHeight" type="number" step="0.01" value="2.60"></label>
+              <label>Desperdicio (%)<input id="matWaste" type="number" step="0.5" value="5"></label>
+              <label>Capas por cara<input id="matLayers" type="number" min="1" value="1"></label>
+            </div>
+            <label>Tipo de panel
+              <select id="panelType">
+                <option>Tablaroca estándar 1.22×2.44</option>
+                <option>Guard Rey 1.22×2.44</option>
+                <option>Permabase 1.22×2.44</option>
+                <option>ADPanel 1.22×2.44</option>
+              </select>
+            </label>
+            <button class="primary full" id="calcMaterialsBtn">Calcular materiales</button>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><h3>Lista estimada</h3><span id="areaBadge" class="badge">0.00 m²</span></div>
+            <div id="materialsResult" class="result-list empty">Captura las medidas y calcula.</div>
+          </article>
+        </div>
+      </section>
 
-  <div class="divider"></div>
+      <section id="apu" class="view">
+        <div class="section-head"><div><h2>APU rápido</h2><p>Del costo directo al precio comercial sin exponer el análisis al cliente.</p></div><button class="secondary" id="addApuRow">+ Insumo</button></div>
+        <div class="panel table-wrap">
+          <table class="apu-table"><thead><tr><th>Tipo</th><th>Descripción</th><th>Cantidad</th><th>Unidad</th><th>P.U. costo</th><th>Importe</th><th></th></tr></thead><tbody id="apuBody"></tbody></table>
+        </div>
+        <div class="grid-2">
+          <article class="panel form-panel">
+            <div class="form-grid">
+              <label>Indirectos %<input id="apuIndirect" type="number" step="0.1" value="10"></label>
+              <label>Riesgo %<input id="apuRisk" type="number" step="0.1" value="0"></label>
+              <label>Utilidad %<input id="apuProfit" type="number" step="0.1" value="18"></label>
+              <label>IVA %<input id="apuVat" type="number" step="0.1" value="16"></label>
+              <label>Cantidad de venta<input id="apuSaleQty" type="number" step="0.01" value="1"></label>
+              <label>Unidad venta<input id="apuSaleUnit" value="m²"></label>
+            </div>
+          </article>
+          <article class="panel summary-card">
+            <div><span>Costo directo</span><strong id="apuDirect">$0.00</strong></div>
+            <div><span>Precio comercial antes de IVA</span><strong id="apuCommercial">$0.00</strong></div>
+            <div><span>P.U. comercial</span><strong id="apuUnit">$0.00</strong></div>
+            <div class="total"><span>Total con IVA</span><strong id="apuTotal">$0.00</strong></div>
+          </article>
+        </div>
+      </section>
 
-  <div class="info-box">
-    <strong>¿Cómo usar desde iPhone?</strong><br>
-    Abre esta página en Safari → toca el botón compartir → <strong>Agregar a pantalla de inicio</strong> → tendrás acceso directo como una app sin instalar nada.<br><br>
-    <strong>Funciona en:</strong> iPhone · iPad · Windows · Mac · Android
+      <section id="prices" class="view">
+        <div class="section-head"><div><h2>Catálogo de precios</h2><p>Histórico local con proveedor, IVA y fecha de verificación.</p></div><button class="primary" id="addPriceBtn">+ Precio</button></div>
+        <div class="panel table-wrap"><table><thead><tr><th>Insumo</th><th>Proveedor</th><th>Unidad</th><th>Precio + IVA</th><th>Verificado</th><th></th></tr></thead><tbody id="pricesBody"></tbody></table><div id="pricesEmpty" class="empty">Aún no hay precios guardados.</div></div>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="section-head"><div><h2>Reglas RemPro</h2><p>Factores editables para evitar cálculos rígidos.</p></div></div>
+        <div class="panel form-panel">
+          <div class="form-grid rules-grid">
+            <label>Separación listón (m)<input id="ruleListon" type="number" step="0.01"></label>
+            <label>Separación canaleta (m)<input id="ruleCanaleta" type="number" step="0.01"></label>
+            <label>Largo ángulo (m)<input id="ruleAngle" type="number" step="0.01"></label>
+            <label>Alambre por punto (m)<input id="ruleWire" type="number" step="0.01"></label>
+            <label>Tornillos por hoja<input id="ruleScrews" type="number" step="1"></label>
+            <label>Mini pija por m²<input id="ruleMini" type="number" step="1"></label>
+            <label>Cajillo m²/ml<input id="ruleCajillo" type="number" step="0.01"></label>
+            <label>Cortinero m²/ml<input id="ruleCurtain" type="number" step="0.01"></label>
+          </div>
+          <button class="primary" id="saveRulesBtn">Guardar reglas</button>
+          <hr class="soft-sep">
+          <div class="section-head compact-head"><div><h2>Respaldo local</h2><p>Mientras conectamos la base central, puedes exportar e importar tus datos entre dispositivos.</p></div></div>
+          <div class="backup-actions">
+            <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button>
+            <label class="secondary file-label">Importar respaldo<input id="importDataInput" type="file" accept="application/json" hidden></label>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-</div>
+  <dialog id="projectDialog">
+    <form method="dialog" id="projectForm">
+      <div class="dialog-head"><h3>Nueva obra</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="form-grid">
+        <label>Obra<input id="pName" required></label>
+        <label>Cliente<input id="pClient" required></label>
+        <label>Folio<input id="pFolio" placeholder="RP-..."></label>
+        <label>Estatus<select id="pStatus"><option>Activa</option><option>En cotización</option><option>En pausa</option><option>Terminada</option></select></label>
+        <label>Contratado<input id="pContract" type="number" step="0.01" value="0"></label>
+        <label>Cobrado<input id="pCollected" type="number" step="0.01" value="0"></label>
+        <label>Costo real<input id="pCost" type="number" step="0.01" value="0"></label>
+        <label>Avance físico %<input id="pProgress" type="number" min="0" max="100" value="0"></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
+    </form>
+  </dialog>
 
-<div class="footer">
-  Remodelaciones Profesionales · La Paz BCS · uso interno<br>
-  <a href="https://github.com/ferrempro/ferrempro.github.io">ferrempro.github.io</a>
-</div>
+  <dialog id="priceDialog">
+    <form method="dialog" id="priceForm">
+      <div class="dialog-head"><h3>Registrar precio</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="form-grid">
+        <label>Insumo<input id="prItem" required></label>
+        <label>Proveedor<input id="prSupplier" required></label>
+        <label>Unidad<input id="prUnit" placeholder="pza, bulto, m²..."></label>
+        <label>Precio antes de IVA<input id="prNet" type="number" step="0.01" required></label>
+        <label>IVA %<input id="prVat" type="number" step="0.1" value="16"></label>
+        <label>Fecha<input id="prDate" type="date"></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
+    </form>
+  </dialog>
 
+  <script src="app.js"></script>
 </body>
 </html>
