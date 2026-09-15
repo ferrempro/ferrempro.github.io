@@ -1,11 +1,18 @@
-const STORAGE = {
+const STORAGE = (window.RemProData && window.RemProData.keys) || {
   projects:'rempro_projects_v1', prices:'rempro_prices_v1', rules:'rempro_rules_v1'
 };
 const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n||0));
 const num = v => Number(v||0);
 const today = () => new Date().toISOString().slice(0,10);
-const load = (k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
-const save = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load = (k,d)=>{
+  if(window.RemProData && window.RemProData.local)return window.RemProData.local.load(k,d);
+  try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}
+};
+const save = (k,v)=>{
+  if(window.RemProData && window.RemProData.local)return window.RemProData.local.save(k,v);
+  localStorage.setItem(k,JSON.stringify(v));
+  return v;
+};
 let projects = load(STORAGE.projects,[]);
 let prices = load(STORAGE.prices,[]);
 let rules = load(STORAGE.rules,{liston:.61,canaleta:.90,angle:3.05,wire:.70,screws:50,mini:8,cajillo:.75,curtain:.35});
