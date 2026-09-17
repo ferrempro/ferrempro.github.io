@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="RemPro Control" />
-  <title>RemPro Control V1</title>
+  <title>RemPro Control V2</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
@@ -18,7 +18,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-mark">RP</div>
-        <div><strong>RemPro Control</strong><span>V1 · Control + APU</span></div>
+        <div><strong>RemPro Control</strong><span>V2 · Control + APU + Nube</span></div>
       </div>
       <nav>
         <button class="nav-btn active" data-view="dashboard">▦ <span>Dashboard</span></button>
@@ -28,7 +28,7 @@
         <button class="nav-btn" data-view="prices">$ <span>Precios</span></button>
         <button class="nav-btn" data-view="settings">⚙ <span>Reglas</span></button>
       </nav>
-      <div class="sidebar-note">Datos guardados localmente en este dispositivo.</div>
+      <div class="sidebar-note" id="sidebarNote">Datos guardados localmente en este dispositivo.</div>
     </aside>
 
     <main class="main">
@@ -39,16 +39,19 @@
           <p id="viewSubtitle">Resumen general de RemPro</p>
         </div>
         <div class="top-actions">
-          <span class="status-dot"></span><span class="desktop-only">Local / Offline</span>
+          <span id="cloudStatus" class="desktop-only">● Local</span>
+          <button class="link-btn desktop-only" id="accountBtn" type="button">Iniciar sesión</button>
+          <button class="link-btn desktop-only" id="syncNowBtn" type="button" hidden>Sincronizar ahora</button>
+          <button class="link-btn desktop-only" id="signOutBtn" type="button" hidden>Cerrar sesión</button>
         </div>
       </header>
 
       <section id="dashboard" class="view active">
         <div class="hero-card">
           <div>
-            <small>RemPro Control V1</small>
+            <small>RemPro Control V2</small>
             <h2>Una sola fuente de verdad para obra, costos y cotizaciones.</h2>
-            <p>Diseñado para iPad, iPhone y Windows. La V1 funciona sin servidor y conserva los datos en el dispositivo.</p>
+            <p>Diseñado para iPad, iPhone y Windows. Funciona sin servidor y conserva los datos en el dispositivo; si inicias sesión, se sincroniza entre tus equipos.</p>
           </div>
           <button class="primary" data-go="master">Nueva obra</button>
         </div>
@@ -165,7 +168,17 @@
           </div>
           <button class="primary" id="saveRulesBtn">Guardar reglas</button>
           <hr class="soft-sep">
-          <div class="section-head compact-head"><div><h2>Respaldo local</h2><p>Mientras conectamos la base central, puedes exportar e importar tus datos entre dispositivos.</p></div></div>
+          <div class="section-head compact-head"><div><h2>Nube y sincronización</h2><p>Comparte obras, precios y reglas entre tus dispositivos con tu cuenta RemPro.</p></div></div>
+          <div class="cloud-panel">
+            <div><strong id="settingsCloudStatus">Local</strong><small id="settingsCloudDetail"></small></div>
+            <div class="backup-actions">
+              <button class="secondary" id="accountBtnSettings" type="button" onclick="document.getElementById('accountBtn').click()">Iniciar sesión / crear cuenta</button>
+              <button class="secondary" id="syncNowBtnSettings" type="button" onclick="document.getElementById('syncNowBtn').click()">Sincronizar ahora</button>
+              <button class="secondary" id="signOutBtnSettings" type="button" onclick="document.getElementById('signOutBtn').click()">Cerrar sesión</button>
+            </div>
+          </div>
+          <hr class="soft-sep">
+          <div class="section-head compact-head"><div><h2>Respaldo local</h2><p>Exporta e importa tus datos como archivo JSON, además de la sincronización en la nube.</p></div></div>
           <div class="backup-actions">
             <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button>
             <label class="secondary file-label">Importar respaldo<input id="importDataInput" type="file" accept="application/json" hidden></label>
@@ -207,10 +220,27 @@
     </form>
   </dialog>
 
+  <dialog id="authDialog">
+    <form id="authForm">
+      <div class="dialog-head"><h3>Cuenta RemPro</h3><button type="button" value="cancel" class="icon-btn" onclick="document.getElementById('authDialog').close()">✕</button></div>
+      <p class="auth-hint">Sólo los correos autorizados por Fernando pueden ver y editar los datos de RemPro en la nube. Sin cuenta o sin autorización, la app sigue funcionando en modo local.</p>
+      <div class="form-grid">
+        <label>Correo<input id="authEmail" type="email" required autocomplete="username"></label>
+        <label>Contraseña<input id="authPassword" type="password" required minlength="6" autocomplete="current-password"></label>
+      </div>
+      <p id="authError" class="auth-error"></p>
+      <div class="dialog-actions">
+        <button type="button" class="link-btn" id="authModeToggle">¿Primera vez? Crear cuenta</button>
+        <button type="submit" id="authSubmitBtn" class="primary">Iniciar sesión</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
   <script src="supabase-client.js"></script>
   <script src="data-store.js"></script>
+  <script src="sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
