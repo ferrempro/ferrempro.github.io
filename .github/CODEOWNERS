@@ -1,0 +1,10 @@
+# RemPro Control — ownership de cambios sensibles
+* @ferrempro
+
+/supabase/ @ferrempro
+/.github/ @ferrempro
+/supabase-config.js @ferrempro
+/supabase-client.js @ferrempro
+/sync.js @ferrempro
+/app.js @ferrempro
+/sw.js @ferrempro
