@@ -299,6 +299,21 @@ async function uploadPriceEvidence(file, historyId) {
   return { path, name: file.name || safeName };
 }
 
+async function savePriceHistoryToCloud(record) {
+  const client = DATA.remote.getClient();
+  if (!client || !window.RemProSupabase?.session) return;
+  const payload = {
+    id: record.id, price_id: record.price_id || null, item: record.item,
+    supplier: record.supplier || null, unit: record.unit || null,
+    net: num(record.net), vat: num(record.vat), date: record.date || today(),
+    source_type: record.source_type || 'manual',
+    evidence_path: record.evidence_path || null, evidence_name: record.evidence_name || null,
+    deleted: Boolean(record.deleted), updated_at: record.updated_at || nowISO(), updated_by: currentEmail()
+  };
+  const { error } = await client.from('rempro_price_history').insert(payload);
+  if (error && error.code !== '23505') throw error;
+}
+
 document.getElementById('pricesBody').addEventListener('click', e => {
   const editId = e.target.closest('[data-edit-price]')?.dataset.editPrice;
   if (editId) openPrice(editId);
@@ -356,6 +371,8 @@ document.getElementById('priceForm').onsubmit = async e => {
   priceHistory = [...priceHistory, historyRecord];
   save(STORAGE.prices, prices);
   save(STORAGE.priceHistory, priceHistory);
+  try { await savePriceHistoryToCloud(historyRecord); }
+  catch (err) { console.warn('Historial pendiente de sincronizar:', err); }
   prd.close();
   document.getElementById('priceForm').reset();
   renderPrices(); renderPriceHistory(); renderApu();
@@ -375,7 +392,7 @@ function loadRulesForm() {
   document.getElementById('ruleCajillo').value = rules.cajillo;
   document.getElementById('ruleCurtain').value = rules.curtain;
 }
-document.getElementById('saveRulesBtn').onclick = () => {
+document.getElementById('saveRulesBtn').onclick = async () => {
   if (!['ruleStudSpacing','ruleStudLength','ruleTrackLength','ruleListon','ruleCanaleta','ruleAngle','ruleWire','ruleScrews','ruleMini','ruleCajillo','ruleCurtain'].every(id => Number.isFinite(Number(val(id))) && Number(val(id)) > 0)) { alert('Todos los factores deben ser mayores que cero.'); return; }
   rules = {
     studSpacing: num(val('ruleStudSpacing')), studLength: num(val('ruleStudLength')), trackLength: num(val('ruleTrackLength')),
@@ -384,7 +401,16 @@ document.getElementById('saveRulesBtn').onclick = () => {
     updated_at: nowISO(), updated_by: currentEmail()
   };
   save(STORAGE.rules, rules);
-  alert('Reglas RemPro guardadas en este dispositivo.');
+  const client = DATA.remote.getClient();
+  if (client && window.RemProSupabase?.session) {
+    const { error } = await client.from('rempro_rules').update({
+      stud_spacing: rules.studSpacing,
+      stud_length: rules.studLength,
+      track_length: rules.trackLength
+    }).eq('id','default');
+    if (error) console.warn('Parámetros geométricos pendientes de sincronizar:', error);
+  }
+  alert('Reglas RemPro guardadas.');
   window.RemProSync && window.RemProSync.queueSync();
 };
 function updateBalanceOptions() {
@@ -548,6 +574,42 @@ if (authForm) authForm.addEventListener('submit', async e => {
   }
 });
 
+async function refreshCloudExtensions() {
+  const client = DATA.remote.getClient();
+  if (!client || !window.RemProSupabase?.session) return;
+  try {
+    const localHistory = DATA.ensureRecordMeta(load(STORAGE.priceHistory, [])).list;
+    const { data: remoteHistory, error: historyReadError } = await client.from('rempro_price_history').select('*');
+    if (historyReadError) throw historyReadError;
+    const remoteIds = new Set((remoteHistory || []).map(r => r.id));
+    for (const row of localHistory) {
+      if (!remoteIds.has(row.id)) await savePriceHistoryToCloud(row);
+    }
+    const { data: confirmedHistory, error: confirmedError } = await client.from('rempro_price_history').select('*').order('date',{ascending:false}).order('updated_at',{ascending:false});
+    if (confirmedError) throw confirmedError;
+    save(STORAGE.priceHistory, confirmedHistory || []);
+
+    const { data: updates, error: updatesError } = await client.from('rempro_project_updates').select('*').order('as_of_date',{ascending:false}).order('created_at',{ascending:false});
+    if (updatesError) throw updatesError;
+    save(STORAGE.projectUpdates, (updates || []).map(r => ({...r, deleted:false, updated_at:r.created_at || new Date(0).toISOString()})));
+
+    const { data: remoteRules, error: rulesError } = await client.from('rempro_rules').select('*').eq('id','default').maybeSingle();
+    if (rulesError) throw rulesError;
+    if (remoteRules) {
+      const localRules = load(STORAGE.rules, {});
+      save(STORAGE.rules, {
+        ...localRules,
+        studSpacing: num(remoteRules.stud_spacing || localRules.studSpacing || .61),
+        studLength: num(remoteRules.stud_length || localRules.studLength || 3.05),
+        trackLength: num(remoteRules.track_length || localRules.trackLength || 3.05)
+      });
+    }
+    reloadLocalData();
+  } catch (err) {
+    console.warn('Extensiones RemPro pendientes de sincronizar:', err);
+  }
+}
+
 function reloadLocalData() {
   projects = load(STORAGE.projects, []);
   prices = load(STORAGE.prices, []);
@@ -558,7 +620,7 @@ function reloadLocalData() {
   rules = nextRules;
   renderProjects(); renderPrices(); renderPriceHistory(); renderApu(); if (rulesChanged) loadRulesForm();
 }
-window.addEventListener('rempro:synced', reloadLocalData);
+window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
 window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.rules].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
