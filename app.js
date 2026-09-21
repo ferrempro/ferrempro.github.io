@@ -513,8 +513,6 @@ const signOutBtn = document.getElementById('signOutBtn');
 const syncNowBtn = document.getElementById('syncNowBtn');
 const authForm = document.getElementById('authForm');
 const authError = document.getElementById('authError');
-const authModeToggle = document.getElementById('authModeToggle');
-let authMode = 'signin';
 
 function paintStatus(status) {
   const labels = {
@@ -552,23 +550,13 @@ if (window.RemProSync) {
 if (accountBtn) accountBtn.onclick = () => { authError.textContent = ''; authForm.reset(); authDialog.showModal(); };
 if (signOutBtn) signOutBtn.onclick = () => window.RemProSync && window.RemProSync.signOut();
 if (syncNowBtn) syncNowBtn.onclick = () => window.RemProSync && window.RemProSync.syncNow();
-if (authModeToggle) authModeToggle.onclick = () => {
-  authMode = authMode === 'signin' ? 'signup' : 'signin';
-  document.getElementById('authSubmitBtn').textContent = authMode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta';
-  authModeToggle.textContent = authMode === 'signin' ? '¿Primera vez? Crear cuenta' : '¿Ya tienes cuenta? Iniciar sesión';
-};
 if (authForm) authForm.addEventListener('submit', async e => {
   e.preventDefault();
   authError.textContent = '';
   const email = val('authEmail'), password = val('authPassword');
   try {
-    if (authMode === 'signin') {
-      await window.RemProSync.signIn(email, password);
-      authDialog.close();
-    } else {
-      await window.RemProSync.signUp(email, password);
-      authError.textContent = 'Cuenta creada. Si tu correo requiere confirmación, revisa tu bandeja antes de iniciar sesión.';
-    }
+    await window.RemProSync.signIn(email, password);
+    authDialog.close();
   } catch (err) {
     authError.textContent = err && err.message ? err.message : 'No se pudo completar la operación.';
   }
