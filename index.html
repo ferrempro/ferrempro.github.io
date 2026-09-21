@@ -80,9 +80,10 @@
           <div><h2>Control Maestro</h2><p>Obras, contratación, cobros y costo real.</p></div>
           <button class="primary" id="addProjectBtn">+ Agregar obra</button>
         </div>
+        <div class="panel form-panel master-filters"><label>Buscar obra, cliente o folio<input id="projectSearch" type="search" placeholder="Buscar..."></label><label>Estatus<select id="projectFilter"><option value="">Todos</option><option>Activa</option><option>En cotización</option><option>En pausa</option><option>Terminada</option></select></label></div>
         <div class="panel table-wrap">
           <table>
-            <thead><tr><th>Obra</th><th>Cliente</th><th>Estatus</th><th>Contratado</th><th>Cobrado</th><th>Costo real</th><th>Saldo</th><th></th></tr></thead>
+            <thead><tr><th>Obra</th><th>Cliente</th><th>Estatus</th><th>Contratado</th><th>Cobrado</th><th>Costo real</th><th>Saldo</th><th>Avance</th><th>Margen antes de IVA</th><th>Acciones</th></tr></thead>
             <tbody id="projectsBody"></tbody>
           </table>
           <div id="projectsEmpty" class="empty">No hay obras registradas.</div>
@@ -180,7 +181,7 @@
           <hr class="soft-sep">
           <div class="section-head compact-head"><div><h2>Respaldo local</h2><p>Exporta e importa tus datos como archivo JSON, además de la sincronización en la nube.</p></div></div>
           <div class="backup-actions">
-            <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button>
+            <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button><button class="secondary" id="exportSafetyBtn" type="button">Descargar respaldo de seguridad</button>
             <label class="secondary file-label">Importar respaldo<input id="importDataInput" type="file" accept="application/json" hidden></label>
           </div>
         </div>
@@ -190,39 +191,39 @@
 
   <dialog id="projectDialog">
     <form method="dialog" id="projectForm">
-      <div class="dialog-head"><h3>Nueva obra</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="dialog-head"><h3 id="projectDialogTitle">Nueva obra</h3><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="icon-btn">✕</button></div>
       <div class="form-grid">
         <label>Obra<input id="pName" required></label>
         <label>Cliente<input id="pClient" required></label>
         <label>Folio<input id="pFolio" placeholder="RP-..."></label>
         <label>Estatus<select id="pStatus"><option>Activa</option><option>En cotización</option><option>En pausa</option><option>Terminada</option></select></label>
-        <label>Contratado<input id="pContract" type="number" step="0.01" value="0"></label>
-        <label>Cobrado<input id="pCollected" type="number" step="0.01" value="0"></label>
-        <label>Costo real<input id="pCost" type="number" step="0.01" value="0"></label>
-        <label>Avance físico %<input id="pProgress" type="number" min="0" max="100" value="0"></label>
+        <label>Contratado<input id="pContract" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Cobrado<input id="pCollected" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Costo real<input id="pCost" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Avance físico %<input id="pProgress" required type="number" min="0" max="100" value="0"></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
+      <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
 
   <dialog id="priceDialog">
     <form method="dialog" id="priceForm">
-      <div class="dialog-head"><h3>Registrar precio</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="dialog-head"><h3>Registrar precio</h3><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="icon-btn">✕</button></div>
       <div class="form-grid">
         <label>Insumo<input id="prItem" required></label>
         <label>Proveedor<input id="prSupplier" required></label>
         <label>Unidad<input id="prUnit" placeholder="pza, bulto, m²..."></label>
-        <label>Precio antes de IVA<input id="prNet" type="number" step="0.01" required></label>
-        <label>IVA %<input id="prVat" type="number" step="0.1" value="16"></label>
+        <label>Precio antes de IVA<input id="prNet" min="0" type="number" step="0.01" required></label>
+        <label>IVA %<input id="prVat" min="0" max="100" required type="number" step="0.1" value="16"></label>
         <label>Fecha<input id="prDate" type="date"></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
+      <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
 
   <dialog id="authDialog">
     <form id="authForm">
-      <div class="dialog-head"><h3>Cuenta RemPro</h3><button type="button" value="cancel" class="icon-btn" onclick="document.getElementById('authDialog').close()">✕</button></div>
+      <div class="dialog-head"><h3>Cuenta RemPro</h3><button type="button" value="cancel" formnovalidate class="icon-btn" onclick="document.getElementById('authDialog').close()">✕</button></div>
       <p class="auth-hint">Sólo los correos autorizados por Fernando pueden ver y editar los datos de RemPro en la nube. Sin cuenta o sin autorización, la app sigue funcionando en modo local.</p>
       <div class="form-grid">
         <label>Correo<input id="authEmail" type="email" required autocomplete="username"></label>
@@ -240,7 +241,8 @@
   <script src="supabase-config.js"></script>
   <script src="supabase-client.js"></script>
   <script src="data-store.js"></script>
-  <script src="sync.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
+  <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>

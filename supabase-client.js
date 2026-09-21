@@ -1,4 +1,4 @@
-﻿// RemPro Control V2 — cliente Supabase con sesión persistente.
+// RemPro Control V2 — cliente Supabase con sesión persistente.
 // A diferencia de la base V2 original (persistSession:false,
 // autoRefreshToken:false, sin pantalla de acceso), este archivo SÍ
 // mantiene la sesión entre recargas y expone signIn/signUp/signOut para
@@ -55,12 +55,12 @@
 
       state.client.auth.getSession().then(({ data }) => {
         state.session = data && data.session ? data.session : null;
-        notify();
+        setTimeout(notify, 0);
       });
 
       state.client.auth.onAuthStateChange((_event, session) => {
         state.session = session || null;
-        notify();
+        setTimeout(notify, 0);
       });
 
       state.ready = true;
@@ -95,7 +95,8 @@
 
   async function signOut() {
     if (!state.client) return;
-    await state.client.auth.signOut();
+    const { error } = await state.client.auth.signOut();
+    if (error) throw error;
     state.session = null;
     notify();
   }
