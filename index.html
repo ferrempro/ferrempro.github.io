@@ -80,12 +80,24 @@
           <div><h2>Control Maestro</h2><p>Obras, contratación, cobros y costo real.</p></div>
           <button class="primary" id="addProjectBtn">+ Agregar obra</button>
         </div>
+        <div class="panel form-panel master-filters"><label>Buscar obra, cliente o folio<input id="projectSearch" type="search" placeholder="Buscar..."></label><label>Estatus<select id="projectFilter"><option value="">Todos</option><option>Activa</option><option>En cotización</option><option>En pausa</option><option>Terminada</option></select></label></div>
         <div class="panel table-wrap">
           <table>
-            <thead><tr><th>Obra</th><th>Cliente</th><th>Estatus</th><th>Contratado</th><th>Cobrado</th><th>Costo real</th><th>Saldo</th><th></th></tr></thead>
+            <thead><tr><th>Obra</th><th>Cliente</th><th>Estatus</th><th>Contratado</th><th>Cobrado</th><th>Costo real</th><th>Saldo</th><th>Avance</th><th>Margen antes de IVA</th><th>Acciones</th></tr></thead>
             <tbody id="projectsBody"></tbody>
           </table>
           <div id="projectsEmpty" class="empty">No hay obras registradas.</div>
+        </div>
+        <div class="panel form-panel">
+          <div class="section-head compact-head">
+            <div><h2>Balance de obra · corte al momento</h2><p>Resumen interno de contrato, flujo, costo real, margen y avance físico.</p></div>
+            <button class="secondary" id="printBalanceBtn" type="button">Imprimir / guardar PDF</button>
+          </div>
+          <div class="form-grid">
+            <label>Obra<select id="balanceProject"></select></label>
+            <label>Fecha de corte<input id="balanceDate" type="date" readonly></label>
+          </div>
+          <div id="balanceResult" class="balance-grid empty">Selecciona una obra para generar el balance.</div>
         </div>
       </section>
 
@@ -114,6 +126,7 @@
                 <option>ADPanel 1.22×2.44</option>
               </select>
             </label>
+            <p class="auth-hint">Para muros, la medida 1.22 × 2.44 m corresponde únicamente al panel. Los postes/montenes se cuantifican por pieza comercial de 3.05 m y por su modulación.</p>
             <button class="primary full" id="calcMaterialsBtn">Calcular materiales</button>
           </article>
           <article class="panel">
@@ -125,8 +138,13 @@
 
       <section id="apu" class="view">
         <div class="section-head"><div><h2>APU rápido</h2><p>Del costo directo al precio comercial sin exponer el análisis al cliente.</p></div><button class="secondary" id="addApuRow">+ Insumo</button></div>
+        <div class="panel form-panel">
+          <label>Descripción del concepto
+            <textarea id="apuConceptDescription" rows="3" placeholder="Ej. Suministro y colocación de muro de panel de yeso a dos caras, estructura galvanizada, tratamiento de juntas, materiales, mano de obra y herramienta necesarios para su correcta ejecución."></textarea>
+          </label>
+        </div>
         <div class="panel table-wrap">
-          <table class="apu-table"><thead><tr><th>Tipo</th><th>Descripción</th><th>Cantidad</th><th>Unidad</th><th>P.U. costo</th><th>Importe</th><th></th></tr></thead><tbody id="apuBody"></tbody></table>
+          <table class="apu-table"><thead><tr><th>Tipo</th><th>Descripción</th><th>Precio base</th><th>Cantidad</th><th>Unidad</th><th>P.U. costo</th><th>Importe</th><th></th></tr></thead><tbody id="apuBody"></tbody></table>
         </div>
         <div class="grid-2">
           <article class="panel form-panel">
@@ -149,14 +167,22 @@
       </section>
 
       <section id="prices" class="view">
-        <div class="section-head"><div><h2>Catálogo de precios</h2><p>Histórico local con proveedor, IVA y fecha de verificación.</p></div><button class="primary" id="addPriceBtn">+ Precio</button></div>
-        <div class="panel table-wrap"><table><thead><tr><th>Insumo</th><th>Proveedor</th><th>Unidad</th><th>Precio + IVA</th><th>Verificado</th><th></th></tr></thead><tbody id="pricesBody"></tbody></table><div id="pricesEmpty" class="empty">Aún no hay precios guardados.</div></div>
+        <div class="section-head"><div><h2>Catálogo de precios</h2><p>El APU toma como referencia el precio vigente más reciente. Cada verificación conserva su historial y evidencia.</p></div><button class="primary" id="addPriceBtn">+ Registrar verificación</button></div>
+        <div class="panel table-wrap"><table><thead><tr><th>Insumo</th><th>Proveedor</th><th>Unidad</th><th>Precio + IVA</th><th>Última verificación</th><th></th></tr></thead><tbody id="pricesBody"></tbody></table><div id="pricesEmpty" class="empty">Aún no hay precios guardados.</div></div>
+        <div class="panel table-wrap">
+          <div class="panel-head"><h3>Historial de costos</h3><span class="badge" id="priceHistoryCount">0 registros</span></div>
+          <table><thead><tr><th>Fecha</th><th>Insumo</th><th>Proveedor</th><th>Precio + IVA</th><th>Origen</th><th>Evidencia</th></tr></thead><tbody id="priceHistoryBody"></tbody></table>
+          <div id="priceHistoryEmpty" class="empty">Aún no hay verificaciones históricas.</div>
+        </div>
       </section>
 
       <section id="settings" class="view">
         <div class="section-head"><div><h2>Reglas RemPro</h2><p>Factores editables para evitar cálculos rígidos.</p></div></div>
         <div class="panel form-panel">
           <div class="form-grid rules-grid">
+            <label>Separación postes (m)<input id="ruleStudSpacing" type="number" step="0.01"></label>
+            <label>Largo poste comercial (m)<input id="ruleStudLength" type="number" step="0.01"></label>
+            <label>Largo canal comercial (m)<input id="ruleTrackLength" type="number" step="0.01"></label>
             <label>Separación listón (m)<input id="ruleListon" type="number" step="0.01"></label>
             <label>Separación canaleta (m)<input id="ruleCanaleta" type="number" step="0.01"></label>
             <label>Largo ángulo (m)<input id="ruleAngle" type="number" step="0.01"></label>
@@ -172,7 +198,7 @@
           <div class="cloud-panel">
             <div><strong id="settingsCloudStatus">Local</strong><small id="settingsCloudDetail"></small></div>
             <div class="backup-actions">
-              <button class="secondary" id="accountBtnSettings" type="button" onclick="document.getElementById('accountBtn').click()">Iniciar sesión / crear cuenta</button>
+              <button class="secondary" id="accountBtnSettings" type="button" onclick="document.getElementById('accountBtn').click()">Iniciar sesión</button>
               <button class="secondary" id="syncNowBtnSettings" type="button" onclick="document.getElementById('syncNowBtn').click()">Sincronizar ahora</button>
               <button class="secondary" id="signOutBtnSettings" type="button" onclick="document.getElementById('signOutBtn').click()">Cerrar sesión</button>
             </div>
@@ -180,7 +206,7 @@
           <hr class="soft-sep">
           <div class="section-head compact-head"><div><h2>Respaldo local</h2><p>Exporta e importa tus datos como archivo JSON, además de la sincronización en la nube.</p></div></div>
           <div class="backup-actions">
-            <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button>
+            <button class="secondary" id="exportDataBtn" type="button">Exportar respaldo</button><button class="secondary" id="exportSafetyBtn" type="button">Descargar respaldo de seguridad</button>
             <label class="secondary file-label">Importar respaldo<input id="importDataInput" type="file" accept="application/json" hidden></label>
           </div>
         </div>
@@ -190,39 +216,49 @@
 
   <dialog id="projectDialog">
     <form method="dialog" id="projectForm">
-      <div class="dialog-head"><h3>Nueva obra</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="dialog-head"><h3 id="projectDialogTitle">Nueva obra</h3><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="icon-btn">✕</button></div>
       <div class="form-grid">
         <label>Obra<input id="pName" required></label>
         <label>Cliente<input id="pClient" required></label>
         <label>Folio<input id="pFolio" placeholder="RP-..."></label>
         <label>Estatus<select id="pStatus"><option>Activa</option><option>En cotización</option><option>En pausa</option><option>Terminada</option></select></label>
-        <label>Contratado<input id="pContract" type="number" step="0.01" value="0"></label>
-        <label>Cobrado<input id="pCollected" type="number" step="0.01" value="0"></label>
-        <label>Costo real<input id="pCost" type="number" step="0.01" value="0"></label>
-        <label>Avance físico %<input id="pProgress" type="number" min="0" max="100" value="0"></label>
+        <label>Contratado<input id="pContract" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Cobrado<input id="pCollected" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Costo real<input id="pCost" min="0" required type="number" step="0.01" value="0"></label>
+        <label>Avance físico %<input id="pProgress" type="number" min="0" max="100" value="0" readonly></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
+      <p class="auth-hint">El avance físico es de solo lectura en la app. Se actualiza mediante ChatGPT —incluyendo dictado/voz— para mantener trazabilidad diaria.</p>
+      <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
 
   <dialog id="priceDialog">
     <form method="dialog" id="priceForm">
-      <div class="dialog-head"><h3>Registrar precio</h3><button value="cancel" class="icon-btn">✕</button></div>
+      <div class="dialog-head"><h3>Registrar precio</h3><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="icon-btn">✕</button></div>
       <div class="form-grid">
         <label>Insumo<input id="prItem" required></label>
         <label>Proveedor<input id="prSupplier" required></label>
         <label>Unidad<input id="prUnit" placeholder="pza, bulto, m²..."></label>
-        <label>Precio antes de IVA<input id="prNet" type="number" step="0.01" required></label>
-        <label>IVA %<input id="prVat" type="number" step="0.1" value="16"></label>
+        <label>Precio antes de IVA<input id="prNet" min="0" type="number" step="0.01" required></label>
+        <label>IVA %<input id="prVat" min="0" max="100" required type="number" step="0.1" value="16"></label>
         <label>Fecha<input id="prDate" type="date"></label>
+        <label>Origen
+          <select id="prSourceType">
+            <option value="manual">Captura manual</option>
+            <option value="photo">Fotografía</option>
+            <option value="document">Documento</option>
+          </select>
+        </label>
+        <label>Evidencia<input id="prEvidence" type="file" accept="image/*,application/pdf,.csv,.xlsx,.xls,.doc,.docx"></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
+      <p class="auth-hint">Las fotos y documentos se guardan como evidencia privada en Supabase. Para adjuntar un archivo debes iniciar sesión; la captura manual funciona también sin archivo.</p>
+      <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
 
   <dialog id="authDialog">
     <form id="authForm">
-      <div class="dialog-head"><h3>Cuenta RemPro</h3><button type="button" value="cancel" class="icon-btn" onclick="document.getElementById('authDialog').close()">✕</button></div>
+      <div class="dialog-head"><h3>Cuenta RemPro</h3><button type="button" value="cancel" formnovalidate class="icon-btn" onclick="document.getElementById('authDialog').close()">✕</button></div>
       <p class="auth-hint">Sólo los correos autorizados por Fernando pueden ver y editar los datos de RemPro en la nube. Sin cuenta o sin autorización, la app sigue funcionando en modo local.</p>
       <div class="form-grid">
         <label>Correo<input id="authEmail" type="email" required autocomplete="username"></label>
@@ -230,7 +266,6 @@
       </div>
       <p id="authError" class="auth-error"></p>
       <div class="dialog-actions">
-        <button type="button" class="link-btn" id="authModeToggle">¿Primera vez? Crear cuenta</button>
         <button type="submit" id="authSubmitBtn" class="primary">Iniciar sesión</button>
       </div>
     </form>
@@ -240,7 +275,8 @@
   <script src="supabase-config.js"></script>
   <script src="supabase-client.js"></script>
   <script src="data-store.js"></script>
-  <script src="sync.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
+  <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>

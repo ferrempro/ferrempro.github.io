@@ -1,0 +1,11 @@
+# RemPro Control — no versionar secretos ni respaldos operativos
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+RemPro_Control_respaldo_*.json
+RemPro_respaldo_seguridad*.json
+*backup*.json
+*respaldo*.json

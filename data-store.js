@@ -5,7 +5,11 @@
     projects: 'rempro_projects_v1',
     prices: 'rempro_prices_v1',
     rules: 'rempro_rules_v1',
-    syncMeta: 'rempro_sync_meta_v1'
+    syncMeta: 'rempro_sync_meta_v1',
+    backup: 'rempro_safety_backup_v2',
+    apu: 'rempro_apu_v2',
+    priceHistory: 'rempro_price_history_v1',
+    projectUpdates: 'rempro_project_updates_v1'
   });
 
   const local = Object.freeze({
@@ -46,11 +50,11 @@
   // sola vez por registro: si ya trae id, se respeta tal cual.
   function ensureRecordMeta(list) {
     let changed = false;
-    const now = new Date().toISOString();
+    const now = new Date(0).toISOString();
     const out = (Array.isArray(list) ? list : []).map(item => {
       const copy = { ...item };
       if (!copy.id) { copy.id = crypto.randomUUID(); changed = true; }
-      if (!copy.updated_at) { copy.updated_at = now; changed = true; }
+      if (!copy.updated_at || !Number.isFinite(Date.parse(copy.updated_at))) { copy.updated_at = now; changed = true; }
       if (typeof copy.deleted !== 'boolean') { copy.deleted = false; changed = true; }
       return copy;
     });
