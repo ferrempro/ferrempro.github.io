@@ -120,7 +120,6 @@
     catch(e) { setStatus('error',`No se pudo cerrar sesión: ${e.message}`); }
   }
   window.RemProSync=Object.freeze({syncNow,queueSync,signIn,signOut,
-    signUp:(email,password)=>window.RemProSupabase.signUp(email.trim(),password),
     onStatusChange(fn){listeners.add(fn);fn({...state});return()=>listeners.delete(fn);},
     get status(){return {...state};}
   });
