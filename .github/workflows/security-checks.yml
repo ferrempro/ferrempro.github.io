@@ -1,0 +1,59 @@
+name: RemPro security checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in app.js data-store.js supabase-client.js sync.js sw.js; do
+            node --check "$file"
+          done
+
+      - name: Reject privileged secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE             --exclude-dir=.git             --exclude='*.md'             --exclude='*.sql'             'sb_secret_[A-Za-z0-9_-]+|SUPABASE_SERVICE_ROLE(_KEY)?[[:space:]]*[:=]|postgres(ql)?://[^[:space:]]+:[^[:space:]@]+@' .; then
+            echo "Privileged credential pattern detected."
+            exit 1
+          fi
+
+      - name: Reject private-key and environment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad_files="$(git ls-files | grep -E '(^|/)\.env($|\.)|\.(pem|key|p12|pfx)$' || true)"
+          if [ -n "$bad_files" ]; then
+            echo "Sensitive file types must not be committed:"
+            echo "$bad_files"
+            exit 1
+          fi
+
+      - name: Confirm browser config is publishable-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "publishableKey" supabase-config.js
+          if grep -qE 'service_role|sb_secret_' supabase-config.js; then
+            # Comments documenting forbidden credentials are allowed; actual secret
+            # values are already rejected by the previous guard.
+            if grep -qE "['\"]sb_secret_[A-Za-z0-9_-]+['\"]" supabase-config.js; then
+              echo "Privileged Supabase secret found in browser config."
+              exit 1
+            fi
+          fi
