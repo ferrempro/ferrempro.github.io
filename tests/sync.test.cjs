@@ -41,3 +41,5 @@ test('tombstones remain deleted on other devices',async()=>{const h=harness({loc
 test('session changed during read stops subsequent writes',async()=>{const h=harness({local:[row('a','Local')],hook:({ctx})=>{ctx.RemProSupabase.session=null;}});await h.ctx.RemProSync.syncNow();assert.equal(h.tables.rempro_projects.length,0);assert.equal(h.load()[0].name,'Local');});
 
 test('concurrent server write is not overwritten and keeps local draft',async()=>{const h=harness({local:[row('a','Local','2026-09-21T00:00:00.000Z')],remote:[row('a','Remote')],writeConflict:true});await h.ctx.RemProSync.syncNow();assert.equal(h.ctx.RemProSync.status.status,'error');assert.equal(h.load()[0].name,'Local');assert.equal(h.tables.rempro_projects[0].name,'Concurrent');});
+
+test('legacy rules receive geometry defaults on first upload',async()=>{const h=harness();await h.ctx.RemProSync.syncNow();const r=h.tables.rempro_rules[0];assert.equal(r.stud_spacing,.61);assert.equal(r.stud_length,3.05);assert.equal(r.track_length,3.05);});
