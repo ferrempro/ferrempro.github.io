@@ -484,7 +484,7 @@ async function importData(file) {
     save(STORAGE.projects, projects); save(STORAGE.prices, prices); save(STORAGE.priceHistory, priceHistory); save(STORAGE.projectUpdates, projectUpdates); save(STORAGE.rules, rules);
     if (data.apu) {
       apuRows = data.apu.rows;
-      const allowed = ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit'];
+      const allowed = ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit','apuConceptDescription'];
       allowed.forEach(id => { if (data.apu.fields && data.apu.fields[id] !== undefined) document.getElementById(id).value = data.apu.fields[id]; });
       renderApu();
     }
