@@ -7,7 +7,9 @@
     rules: 'rempro_rules_v1',
     syncMeta: 'rempro_sync_meta_v1',
     backup: 'rempro_safety_backup_v2',
-    apu: 'rempro_apu_v2'
+    apu: 'rempro_apu_v2',
+    priceHistory: 'rempro_price_history_v1',
+    projectUpdates: 'rempro_project_updates_v1'
   });
 
   const local = Object.freeze({

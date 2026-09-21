@@ -1,7 +1,7 @@
 // RemPro Control V2 — cliente Supabase con sesión persistente.
 // A diferencia de la base V2 original (persistSession:false,
 // autoRefreshToken:false, sin pantalla de acceso), este archivo SÍ
-// mantiene la sesión entre recargas y expone signIn/signUp/signOut para
+// mantiene la sesión entre recargas y expone signIn/signOut para
 // que sync.js y app.js puedan usarlos. Si el SDK no carga (sin red) o el
 // proyecto no coincide, la app sigue funcionando en modo local: nunca se
 // bloquea la interfaz por falta de nube.
@@ -84,15 +84,6 @@
     return data.session;
   }
 
-  async function signUp(email, password) {
-    if (!state.client) throw new Error('Sin conexión a Supabase todavía.');
-    const { data, error } = await state.client.auth.signUp({ email, password });
-    if (error) throw error;
-    state.session = data.session || null;
-    notify();
-    return data;
-  }
-
   async function signOut() {
     if (!state.client) return;
     const { error } = await state.client.auth.signOut();
@@ -108,7 +99,6 @@
     get reason() { return state.reason; },
     get session() { return state.session; },
     signIn,
-    signUp,
     signOut,
     onAuthChange(fn) {
       state.listeners.push(fn);
