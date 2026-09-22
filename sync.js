@@ -91,6 +91,31 @@
     data.local.save(key,[...merged.values()]);
     window.dispatchEvent(new CustomEvent('rempro:synced'));
   }
+  async function syncApu(client,user) {
+    const key=data.keys.apu;
+    const local=data.local.load(key,null);
+    const {data:rows,error}=await client.from('rempro_apu_drafts').select('*').eq('id','default').limit(1);
+    if(error) throw error;
+    assertSession(user.id);
+    const remote=rows?.[0] || null;
+    const localStamp=stamp(local);
+    const remoteStamp=stamp(remote);
+
+    if (local && (!remote || localStamp>remoteStamp)) {
+      const payload={id:'default',payload:{rows:Array.isArray(local.rows)?local.rows:[],fields:local.fields||{}},updated_at:local.updated_at || new Date().toISOString(),updated_by:user.email};
+      const query=remote
+        ? client.from('rempro_apu_drafts').update(payload).eq('id','default').eq('updated_at',remote.updated_at)
+        : client.from('rempro_apu_drafts').upsert(payload,{onConflict:'id',ignoreDuplicates:true});
+      const {data:written,error:writeError}=await query.select();
+      if(writeError) throw writeError;
+      if(!written?.length) throw new Error('El APU cambió en otro dispositivo durante la sincronización. Los datos locales se conservan.');
+    } else if (remote && (!local || remoteStamp>localStamp)) {
+      data.local.save(key,{...(remote.payload||{}),updated_at:remote.updated_at,updated_by:remote.updated_by});
+    }
+
+    window.dispatchEvent(new CustomEvent('rempro:synced'));
+  }
+
   async function syncRules(client,user) {
     const snapshot=data.local.load(data.keys.rules,{});
     const local={...snapshot,id:'default',updated_at:snapshot.updated_at || new Date(0).toISOString()};
@@ -122,11 +147,12 @@
       assertSession(user.id);
       const meta=data.local.load(data.keys.syncMeta,{});
       if (!meta.lastSyncAt && !data.local.load(data.keys.backup,null)) {
-        data.local.save(data.keys.backup,{version:1,exportedAt:new Date().toISOString(),projects:data.local.load(data.keys.projects,[]),prices:data.local.load(data.keys.prices,[]),rules:data.local.load(data.keys.rules,{})});
+        data.local.save(data.keys.backup,{version:1,exportedAt:new Date().toISOString(),projects:data.local.load(data.keys.projects,[]),prices:data.local.load(data.keys.prices,[]),rules:data.local.load(data.keys.rules,{}),apu:data.local.load(data.keys.apu,null)});
       }
       await syncTable(client,'projects',user);
       await syncTable(client,'prices',user);
       await syncTable(client,'documents',user);
+      await syncApu(client,user);
       await syncRules(client,user);
       assertSession(user.id);
       state.lastSyncAt=new Date().toISOString();

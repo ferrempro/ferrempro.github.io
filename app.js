@@ -321,14 +321,14 @@ function latestPriceOptions(selected='') {
 function renderApu() {
   const body = document.getElementById('apuBody');
   body.innerHTML = apuRows.map((r, i) => `<tr><td><select data-apu-field="type" data-apu-i="${i}"><option ${r.type === 'Material' ? 'selected' : ''}>Material</option><option ${r.type === 'Mano de obra' ? 'selected' : ''}>Mano de obra</option><option ${r.type === 'Herramienta' ? 'selected' : ''}>Herramienta</option><option ${r.type === 'Subcontrato' ? 'selected' : ''}>Subcontrato</option></select></td><td><input value="${esc(r.desc)}" data-apu-field="desc" data-apu-i="${i}"></td><td><select class="apu-price-source" data-apu-field="sourcePriceId" data-apu-i="${i}">${latestPriceOptions(r.sourcePriceId || '')}</select></td><td><input type="number" min="0" step="0.01" value="${r.qty}" data-apu-field="qty" data-apu-i="${i}"></td><td><input value="${esc(r.unit)}" data-apu-field="unit" data-apu-i="${i}"></td><td><input type="number" min="0" step="0.01" value="${r.pu}" data-apu-field="pu" data-apu-i="${i}"></td><td data-apu-total>${money(r.qty * r.pu)}</td><td><button class="mini-btn" data-apu-remove="${i}">✕</button></td></tr>`).join('');
-  calcApu();
+  calcApu(false);
 }
 document.getElementById('apuBody').addEventListener('input', e => {
   const i = e.target.dataset.apuI, field = e.target.dataset.apuField;
   if (i === undefined || !field || field === 'sourcePriceId') return;
   apuRows[i][field] = (field === 'qty' || field === 'pu') ? num(e.target.value) : e.target.value;
   e.target.closest('tr').querySelector('[data-apu-total]').textContent = money(apuRows[i].qty * apuRows[i].pu);
-  calcApu();
+  calcApu(true);
 });
 document.getElementById('apuBody').addEventListener('change', e => {
   const i = e.target.dataset.apuI, field = e.target.dataset.apuField;
@@ -340,14 +340,29 @@ document.getElementById('apuBody').addEventListener('change', e => {
     apuRows[i].unit = price.unit || apuRows[i].unit;
     apuRows[i].pu = Number((num(price.net) * (1 + num(price.vat) / 100)).toFixed(2));
   }
+  const current=load(STORAGE.apu,{});
+  save(STORAGE.apu,{...current,...currentApuPayload(),updated_at:nowISO(),updated_by:currentEmail()});
+  window.RemProSync && window.RemProSync.queueSync();
   renderApu();
 });
 document.getElementById('apuBody').addEventListener('click', e => {
   const i = e.target.closest('[data-apu-remove]')?.dataset.apuRemove;
-  if (i !== undefined) { apuRows.splice(i, 1); renderApu(); }
+  if (i !== undefined) {
+    apuRows.splice(i, 1);
+    const current=load(STORAGE.apu,{});
+    save(STORAGE.apu,{...current,...currentApuPayload(),updated_at:nowISO(),updated_by:currentEmail()});
+    window.RemProSync && window.RemProSync.queueSync();
+    renderApu();
+  }
 });
-document.getElementById('addApuRow').onclick = () => { apuRows.push({ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }); renderApu(); };
-['apuIndirect', 'apuRisk', 'apuProfit', 'apuVat', 'apuSaleQty', 'apuSaleUnit', 'apuConceptDescription'].forEach(id => document.getElementById(id).addEventListener('input', calcApu));
+document.getElementById('addApuRow').onclick = () => {
+  apuRows.push({ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 });
+  const current=load(STORAGE.apu,{});
+  save(STORAGE.apu,{...current,...currentApuPayload(),updated_at:nowISO(),updated_by:currentEmail()});
+  window.RemProSync && window.RemProSync.queueSync();
+  renderApu();
+};
+['apuIndirect', 'apuRisk', 'apuProfit', 'apuVat', 'apuSaleQty', 'apuSaleUnit', 'apuConceptDescription'].forEach(id => document.getElementById(id).addEventListener('input', () => calcApu(true)));
 function currentApuPayload() {
   return {
     rows: apuRows,
@@ -363,20 +378,32 @@ function saveApuInputs(showFeedback=false) {
     }
     return false;
   }
-  save(STORAGE.apu, currentApuPayload());
+  const payload={...currentApuPayload(),updated_at:nowISO(),updated_by:currentEmail()};
+  save(STORAGE.apu,payload);
+  window.RemProSync && window.RemProSync.queueSync(0);
   if (showFeedback) {
     const status=document.getElementById('apuSaveStatus');
-    if(status) status.textContent=`Insumos guardados en este dispositivo · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`;
+    const cloud=Boolean(window.RemProSupabase?.session);
+    if(status) status.textContent=cloud
+      ? `Insumos guardados · sincronizando con la nube · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`
+      : `Insumos guardados en este dispositivo · inicia sesión para sincronizarlos · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`;
   }
   return true;
 }
 document.getElementById('saveApuInputsBtn').onclick = () => saveApuInputs(true);
 
-function calcApu() {
+function calcApu(persist=false) {
   if (apuRows.some(r => !Number.isFinite(r.qty) || !Number.isFinite(r.pu) || r.qty < 0 || r.pu < 0) || ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty'].some(id => !Number.isFinite(Number(val(id))) || Number(val(id)) < 0) || Number(val('apuSaleQty')) <= 0) {
     ['apuDirect','apuCommercial','apuUnit','apuTotal'].forEach(id => document.getElementById(id).textContent='Revisa cantidades'); return;
   }
-  save(STORAGE.apu, currentApuPayload());
+  if (persist) {
+    const current=load(STORAGE.apu,{});
+    save(STORAGE.apu,{...current,...currentApuPayload(),updated_at:nowISO(),updated_by:currentEmail()});
+    window.RemProSync && window.RemProSync.queueSync();
+  } else {
+    const current=load(STORAGE.apu,{});
+    save(STORAGE.apu,{...current,...currentApuPayload()});
+  }
   const direct = apuRows.reduce((a, r) => a + r.qty * r.pu, 0), ind = direct * num(val('apuIndirect')) / 100, risk = direct * num(val('apuRisk')) / 100,
     base = direct + ind + risk, profit = base * num(val('apuProfit')) / 100, commercial = base + profit,
     qty = Math.max(.0001, num(val('apuSaleQty'))), vat = commercial * num(val('apuVat')) / 100;
@@ -736,6 +763,13 @@ async function refreshCloudExtensions() {
   }
 }
 
+function reloadApuFromLocal() {
+  const stored=load(STORAGE.apu,null);
+  if(!stored) return;
+  apuRows=Array.isArray(stored.rows)?stored.rows:apuRows;
+  if(stored.fields) Object.entries(stored.fields).forEach(([id,value])=>{ const input=document.getElementById(id); if(input) input.value=value; });
+  renderApu();
+}
 function reloadLocalData() {
   projects = load(STORAGE.projects, []);
   prices = load(STORAGE.prices, []);
@@ -745,10 +779,10 @@ function reloadLocalData() {
   const nextRules = { ...defaultRules, ...load(STORAGE.rules, rules) };
   const rulesChanged = JSON.stringify(nextRules) !== JSON.stringify(rules);
   rules = nextRules;
-  renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); if (rulesChanged) loadRulesForm();
+  renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); if (rulesChanged) loadRulesForm();
 }
 window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
-window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules].includes(e.key)) reloadLocalData(); });
+window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
 renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
