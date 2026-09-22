@@ -113,9 +113,12 @@
     setStatus('syncing','Sincronizando…');
     try {
       const client=data.remote.getClient();
-      const {data:members,error}=await client.from('rempro_members').select('email').eq('email',user.email);
-      if(error) throw error;
-      if (!members?.length) throw new Error('Tu correo no está autorizado en rempro_members.');
+      const {data:authorized,error}=await client.rpc('rempro_is_member');
+      if(error) {
+        if (error.code === '42501') throw new Error('La sesión de RemPro no tiene permisos válidos. Cierra sesión y vuelve a iniciar sesión.');
+        throw error;
+      }
+      if (authorized !== true) throw new Error('Tu correo no está autorizado para RemPro Control.');
       assertSession(user.id);
       const meta=data.local.load(data.keys.syncMeta,{});
       if (!meta.lastSyncAt && !data.local.load(data.keys.backup,null)) {
