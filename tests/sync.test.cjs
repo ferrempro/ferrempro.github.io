@@ -10,7 +10,7 @@ function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,fail=fals
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.dispatchEvent=e=>events.push(e.type);
  ctx.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
  const client={rpc:async(name)=> name==='rempro_is_member'?{data:member,error:null}:{data:null,error:{message:'unknown rpc'}},from(table){let mode='read',payload,opts,filters=[],start=0,end=499;const q={
-  select(){return q;},order(){return q;},range(a,b){start=a;end=b;return q;},eq(k,v){filters.push([k,v]);return q;},
+  select(){return q;},order(){return q;},range(a,b){start=a;end=b;return q;},limit(n){end=Math.min(end,start+n-1);return q;},eq(k,v){filters.push([k,v]);return q;},
   upsert(p,o){mode='insert';payload=p;opts=o;return q;},update(p){mode='update';payload=p;return q;},
   async then(resolve,reject){try {
    if(fail && table==='rempro_projects') return resolve({error:{message:'offline'}});
