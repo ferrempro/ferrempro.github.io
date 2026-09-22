@@ -52,3 +52,8 @@ Comprobado el 21 de septiembre de 2026:
 El asesor reporta advertencias preexistentes ajenas a las tablas mínimas: once funciones RPC del esquema contable usan `SECURITY DEFINER` y son ejecutables por usuarios autenticados. Debe revisarse su autorización interna antes de habilitar esa arquitectura; cambiar sus permisos indiscriminadamente puede romper sus operaciones. [Guía de revisión](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
 
 También está desactivada la protección frente a contraseñas filtradas. [Configuración de contraseñas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). No se cambiaron estos permisos ni ajustes de cuenta en esta actualización.
+
+
+## Histórico de obras eliminadas
+
+Las obras eliminadas desde cualquier dispositivo se conservan automáticamente en Supabase en `rempro_project_archive`. El archivado ocurre en el servidor al recibir un tombstone sincronizado, un cambio de `deleted=false` a `deleted=true` o una eliminación física. El histórico guarda una fotografía de la obra y, al momento del archivo, sus documentos y avances asociados. Es de solo lectura para usuarios autorizados y no concede escritura desde la app.
