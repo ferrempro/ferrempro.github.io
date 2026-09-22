@@ -782,7 +782,7 @@ function reloadLocalData() {
   renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); if (rulesChanged) loadRulesForm();
 }
 window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
-window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules].includes(e.key)) reloadLocalData(); });
+window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
 renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
