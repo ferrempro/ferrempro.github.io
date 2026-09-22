@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RemPro · Diagnóstico de sincronización</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f4f7fb;color:#17324d}
+main{max-width:760px;margin:40px auto;padding:0 20px}
+.card{background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:22px;box-shadow:0 10px 30px #17324d12}
+h1{margin-top:0}.row{padding:10px 0;border-bottom:1px solid #edf1f5}.ok{color:#16794b}.bad{color:#b42318}.wait{color:#667085}
+button,a.btn{display:inline-block;margin-top:16px;padding:10px 14px;border:0;border-radius:10px;background:#123b5d;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}
+button.secondary{background:#e9eef4;color:#17324d;margin-left:8px}
+code{background:#f2f4f7;padding:2px 5px;border-radius:5px}
+small{color:#667085}
+</style>
+</head>
+<body>
+<main><div class="card">
+<h1>Diagnóstico RemPro</h1>
+<p>Esta página prueba la conexión real entre este navegador y Supabase sin modificar obras ni importes.</p>
+<div id="results"></div>
+<button id="run">Probar de nuevo</button>
+<button id="repair" class="secondary">Limpiar caché de RemPro</button>
+<a class="btn" href="./?v=diag-20260922">Volver a RemPro</a>
+<p><small>Build diagnóstico: 20260922-1</small></p>
+</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="supabase-config.js?v=20260922-3"></script>
+<script>
+const out=document.getElementById('results');
+function row(label,status,detail=''){const c=status==='OK'?'ok':status==='ERROR'?'bad':'wait';out.insertAdjacentHTML('beforeend',`<div class="row"><strong>${label}</strong>: <span class="${c}">${status}</span>${detail?'<br><small>'+String(detail).replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))+'</small>':''}</div>`)}
+async function run(){
+ out.innerHTML='';
+ try{
+  row('SDK Supabase',window.supabase?.createClient?'OK':'ERROR',window.supabase?.createClient?'Cargado':'No cargó desde jsDelivr');
+  if(!window.supabase?.createClient) return;
+  const cfg=window.REMPRO_SUPABASE_CONFIG;
+  row('Configuración',cfg?.url&&cfg?.publishableKey?'OK':'ERROR',cfg?.projectRef||'Sin projectRef');
+  if(!cfg?.url||!cfg?.publishableKey) return;
+  const client=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'rempro_supabase_auth_v1'}});
+  const {data:{session},error:sessionError}=await client.auth.getSession();
+  if(sessionError){row('Sesión','ERROR',sessionError.message);return;}
+  row('Sesión',session?.user?'OK':'ERROR',session?.user?'Usuario autenticado':'No hay sesión; vuelve a iniciar sesión en RemPro');
+  if(!session?.user) return;
+  const {data:member,error:memberError}=await client.rpc('rempro_is_member');
+  row('Autorización RemPro',memberError?'ERROR':member===true?'OK':'ERROR',memberError?`${memberError.code||''} ${memberError.message}`:member===true?'Cuenta autorizada':'Cuenta no autorizada');
+  if(memberError||member!==true) return;
+  const {data:projects,error:projectsError}=await client.from('rempro_projects').select('id').limit(1);
+  row('Lectura de obras',projectsError?'ERROR':'OK',projectsError?`${projectsError.code||''} ${projectsError.message}`:`Acceso correcto`);
+  const {data:rules,error:rulesError}=await client.from('rempro_rules').select('id').limit(1);
+  row('Lectura de reglas',rulesError?'ERROR':'OK',rulesError?`${rulesError.code||''} ${rulesError.message}`:'Acceso correcto');
+  const {data:docs,error:docsError}=await client.from('rempro_documents').select('id').limit(1);
+  row('Lectura de documentos',docsError?'ERROR':'OK',docsError?`${docsError.code||''} ${docsError.message}`:'Acceso correcto');
+ }catch(e){row('Prueba general','ERROR',e?.message||String(e));}
+}
+document.getElementById('run').onclick=run;
+document.getElementById('repair').onclick=async()=>{
+ if(!confirm('Esto limpiará únicamente el caché de RemPro en este navegador. No borra obras locales.')) return;
+ try{
+  const regs=await navigator.serviceWorker?.getRegistrations?.()||[];
+  await Promise.all(regs.map(r=>r.unregister()));
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(k=>k.startsWith('rempro-control-v2-')).map(k=>caches.delete(k)));
+  alert('Caché de RemPro limpiado. Cierra esta pestaña, vuelve a abrir RemPro e inicia sesión otra vez si se solicita.');
+ }catch(e){alert('No se pudo limpiar automáticamente: '+(e.message||e));}
+};
+run();
+</script>
+</body></html>
