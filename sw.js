@@ -11,7 +11,7 @@
 // El SDK de Supabase se carga desde jsDelivr (otro origen) y se deja fuera
 // del precache a propósito: sin red, la app sigue funcionando en modo local.
 const CACHE_PREFIX = 'rempro-control-v2-';
-const CACHE = CACHE_PREFIX + '6';
+const CACHE = CACHE_PREFIX + '7';
 const ASSETS = [
   './',
   './index.html',
@@ -60,18 +60,16 @@ async function networkFirstNavigation(request) {
   }
 }
 
-async function cacheFirstAsset(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+async function networkFirstAsset(request) {
   try {
-    const response = await fetch(request);
+    const response = await fetch(request, { cache: 'no-store' });
     if (response && response.ok) {
       const cache = await caches.open(CACHE);
       await cache.put(request, response.clone());
     }
     return response;
   } catch (err) {
-    return cached;
+    return caches.match(request);
   }
 }
 
@@ -86,5 +84,5 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(cacheFirstAsset(event.request));
+  event.respondWith(networkFirstAsset(event.request));
 });
