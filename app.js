@@ -348,11 +348,35 @@ document.getElementById('apuBody').addEventListener('click', e => {
 });
 document.getElementById('addApuRow').onclick = () => { apuRows.push({ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }); renderApu(); };
 ['apuIndirect', 'apuRisk', 'apuProfit', 'apuVat', 'apuSaleQty', 'apuSaleUnit', 'apuConceptDescription'].forEach(id => document.getElementById(id).addEventListener('input', calcApu));
+function currentApuPayload() {
+  return {
+    rows: apuRows,
+    fields: Object.fromEntries(['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit','apuConceptDescription'].map(id => [id,val(id)]))
+  };
+}
+function saveApuInputs(showFeedback=false) {
+  const invalidRows = apuRows.some(r => !r.desc?.trim() || !r.unit?.trim() || !Number.isFinite(r.qty) || !Number.isFinite(r.pu) || r.qty < 0 || r.pu < 0);
+  if (invalidRows) {
+    if (showFeedback) {
+      const status=document.getElementById('apuSaveStatus');
+      if(status) status.textContent='Revisa descripción, unidad, cantidad y P.U. de cada insumo antes de guardar.';
+    }
+    return false;
+  }
+  save(STORAGE.apu, currentApuPayload());
+  if (showFeedback) {
+    const status=document.getElementById('apuSaveStatus');
+    if(status) status.textContent=`Insumos guardados en este dispositivo · ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+  return true;
+}
+document.getElementById('saveApuInputsBtn').onclick = () => saveApuInputs(true);
+
 function calcApu() {
   if (apuRows.some(r => !Number.isFinite(r.qty) || !Number.isFinite(r.pu) || r.qty < 0 || r.pu < 0) || ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty'].some(id => !Number.isFinite(Number(val(id))) || Number(val(id)) < 0) || Number(val('apuSaleQty')) <= 0) {
     ['apuDirect','apuCommercial','apuUnit','apuTotal'].forEach(id => document.getElementById(id).textContent='Revisa cantidades'); return;
   }
-  save(STORAGE.apu, { rows: apuRows, fields: Object.fromEntries(['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit','apuConceptDescription'].map(id => [id,val(id)])) });
+  save(STORAGE.apu, currentApuPayload());
   const direct = apuRows.reduce((a, r) => a + r.qty * r.pu, 0), ind = direct * num(val('apuIndirect')) / 100, risk = direct * num(val('apuRisk')) / 100,
     base = direct + ind + risk, profit = base * num(val('apuProfit')) / 100, commercial = base + profit,
     qty = Math.max(.0001, num(val('apuSaleQty'))), vat = commercial * num(val('apuVat')) / 100;
