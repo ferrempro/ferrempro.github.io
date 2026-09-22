@@ -576,6 +576,12 @@ async function importData(file) {
     for (const list of [data.projects,data.prices]) { const ids = list.filter(r => r.id).map(r => r.id); if (new Set(ids).size !== ids.length) throw new Error('IDs duplicados'); }
 
     if (data.apu && (!Array.isArray(data.apu.rows) || !data.apu.rows.every(r => r && typeof r.desc === 'string' && typeof r.unit === 'string' && Number.isFinite(r.qty) && r.qty >= 0 && Number.isFinite(r.pu) && r.pu >= 0))) throw new Error('APU inválido');
+    if (data.documents && (!Array.isArray(data.documents) || !data.documents.every(d =>
+      d && typeof d.project_id === 'string' && typeof d.title === 'string' &&
+      Number.isFinite(Number(d.amount)) && Number(d.amount) >= 0 &&
+      ['pending','partial','paid','accepted','overdue','rejected'].includes(d.status) &&
+      ['unsent','sent'].includes(d.sent_state)
+    ))) throw new Error('Documento inválido');
     const cloudNote = (window.RemProSupabase && window.RemProSupabase.session)
       ? ' Como tienes sesión iniciada, después se comparará contra la nube y sólo se aplicarán los cambios más recientes por registro.'
       : '';
