@@ -24,6 +24,10 @@ jobs:
             node --check "$file"
           done
 
+      - name: Run synchronization tests
+        shell: bash
+        run: node --test tests/sync.test.cjs
+
       - name: Reject privileged secrets
         shell: bash
         run: |

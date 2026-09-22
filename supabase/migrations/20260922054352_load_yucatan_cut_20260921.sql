@@ -1,0 +1,3 @@
+-- Migration marker only.
+-- The production migration at this version loaded reconciled operational project data.
+-- Values are intentionally omitted from this public repository per SECURITY.md.

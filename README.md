@@ -4,7 +4,7 @@ Aplicación estática de obras, cobros acumulados, costos, avance, precios y APU
 
 ## Uso
 
-- **Control Maestro:** agregar, editar, buscar y filtrar obras; actualizar contratado, cobrado, costo y avance. Muestra saldo por obra y margen (contratado menos costo registrado), sin compensar saldos con anticipos de otras obras.
+- **Control Maestro:** agregar, editar, buscar y filtrar obras; actualizar contratado, cobrado y costo. El avance físico queda de solo lectura en la interfaz y se registra mediante ChatGPT/voz. Incluye balance de obra con corte al momento y control de documentos con estado financiero independiente del estado de envío.
 - **Precios:** alta, edición y eliminación con proveedor, IVA y fecha.
 - **APU:** captura continua sin perder el foco; conserva el último análisis en este navegador. El APU se incluye en el respaldo exportado y no se sincroniza con la nube.
 - **Reglas:** factores positivos para las estimaciones de materiales.
@@ -13,11 +13,15 @@ Aplicación estática de obras, cobros acumulados, costos, avance, precios y APU
 
 ## Sincronización y límites
 
-Las tablas utilizadas son `rempro_projects`, `rempro_prices`, `rempro_rules` y la lista de acceso `rempro_members`. No se aplica ni modifica el borrador de arquitectura contable contenido en las migraciones antiguas. Los importes son acumulados: esta interfaz no representa un libro de movimientos individuales de cobros y gastos.
+Las tablas activas de la interfaz V2 son `rempro_projects`, `rempro_prices`, `rempro_rules`, `rempro_price_history`, `rempro_project_updates`, `rempro_documents` y la lista de acceso `rempro_members`. No se aplica ni modifica el borrador de arquitectura contable contenido en las migraciones antiguas. Los importes son acumulados: esta interfaz no representa un libro de movimientos individuales de cobros y gastos.
 
 La sincronización lee antes de escribir, pagina los resultados, conserva eliminaciones como marcas, evita ejecuciones paralelas en la pestaña y vuelve a consultar las filas confirmadas por el servidor. Los registros antiguos sin fecha reciben una fecha base, nunca la hora actual. Las actualizaciones comprueban que la versión remota no cambió durante la petición. Los cambios locales hechos mientras hay peticiones pendientes se conservan y se envían en el siguiente ciclo. Un fallo parcial actualiza la pantalla con los datos ya confirmados y muestra el error sin declarar sincronización completa.
 
 El criterio de resolución entre versiones existentes sigue siendo `updated_at`; conviene mantener los relojes de los equipos correctos. Si otro dispositivo cambia la misma fila durante la escritura, se muestra un error y se conserva la versión local. Exporta un respaldo antes de resolver diferencias. La lista de miembros comparte el mismo conjunto de datos RemPro. Cerrar sesión conserva los datos locales, por lo que conviene usar un perfil de navegador propio.
+
+Los documentos usan estados independientes: pendiente, pago parcial, pagado/aceptado y vencido/rechazado; el envío se marca aparte como enviado o sin enviar. La aplicación no cambia automáticamente un documento pendiente a vencido: la fecha límite debe existir y el estado debe confirmarse explícitamente.
+
+Para evitar que respaldos V1 abiertos en distintos dispositivos creen copias lógicas de una misma obra con UUID distintos, la sincronización reconcilia proyectos por nombre + cliente cuando no existe coincidencia exacta por ID. Las copias históricas ya detectadas en producción se conservaron como registros eliminados, no como obras activas.
 
 ## Verificación
 

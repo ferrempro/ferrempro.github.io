@@ -99,6 +99,18 @@
           </div>
           <div id="balanceResult" class="balance-grid empty">Selecciona una obra para generar el balance.</div>
         </div>
+        <div class="panel table-wrap">
+          <div class="section-head compact-head">
+            <div><h2>Documentos y cobros</h2><p>Estado financiero y estado de envío se controlan por separado. Un documento pendiente no se considera vencido sin una fecha límite confirmada y un cambio explícito de estado.</p></div>
+            <button class="secondary" id="addDocumentBtn" type="button">+ Documento</button>
+          </div>
+          <div class="master-filters document-filters">
+            <label>Obra<select id="documentProjectFilter"><option value="">Todas las obras</option></select></label>
+            <label>Estado<select id="documentStatusFilter"><option value="">Todos</option><option value="pending">🟡 Pendiente</option><option value="partial">🔵 Pago parcial</option><option value="paid">🟢 Pagado</option><option value="accepted">🟢 Aceptada</option><option value="overdue">🔴 Vencido</option><option value="rejected">🔴 Rechazada</option></select></label>
+          </div>
+          <table><thead><tr><th>Documento</th><th>Obra</th><th>Folio</th><th>Importe</th><th>Estado</th><th>Envío</th><th>Fecha límite</th><th>Acciones</th></tr></thead><tbody id="documentsBody"></tbody></table>
+          <div id="documentsEmpty" class="empty">Aún no hay documentos registrados.</div>
+        </div>
       </section>
 
       <section id="materials" class="view">
@@ -229,6 +241,25 @@
       </div>
       <p class="auth-hint">El avance físico es de solo lectura en la app. Se actualiza mediante ChatGPT —incluyendo dictado/voz— para mantener trazabilidad diaria.</p>
       <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="saveProjectBtn" value="default" class="primary">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="documentDialog">
+    <form method="dialog" id="documentForm">
+      <div class="dialog-head"><h3 id="documentDialogTitle">Nuevo documento</h3><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="icon-btn">✕</button></div>
+      <div class="form-grid">
+        <label>Obra<select id="dProject" required></select></label>
+        <label>Documento<input id="dTitle" required placeholder="Ej. Estimación 02"></label>
+        <label>Tipo<select id="dType"><option>Cotización</option><option>Estimación</option><option>Factura</option><option>Orden de trabajo</option><option>Contrato</option><option>Otro</option></select></label>
+        <label>Folio<input id="dFolio" placeholder="RP-..."></label>
+        <label>Importe<input id="dAmount" type="number" min="0" step="0.01" value="0"></label>
+        <label>Estado<select id="dStatus"><option value="pending">🟡 Pendiente</option><option value="partial">🔵 Pago parcial</option><option value="paid">🟢 Pagado</option><option value="accepted">🟢 Aceptada</option><option value="overdue">🔴 Vencido</option><option value="rejected">🔴 Rechazada</option></select></label>
+        <label>Envío<select id="dSent"><option value="unsent">⚪ Sin enviar</option><option value="sent">⚪ Enviado</option></select></label>
+        <label>Fecha límite confirmada<input id="dDueDate" type="date"></label>
+      </div>
+      <label class="dialog-full-label">Notas<textarea id="dNotes" rows="3" placeholder="Seguimiento, respuesta del cliente o condición de pago."></textarea></label>
+      <p class="auth-hint">La fecha límite es opcional. El sistema no cambia automáticamente un documento pendiente a vencido.</p>
+      <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
 

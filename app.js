@@ -18,18 +18,21 @@ let projects = DATA.ensureRecordMeta(load(STORAGE.projects, [])).list;
 let prices = DATA.ensureRecordMeta(load(STORAGE.prices, [])).list;
 let priceHistory = DATA.ensureRecordMeta(load(STORAGE.priceHistory, [])).list;
 let projectUpdates = DATA.ensureRecordMeta(load(STORAGE.projectUpdates, [])).list;
+let documents = DATA.ensureRecordMeta(load(STORAGE.documents, [])).list;
 const defaultRules = { studSpacing: .61, studLength: 3.05, trackLength: 3.05, liston: .61, canaleta: .90, angle: 3.05, wire: .70, screws: 50, mini: 8, cajillo: .75, curtain: .35 };
 let rules = { ...defaultRules, ...load(STORAGE.rules, {}) };
 save(STORAGE.projects, projects);
 save(STORAGE.prices, prices);
 save(STORAGE.priceHistory, priceHistory);
 save(STORAGE.projectUpdates, projectUpdates);
+save(STORAGE.documents, documents);
 save(STORAGE.rules, rules);
 
 const activeProjects = () => projects.filter(p => !p.deleted);
 const activePrices = () => prices.filter(p => !p.deleted);
 const activePriceHistory = () => priceHistory.filter(p => !p.deleted);
 const activeProjectUpdates = () => projectUpdates.filter(p => !p.deleted);
+const activeDocuments = () => documents.filter(d => !d.deleted);
 
 const views = {
   dashboard: ['Dashboard', 'Resumen general de RemPro'],
@@ -102,6 +105,7 @@ function renderProjects() {
   ).join('');
   empty.style.display = list.length ? 'none' : 'block';
   updateBalanceOptions();
+  updateDocumentProjectOptions();
   renderDashboard();
 }
 document.getElementById('projectsBody').addEventListener('click', e => {
@@ -162,6 +166,109 @@ document.getElementById('projectForm').onsubmit = e => {
   pd.close();
   document.getElementById('projectForm').reset();
   renderProjects();
+  window.RemProSync && window.RemProSync.queueSync();
+};
+
+
+function documentStatusMeta(status) {
+  const map = {
+    pending: ['🟡','Pendiente'],
+    partial: ['🔵','Pago parcial'],
+    paid: ['🟢','Pagado'],
+    accepted: ['🟢','Aceptada'],
+    overdue: ['🔴','Vencido'],
+    rejected: ['🔴','Rechazada']
+  };
+  return map[status] || map.pending;
+}
+function documentSentLabel(state) {
+  return state === 'sent' ? '⚪ Enviado' : '⚪ Sin enviar';
+}
+function updateDocumentProjectOptions() {
+  const ids=['documentProjectFilter','dProject'];
+  ids.forEach(id=>{
+    const select=document.getElementById(id);
+    if(!select) return;
+    const previous=select.value;
+    const prefix=id==='documentProjectFilter' ? '<option value="">Todas las obras</option>' : '<option value="">Selecciona una obra</option>';
+    select.innerHTML=prefix+activeProjects().map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${esc(p.client)}</option>`).join('');
+    if ([...select.options].some(o=>o.value===previous)) select.value=previous;
+  });
+}
+function renderDocuments() {
+  const body=document.getElementById('documentsBody'), empty=document.getElementById('documentsEmpty');
+  if(!body || !empty) return;
+  const projectFilter=document.getElementById('documentProjectFilter')?.value || '';
+  const statusFilter=document.getElementById('documentStatusFilter')?.value || '';
+  const list=[...activeDocuments()]
+    .filter(d=>(!projectFilter || d.project_id===projectFilter) && (!statusFilter || d.status===statusFilter))
+    .sort((a,b)=>(Date.parse(b.updated_at)||0)-(Date.parse(a.updated_at)||0));
+  body.innerHTML=list.map(d=>{
+    const p=activeProjects().find(x=>x.id===d.project_id);
+    const [icon,label]=documentStatusMeta(d.status);
+    return `<tr>
+      <td><strong>${esc(d.title)}</strong><br><small>${esc(d.document_type || '')}</small></td>
+      <td>${esc(p?.name || 'Obra no disponible')}</td>
+      <td>${esc(d.folio || '—')}</td>
+      <td>${money(d.amount)}</td>
+      <td><span class="doc-chip doc-${esc(d.status || 'pending')}">${icon} ${esc(label)}</span></td>
+      <td><span class="doc-chip doc-sent">${esc(documentSentLabel(d.sent_state))}</span></td>
+      <td>${esc(d.due_date || '—')}</td>
+      <td><button class="mini-btn" data-edit-document="${esc(d.id)}">Editar</button> <button class="mini-btn" data-remove-document="${esc(d.id)}">Eliminar</button></td>
+    </tr>`;
+  }).join('');
+  empty.style.display=list.length?'none':'block';
+}
+const dd=document.getElementById('documentDialog');
+let editingDocument=null, editingDocumentVersion=null;
+function openDocument(id=null) {
+  editingDocument=id;
+  const d=documents.find(x=>x.id===id && !x.deleted);
+  editingDocumentVersion=d?JSON.stringify(d):null;
+  document.getElementById('documentForm').reset();
+  updateDocumentProjectOptions();
+  document.getElementById('documentDialogTitle').textContent=d?'Editar documento':'Nuevo documento';
+  if(d) {
+    const fields={dProject:'project_id',dTitle:'title',dType:'document_type',dFolio:'folio',dAmount:'amount',dStatus:'status',dSent:'sent_state',dDueDate:'due_date',dNotes:'notes'};
+    Object.entries(fields).forEach(([field,key])=>{ document.getElementById(field).value=d[key] ?? ''; });
+  } else {
+    document.getElementById('dStatus').value='pending';
+    document.getElementById('dSent').value='unsent';
+  }
+  dd.showModal();
+}
+document.getElementById('addDocumentBtn').onclick=()=>openDocument();
+document.getElementById('documentProjectFilter').addEventListener('change',renderDocuments);
+document.getElementById('documentStatusFilter').addEventListener('change',renderDocuments);
+document.getElementById('documentsBody').addEventListener('click',e=>{
+  const editId=e.target.closest('[data-edit-document]')?.dataset.editDocument;
+  if(editId) openDocument(editId);
+  const removeId=e.target.closest('[data-remove-document]')?.dataset.removeDocument;
+  if(removeId) removeDocument(removeId);
+});
+function removeDocument(id) {
+  if(!confirm('¿Eliminar este documento del Control Maestro?')) return;
+  const d=documents.find(x=>x.id===id);
+  if(!d) return;
+  d.deleted=true; d.updated_at=nowISO(); d.updated_by=currentEmail();
+  save(STORAGE.documents,documents); renderDocuments();
+  window.RemProSync && window.RemProSync.queueSync();
+}
+document.getElementById('documentForm').onsubmit=e=>{
+  if(e.submitter?.value==='cancel') return;
+  e.preventDefault();
+  if(!document.getElementById('documentForm').reportValidity() || !val('dProject') || !val('dTitle').trim()) return;
+  const existing=documents.find(d=>d.id===editingDocument);
+  if(editingDocument && JSON.stringify(existing)!==editingDocumentVersion) { alert('Este documento cambió mientras lo editabas. Cierra y vuelve a abrirlo.'); return; }
+  const record={
+    id:editingDocument || crypto.randomUUID(),
+    project_id:val('dProject'), title:val('dTitle'), document_type:val('dType'), folio:val('dFolio'),
+    amount:num(val('dAmount')), status:val('dStatus') || 'pending', sent_state:val('dSent') || 'unsent',
+    due_date:val('dDueDate') || null, notes:val('dNotes'),
+    deleted:false, updated_at:nowISO(), updated_by:currentEmail()
+  };
+  documents=editingDocument ? documents.map(d=>d.id===editingDocument?record:d) : [...documents,record];
+  save(STORAGE.documents,documents); dd.close(); renderDocuments();
   window.RemProSync && window.RemProSync.queueSync();
 };
 
@@ -454,7 +561,7 @@ function val(id) { return document.getElementById(id).value; }
 function esc(s) { return String(s ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 
 function exportData() {
-  const payload = { version: 1, exportedAt: new Date().toISOString(), projects, prices, priceHistory, projectUpdates, rules, apu: load(STORAGE.apu, null) };
+  const payload = { version: 1, exportedAt: new Date().toISOString(), projects, prices, priceHistory, projectUpdates, documents, rules, apu: load(STORAGE.apu, null) };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = `RemPro_Control_respaldo_${today()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -469,26 +576,33 @@ async function importData(file) {
     for (const list of [data.projects,data.prices]) { const ids = list.filter(r => r.id).map(r => r.id); if (new Set(ids).size !== ids.length) throw new Error('IDs duplicados'); }
 
     if (data.apu && (!Array.isArray(data.apu.rows) || !data.apu.rows.every(r => r && typeof r.desc === 'string' && typeof r.unit === 'string' && Number.isFinite(r.qty) && r.qty >= 0 && Number.isFinite(r.pu) && r.pu >= 0))) throw new Error('APU inválido');
+    if (data.documents && (!Array.isArray(data.documents) || !data.documents.every(d =>
+      d && typeof d.project_id === 'string' && typeof d.title === 'string' &&
+      Number.isFinite(Number(d.amount)) && Number(d.amount) >= 0 &&
+      ['pending','partial','paid','accepted','overdue','rejected'].includes(d.status) &&
+      ['unsent','sent'].includes(d.sent_state)
+    ))) throw new Error('Documento inválido');
     const cloudNote = (window.RemProSupabase && window.RemProSupabase.session)
       ? ' Como tienes sesión iniciada, después se comparará contra la nube y sólo se aplicarán los cambios más recientes por registro.'
       : '';
     if (!confirm(`Esto sustituirá los datos locales de este dispositivo por el respaldo seleccionado.${cloudNote} ¿Continuar?`)) return;
-    save(STORAGE.backup, { version: 1, exportedAt: nowISO(), projects, prices, priceHistory, projectUpdates, rules });
+    save(STORAGE.backup, { version: 1, exportedAt: nowISO(), projects, prices, priceHistory, projectUpdates, documents, rules });
     let importedProjects = Array.isArray(data.projects) ? data.projects : [];
     let importedPrices = Array.isArray(data.prices) ? data.prices : [];
     projects = DATA.ensureRecordMeta(importedProjects).list;
     prices = DATA.ensureRecordMeta(importedPrices).list;
     priceHistory = DATA.ensureRecordMeta(Array.isArray(data.priceHistory) ? data.priceHistory : []).list;
     projectUpdates = DATA.ensureRecordMeta(Array.isArray(data.projectUpdates) ? data.projectUpdates : []).list;
+    documents = DATA.ensureRecordMeta(Array.isArray(data.documents) ? data.documents : []).list;
     rules = { ...defaultRules, ...(data.rules && typeof data.rules === 'object' ? data.rules : rules) };
-    save(STORAGE.projects, projects); save(STORAGE.prices, prices); save(STORAGE.priceHistory, priceHistory); save(STORAGE.projectUpdates, projectUpdates); save(STORAGE.rules, rules);
+    save(STORAGE.projects, projects); save(STORAGE.prices, prices); save(STORAGE.priceHistory, priceHistory); save(STORAGE.projectUpdates, projectUpdates); save(STORAGE.documents, documents); save(STORAGE.rules, rules);
     if (data.apu) {
       apuRows = data.apu.rows;
       const allowed = ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit','apuConceptDescription'];
       allowed.forEach(id => { if (data.apu.fields && data.apu.fields[id] !== undefined) document.getElementById(id).value = data.apu.fields[id]; });
       renderApu();
     }
-    renderProjects(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); renderDashboard();
+    renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); renderDashboard();
     alert('Respaldo importado correctamente.');
     window.RemProSync && window.RemProSync.queueSync();
   } catch (err) { alert('No se pudo importar el respaldo. Verifica que sea un archivo JSON generado por RemPro Control.'); }
@@ -603,16 +717,17 @@ function reloadLocalData() {
   prices = load(STORAGE.prices, []);
   priceHistory = load(STORAGE.priceHistory, []);
   projectUpdates = load(STORAGE.projectUpdates, []);
+  documents = load(STORAGE.documents, []);
   const nextRules = { ...defaultRules, ...load(STORAGE.rules, rules) };
   const rulesChanged = JSON.stringify(nextRules) !== JSON.stringify(rules);
   rules = nextRules;
-  renderProjects(); renderPrices(); renderPriceHistory(); renderApu(); if (rulesChanged) loadRulesForm();
+  renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); if (rulesChanged) loadRulesForm();
 }
 window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
-window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.rules].includes(e.key)) reloadLocalData(); });
+window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-renderProjects(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
+renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }

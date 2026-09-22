@@ -8,10 +8,13 @@
   const fields = {
     projects: ['id','name','client','folio','status','contract','collected','cost','progress','deleted','updated_at','updated_by'],
     prices: ['id','item','supplier','unit','net','vat','date','deleted','updated_at','updated_by'],
-    rules: ['id','liston','canaleta','angle','wire','screws','mini','cajillo','curtain','updated_at','updated_by']
+    rules: ['id','liston','canaleta','angle','wire','screws','mini','cajillo','curtain','updated_at','updated_by'],
+    documents: ['id','project_id','title','document_type','folio','amount','status','sent_state','due_date','notes','deleted','updated_at','updated_by']
   };
   const stamp = row => Date.parse(row?.updated_at) || 0;
   const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+  const norm = v => String(v ?? '').trim().toLocaleLowerCase('es');
+  function projectIdentity(row) { return `${norm(row?.name)}|${norm(row?.client)}`; }
   function setStatus(status,message) {
     Object.assign(state,{status,message:message || ''});
     listeners.forEach(fn => { try { fn({...state}); } catch {} });
@@ -42,11 +45,36 @@
   }
   async function syncTable(client,kind,user) {
     const key=data.keys[kind], table='rempro_'+kind;
-    const snapshot=data.ensureRecordMeta(data.local.load(key,[])).list;
+    let snapshot=data.ensureRecordMeta(data.local.load(key,[])).list;
     data.local.save(key,snapshot);
     const remote=await readAll(client,table);
     assertSession(user.id);
     const remoteMap=new Map(remote.map(r=>[r.id,r]));
+    if (kind==='projects') {
+      const canonicalByIdentity=new Map();
+      for (const row of remote.filter(r=>!r.deleted)) {
+        const identity=projectIdentity(row);
+        if (!identity || identity==='|') continue;
+        const current=canonicalByIdentity.get(identity);
+        if (!current || stamp(row)>stamp(current)) canonicalByIdentity.set(identity,row);
+      }
+      const remapped=[];
+      const seenIds=new Set();
+      for (const row of snapshot) {
+        let next=row;
+        if (!row.deleted && !remoteMap.has(row.id)) {
+          const candidate=canonicalByIdentity.get(projectIdentity(row));
+          if (candidate) {
+            next=stamp(row)>stamp(candidate) ? {...row,id:candidate.id} : {...candidate};
+          }
+        }
+        const previous=remapped.find(r=>r.id===next.id);
+        if (!previous) { remapped.push(next); seenIds.add(next.id); }
+        else if (stamp(next)>stamp(previous)) remapped[remapped.indexOf(previous)]=next;
+      }
+      snapshot=remapped;
+      data.local.save(key,snapshot);
+    }
     for (const row of snapshot) {
       const other=remoteMap.get(row.id);
       if (!other || stamp(row)>stamp(other)) await writeRow(client,table,row,other,fields[kind],user);
@@ -95,6 +123,7 @@
       }
       await syncTable(client,'projects',user);
       await syncTable(client,'prices',user);
+      await syncTable(client,'documents',user);
       await syncRules(client,user);
       assertSession(user.id);
       state.lastSyncAt=new Date().toISOString();
