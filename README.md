@@ -57,3 +57,8 @@ También está desactivada la protección frente a contraseñas filtradas. [Conf
 ## Histórico de obras eliminadas
 
 Las obras eliminadas desde cualquier dispositivo se conservan automáticamente en Supabase en `rempro_project_archive`. El archivado ocurre en el servidor al recibir un tombstone sincronizado, un cambio de `deleted=false` a `deleted=true` o una eliminación física. El histórico guarda una fotografía de la obra y, al momento del archivo, sus documentos y avances asociados. Es de solo lectura para usuarios autorizados y no concede escritura desde la app.
+
+
+## APU rápido sincronizado
+
+El borrador activo de APU rápido se guarda localmente y, cuando existe una sesión RemPro autorizada, se sincroniza con Supabase mediante `rempro_apu_drafts`. La comparación usa `updated_at`: prevalece la versión guardada más reciente y las actualizaciones se propagan entre iPhone, iPad y navegadores de escritorio. El botón **Guardar insumos** fuerza el guardado explícito y solicita sincronización inmediata; las ediciones siguen conservándose localmente durante el trabajo.
