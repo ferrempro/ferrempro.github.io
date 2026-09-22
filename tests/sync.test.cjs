@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 function harness({local=[],remote=[],hook,fail=false,member=true,writeConflict=false}={}) {
  const storage=new Map();const events=[]; let reads=0;
- const tables={rempro_projects:structuredClone(remote),rempro_prices:[],rempro_rules:[],rempro_members:member?[{email:'test@example.test'}]:[]};
+ const tables={rempro_projects:structuredClone(remote),rempro_prices:[],rempro_documents:[],rempro_rules:[],rempro_members:member?[{email:'test@example.test'}]:[]};
  const ctx={console,crypto:require('node:crypto').webcrypto,Date,Map,Set,JSON,setTimeout,clearTimeout,CustomEvent:class{constructor(type){this.type=type;}}};
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.dispatchEvent=e=>events.push(e.type);
  ctx.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
@@ -41,3 +41,5 @@ test('tombstones remain deleted on other devices',async()=>{const h=harness({loc
 test('session changed during read stops subsequent writes',async()=>{const h=harness({local:[row('a','Local')],hook:({ctx})=>{ctx.RemProSupabase.session=null;}});await h.ctx.RemProSync.syncNow();assert.equal(h.tables.rempro_projects.length,0);assert.equal(h.load()[0].name,'Local');});
 
 test('concurrent server write is not overwritten and keeps local draft',async()=>{const h=harness({local:[row('a','Local','2026-09-21T00:00:00.000Z')],remote:[row('a','Remote')],writeConflict:true});await h.ctx.RemProSync.syncNow();assert.equal(h.ctx.RemProSync.status.status,'error');assert.equal(h.load()[0].name,'Local');assert.equal(h.tables.rempro_projects[0].name,'Concurrent');});
+
+test('logical duplicate from another device reuses the server project id',async()=>{const local=row('local-id','Casa Demo','2026-09-20T00:00:00.000Z');const remote=row('cloud-id','Casa Demo','2026-09-20T00:00:00.000Z');const h=harness({local:[local],remote:[remote]});await h.ctx.RemProSync.syncNow();assert.equal(h.tables.rempro_projects.length,1);assert.equal(h.load().length,1);assert.equal(h.load()[0].id,'cloud-id');assert.equal(h.ctx.RemProSync.status.status,'synced');});
