@@ -9,7 +9,7 @@ function harness({local=[],remote=[],hook,fail=false,member=true,writeConflict=f
  const ctx={console,crypto:require('node:crypto').webcrypto,Date,Map,Set,JSON,setTimeout,clearTimeout,CustomEvent:class{constructor(type){this.type=type;}}};
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.dispatchEvent=e=>events.push(e.type);
  ctx.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
- const client={from(table){let mode='read',payload,opts,filters=[],start=0,end=499;const q={
+ const client={rpc:async(name)=> name==='rempro_is_member'?{data:member,error:null}:{data:null,error:{message:'unknown rpc'}},from(table){let mode='read',payload,opts,filters=[],start=0,end=499;const q={
   select(){return q;},order(){return q;},range(a,b){start=a;end=b;return q;},eq(k,v){filters.push([k,v]);return q;},
   upsert(p,o){mode='insert';payload=p;opts=o;return q;},update(p){mode='update';payload=p;return q;},
   async then(resolve,reject){try {
