@@ -15,3 +15,8 @@
 
 /* Control Maestro: documentos y seguimiento */
 .document-filters{margin-top:12px}.doc-chip{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;border-radius:999px;padding:5px 9px;font-size:.75rem;font-weight:700;border:1px solid transparent}.doc-pending{background:#fff7d6;color:#7b5a00}.doc-partial{background:#eaf3ff;color:#174f86}.doc-paid,.doc-accepted{background:#e9f7ef;color:#146c43}.doc-overdue,.doc-rejected{background:#fdecec;color:#9e2d2d}.doc-sent{background:#fff;color:var(--muted);border-color:var(--line)}.dialog-full-label{display:grid;gap:6px;font-size:12px;color:var(--muted);margin-top:12px}dialog textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--text);font:inherit;resize:vertical}
+
+
+/* APU rápido: acciones explícitas de captura */
+.apu-head-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.apu-save-status{margin:-6px 0 12px;text-align:right}
+@media(max-width:520px){.apu-head-actions{width:100%}.apu-head-actions .primary,.apu-head-actions .secondary{flex:1 1 100%;width:100%}.apu-save-status{text-align:left}}
