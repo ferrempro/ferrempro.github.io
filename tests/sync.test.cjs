@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,fail=false,member=true,writeConflict=false}={}) {
  const storage=new Map();const events=[]; let reads=0;
- const tables={rempro_projects:structuredClone(remote),rempro_prices:[],rempro_documents:[],rempro_rules:[],rempro_apu_drafts:remoteApu?[structuredClone(remoteApu)]:[],rempro_members:member?[{email:'test@example.test'}]:[]};
+ const tables={rempro_projects:structuredClone(remote),rempro_prices:[],rempro_documents:[],rempro_civil_calculations:[],rempro_rules:[],rempro_apu_drafts:remoteApu?[structuredClone(remoteApu)]:[],rempro_members:member?[{email:'test@example.test'}]:[]};
  const ctx={console,crypto:require('node:crypto').webcrypto,Date,Map,Set,JSON,setTimeout,clearTimeout,CustomEvent:class{constructor(type){this.type=type;}}};
  ctx.window=ctx;ctx.addEventListener=()=>{};ctx.dispatchEvent=e=>events.push(e.type);
  ctx.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
