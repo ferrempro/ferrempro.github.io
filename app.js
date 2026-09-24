@@ -878,6 +878,11 @@ async function importData(file) {
       ['pending','partial','paid','accepted','overdue','rejected'].includes(d.status) &&
       ['unsent','sent'].includes(d.sent_state)
     ))) throw new Error('Documento inválido');
+    if (data.civilCalculations && (!Array.isArray(data.civilCalculations) || !data.civilCalculations.every(c =>
+      c && ['concrete','mortar'].includes(c.calculation_type) &&
+      c.input_payload && typeof c.input_payload === 'object' &&
+      c.result_payload && typeof c.result_payload === 'object'
+    ))) throw new Error('Cálculo de obra civil inválido');
     const cloudNote = (window.RemProSupabase && window.RemProSupabase.session)
       ? ' Como tienes sesión iniciada, después se comparará contra la nube y sólo se aplicarán los cambios más recientes por registro.'
       : '';
