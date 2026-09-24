@@ -19,6 +19,7 @@ let prices = DATA.ensureRecordMeta(load(STORAGE.prices, [])).list;
 let priceHistory = DATA.ensureRecordMeta(load(STORAGE.priceHistory, [])).list;
 let projectUpdates = DATA.ensureRecordMeta(load(STORAGE.projectUpdates, [])).list;
 let documents = DATA.ensureRecordMeta(load(STORAGE.documents, [])).list;
+let civilCalculations = DATA.ensureRecordMeta(load(STORAGE.civilCalculations, [])).list;
 const defaultRules = { studSpacing: .61, studLength: 3.05, trackLength: 3.05, liston: .61, canaleta: .90, angle: 3.05, wire: .70, screws: 50, mini: 8, cajillo: .75, curtain: .35 };
 let rules = { ...defaultRules, ...load(STORAGE.rules, {}) };
 save(STORAGE.projects, projects);
@@ -26,6 +27,7 @@ save(STORAGE.prices, prices);
 save(STORAGE.priceHistory, priceHistory);
 save(STORAGE.projectUpdates, projectUpdates);
 save(STORAGE.documents, documents);
+save(STORAGE.civilCalculations, civilCalculations);
 save(STORAGE.rules, rules);
 
 const activeProjects = () => projects.filter(p => !p.deleted);
@@ -33,11 +35,13 @@ const activePrices = () => prices.filter(p => !p.deleted);
 const activePriceHistory = () => priceHistory.filter(p => !p.deleted);
 const activeProjectUpdates = () => projectUpdates.filter(p => !p.deleted);
 const activeDocuments = () => documents.filter(d => !d.deleted);
+const activeCivilCalculations = () => civilCalculations.filter(c => !c.deleted);
 
 const views = {
   dashboard: ['Dashboard', 'Resumen general de RemPro'],
   master: ['Control Maestro', 'Obras, cobros y costos'],
   materials: ['Muros y plafones', 'Cuantificación paramétrica'],
+  civil: ['Obra civil', 'Concretos, morteros y cuantificación'],
   apu: ['APU rápido', 'Costo directo y precio comercial'],
   prices: ['Precios', 'Histórico de insumos'],
   settings: ['Reglas RemPro', 'Factores de cálculo y sincronización']
@@ -50,6 +54,7 @@ function showView(id) {
   document.getElementById('viewSubtitle').textContent = views[id][1];
   document.getElementById('sidebar').classList.remove('open');
   if (id === 'dashboard') renderDashboard();
+  if (id === 'civil') renderCivil();
 }
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
 document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { showView(b.dataset.go); if (b.textContent.trim() === 'Nueva obra') openProject(); }));
@@ -131,6 +136,7 @@ function renderProjects() {
   empty.style.display = list.length ? 'none' : 'block';
   updateBalanceOptions();
   updateDocumentProjectOptions();
+  updateCivilProjectOptions();
   renderDashboard();
 }
 document.getElementById('projectsBody').addEventListener('click', e => {
@@ -296,6 +302,218 @@ document.getElementById('documentForm').onsubmit=e=>{
   save(STORAGE.documents,documents); dd.close(); renderDocuments();
   window.RemProSync && window.RemProSync.queueSync();
 };
+
+
+let civilLastResult = null;
+
+function updateCivilProjectOptions() {
+  const select = document.getElementById('civilProject');
+  if (!select) return;
+  const previous = select.value;
+  select.innerHTML = '<option value="">Sin vincular a obra</option>' +
+    activeProjects().map(p => `<option value="${esc(p.id)}">${esc(p.name)} · ${esc(p.client)}</option>`).join('');
+  if ([...select.options].some(o => o.value === previous)) select.value = previous;
+}
+
+function updateCivilDosageOptions() {
+  const type = val('civilType');
+  const select = document.getElementById('civilDosage');
+  const label = document.getElementById('civilDosageLabel');
+  const thirdLabel = document.getElementById('civilWasteThirdLabel');
+  if (!select || !window.RemProCivil) return;
+  const previous = select.value;
+  if (type === 'concrete') {
+    if (label?.firstChild) label.firstChild.nodeValue = "Resistencia f'c ";
+    if (thirdLabel?.firstChild) thirdLabel.firstChild.nodeValue = 'Grava (%)';
+    select.innerHTML = Object.keys(window.RemProCivil.concreteDosages)
+      .sort((a,b)=>Number(a)-Number(b))
+      .map(fc => `<option value="${fc}">${fc} kg/cm²</option>`).join('');
+    select.value = [...select.options].some(o=>o.value===previous) ? previous : '250';
+  } else {
+    if (label?.firstChild) label.firstChild.nodeValue = 'Proporción ';
+    if (thirdLabel?.firstChild) thirdLabel.firstChild.nodeValue = 'Cal (%)';
+    select.innerHTML = Object.keys(window.RemProCivil.mortarDosages)
+      .map(mix => `<option value="${esc(mix)}">${esc(mix.replace(/^\./,''))}</option>`).join('');
+    select.value = [...select.options].some(o=>o.value===previous) ? previous : '.1:4';
+  }
+}
+
+function civilInputPayload() {
+  const type = val('civilType');
+  const dosage = val('civilDosage');
+  return {
+    directVolume: num(val('civilDirectVolume')),
+    length: num(val('civilLength')),
+    width: num(val('civilWidth')),
+    thickness: num(val('civilThickness')),
+    bagWeight: num(val('civilBagWeight')) || 50,
+    wasteCement: num(val('civilWasteCement')),
+    wasteSand: num(val('civilWasteSand')),
+    wasteThird: num(val('civilWasteThird')),
+    ...(type === 'concrete' ? { fc: dosage } : { mix: dosage })
+  };
+}
+
+function renderCivilResult(result) {
+  const out = document.getElementById('civilResult');
+  const source = document.getElementById('civilSource');
+  if (!out) return;
+  if (!result) {
+    out.className = 'empty';
+    out.textContent = 'Captura los datos y calcula.';
+    if (source) source.textContent = '';
+    return;
+  }
+  out.className = '';
+  if (source) source.textContent = result.source || '';
+  const nf = new Intl.NumberFormat('es-MX',{maximumFractionDigits:3});
+  out.innerHTML = `
+    <div class="civil-result-summary">
+      <div><span>Volumen calculado</span><strong>${nf.format(result.volumeM3)} m³</strong></div>
+      <div><span>Dosificación</span><strong>${esc(result.dosage)}${result.type==='concrete' ? ' kg/cm²' : ''}</strong></div>
+    </div>
+    <table class="civil-result-table">
+      <thead><tr><th>Material</th><th>Unidad</th><th>Cantidad</th></tr></thead>
+      <tbody>${result.materials.map(m => `<tr><td>${esc(m.description)}</td><td>${esc(m.unit)}</td><td>${nf.format(m.quantity)}</td></tr>`).join('')}</tbody>
+    </table>
+    <p class="civil-source-note">Las cantidades incluyen los desperdicios capturados. El agua se mantiene según la dosificación base y no se incrementa por desperdicio.</p>`;
+}
+
+function calculateCivil() {
+  if (!window.RemProCivil) return;
+  try {
+    const type = val('civilType');
+    const input = civilInputPayload();
+    const result = window.RemProCivil.calculate(type, input);
+    civilLastResult = { type, input, result };
+    renderCivilResult(result);
+    document.getElementById('civilSaveBtn').disabled = false;
+  } catch (err) {
+    civilLastResult = null;
+    document.getElementById('civilSaveBtn').disabled = true;
+    renderCivilResult(null);
+    alert(err.message || 'No se pudo realizar el cálculo.');
+  }
+}
+
+function clearCivilCalculator() {
+  ['civilLength','civilWidth','civilThickness','civilDirectVolume','civilLabel'].forEach(id => {
+    const el=document.getElementById(id); if (el) el.value='';
+  });
+  document.getElementById('civilWasteCement').value='5';
+  document.getElementById('civilWasteSand').value='20';
+  document.getElementById('civilWasteThird').value='30';
+  document.getElementById('civilProject').value='';
+  civilLastResult=null;
+  document.getElementById('civilSaveBtn').disabled=true;
+  renderCivilResult(null);
+}
+
+function saveCivilCalculation() {
+  if (!civilLastResult) return;
+  const record = {
+    id: crypto.randomUUID(),
+    project_id: val('civilProject') || null,
+    calculation_type: civilLastResult.type,
+    label: val('civilLabel').trim() || (civilLastResult.type === 'concrete' ? 'Concreto' : 'Mortero'),
+    input_payload: civilLastResult.input,
+    result_payload: civilLastResult.result,
+    source_version: 'civil-v1',
+    deleted: false,
+    updated_at: nowISO(),
+    updated_by: currentEmail()
+  };
+  civilCalculations=[...civilCalculations,record];
+  save(STORAGE.civilCalculations,civilCalculations);
+  renderCivilHistory();
+  window.RemProSync && window.RemProSync.queueSync();
+  document.getElementById('civilSaveBtn').disabled=true;
+}
+
+function civilResultSummary(result) {
+  if (!result?.materials?.length) return '—';
+  return result.materials.slice(0,2).map(m => `${m.description}: ${Number(m.quantity).toLocaleString('es-MX',{maximumFractionDigits:2})} ${m.unit}`).join(' · ');
+}
+
+function renderCivilHistory() {
+  const body=document.getElementById('civilHistoryBody'), empty=document.getElementById('civilHistoryEmpty');
+  if (!body || !empty) return;
+  const list=[...activeCivilCalculations()].sort((a,b)=>(Date.parse(b.updated_at)||0)-(Date.parse(a.updated_at)||0));
+  body.innerHTML=list.map(c=>{
+    const p=activeProjects().find(x=>x.id===c.project_id);
+    const r=c.result_payload || {};
+    return `<tr>
+      <td>${esc((c.updated_at || '').slice(0,10) || '—')}</td>
+      <td>${c.calculation_type==='concrete'?'Concreto':'Mortero'}</td>
+      <td>${esc(p?.name || 'Sin vincular')}</td>
+      <td>${esc(c.label || '—')}</td>
+      <td>${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³</td>
+      <td><small>${esc(civilResultSummary(r))}</small></td>
+      <td><div class="civil-history-actions"><button class="mini-btn" data-civil-load="${esc(c.id)}">Cargar</button><button class="mini-btn" data-civil-remove="${esc(c.id)}">Eliminar</button></div></td>
+    </tr>`;
+  }).join('');
+  empty.style.display=list.length?'none':'block';
+}
+
+function loadCivilCalculation(id) {
+  const c=civilCalculations.find(x=>x.id===id && !x.deleted);
+  if (!c) return;
+  document.getElementById('civilType').value=c.calculation_type;
+  updateCivilDosageOptions();
+  document.getElementById('civilProject').value=c.project_id || '';
+  document.getElementById('civilLabel').value=c.label || '';
+  const i=c.input_payload || {};
+  document.getElementById('civilLength').value=i.length || '';
+  document.getElementById('civilWidth').value=i.width || '';
+  document.getElementById('civilThickness').value=i.thickness || '';
+  document.getElementById('civilDirectVolume').value=i.directVolume || '';
+  document.getElementById('civilBagWeight').value=String(i.bagWeight || 50);
+  document.getElementById('civilWasteCement').value=i.wasteCement ?? 5;
+  document.getElementById('civilWasteSand').value=i.wasteSand ?? 20;
+  document.getElementById('civilWasteThird').value=i.wasteThird ?? 30;
+  document.getElementById('civilDosage').value=c.calculation_type==='concrete' ? String(i.fc || '250') : String(i.mix || '.1:4');
+  civilLastResult={type:c.calculation_type,input:i,result:c.result_payload};
+  renderCivilResult(c.result_payload);
+  document.getElementById('civilSaveBtn').disabled=true;
+}
+
+function removeCivilCalculation(id) {
+  const c=civilCalculations.find(x=>x.id===id);
+  if (!c || !confirm('¿Eliminar este cálculo del historial sincronizado?')) return;
+  c.deleted=true; c.updated_at=nowISO(); c.updated_by=currentEmail();
+  save(STORAGE.civilCalculations,civilCalculations);
+  renderCivilHistory();
+  window.RemProSync && window.RemProSync.queueSync();
+}
+
+function renderCivil() {
+  updateCivilProjectOptions();
+  updateCivilDosageOptions();
+  renderCivilHistory();
+  if (civilLastResult) renderCivilResult(civilLastResult.result);
+}
+
+document.getElementById('civilType')?.addEventListener('change',()=>{
+  updateCivilDosageOptions();
+  civilLastResult=null;
+  document.getElementById('civilSaveBtn').disabled=true;
+  renderCivilResult(null);
+});
+document.getElementById('civilCalculateBtn')?.addEventListener('click',calculateCivil);
+document.getElementById('civilSaveBtn')?.addEventListener('click',saveCivilCalculation);
+document.getElementById('civilClearBtn')?.addEventListener('click',clearCivilCalculator);
+document.getElementById('civilHistoryBody')?.addEventListener('click',e=>{
+  const loadId=e.target.closest('[data-civil-load]')?.dataset.civilLoad;
+  if (loadId) loadCivilCalculation(loadId);
+  const removeId=e.target.closest('[data-civil-remove]')?.dataset.civilRemove;
+  if (removeId) removeCivilCalculation(removeId);
+});
+['civilLength','civilWidth','civilThickness','civilDirectVolume','civilDosage','civilBagWeight','civilWasteCement','civilWasteSand','civilWasteThird'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',()=>{
+    civilLastResult=null;
+    document.getElementById('civilSaveBtn').disabled=true;
+  });
+});
 
 function calcMaterials() {
   const type = val('systemType'), L = num(val('matLength')), H = num(val('matHeight')), w = num(val('matWaste')) / 100,
@@ -639,7 +857,7 @@ function val(id) { return document.getElementById(id).value; }
 function esc(s) { return String(s ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])); }
 
 function exportData() {
-  const payload = { version: 1, exportedAt: new Date().toISOString(), projects, prices, priceHistory, projectUpdates, documents, rules, apu: load(STORAGE.apu, null) };
+  const payload = { version: 1, exportedAt: new Date().toISOString(), projects, prices, priceHistory, projectUpdates, documents, civilCalculations, rules, apu: load(STORAGE.apu, null) };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = `RemPro_Control_respaldo_${today()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
@@ -664,7 +882,7 @@ async function importData(file) {
       ? ' Como tienes sesión iniciada, después se comparará contra la nube y sólo se aplicarán los cambios más recientes por registro.'
       : '';
     if (!confirm(`Esto sustituirá los datos locales de este dispositivo por el respaldo seleccionado.${cloudNote} ¿Continuar?`)) return;
-    save(STORAGE.backup, { version: 1, exportedAt: nowISO(), projects, prices, priceHistory, projectUpdates, documents, rules });
+    save(STORAGE.backup, { version: 1, exportedAt: nowISO(), projects, prices, priceHistory, projectUpdates, documents, civilCalculations, rules });
     let importedProjects = Array.isArray(data.projects) ? data.projects : [];
     let importedPrices = Array.isArray(data.prices) ? data.prices : [];
     projects = DATA.ensureRecordMeta(importedProjects).list;
@@ -672,15 +890,16 @@ async function importData(file) {
     priceHistory = DATA.ensureRecordMeta(Array.isArray(data.priceHistory) ? data.priceHistory : []).list;
     projectUpdates = DATA.ensureRecordMeta(Array.isArray(data.projectUpdates) ? data.projectUpdates : []).list;
     documents = DATA.ensureRecordMeta(Array.isArray(data.documents) ? data.documents : []).list;
+    civilCalculations = DATA.ensureRecordMeta(Array.isArray(data.civilCalculations) ? data.civilCalculations : []).list;
     rules = { ...defaultRules, ...(data.rules && typeof data.rules === 'object' ? data.rules : rules) };
-    save(STORAGE.projects, projects); save(STORAGE.prices, prices); save(STORAGE.priceHistory, priceHistory); save(STORAGE.projectUpdates, projectUpdates); save(STORAGE.documents, documents); save(STORAGE.rules, rules);
+    save(STORAGE.projects, projects); save(STORAGE.prices, prices); save(STORAGE.priceHistory, priceHistory); save(STORAGE.projectUpdates, projectUpdates); save(STORAGE.documents, documents); save(STORAGE.civilCalculations, civilCalculations); save(STORAGE.rules, rules);
     if (data.apu) {
       apuRows = data.apu.rows;
       const allowed = ['apuIndirect','apuRisk','apuProfit','apuVat','apuSaleQty','apuSaleUnit','apuConceptDescription'];
       allowed.forEach(id => { if (data.apu.fields && data.apu.fields[id] !== undefined) document.getElementById(id).value = data.apu.fields[id]; });
       renderApu();
     }
-    renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); renderDashboard();
+    renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); renderDashboard();
     alert('Respaldo importado correctamente.');
     window.RemProSync && window.RemProSync.queueSync();
   } catch (err) { alert('No se pudo importar el respaldo. Verifica que sea un archivo JSON generado por RemPro Control.'); }
@@ -803,16 +1022,17 @@ function reloadLocalData() {
   priceHistory = load(STORAGE.priceHistory, []);
   projectUpdates = load(STORAGE.projectUpdates, []);
   documents = load(STORAGE.documents, []);
+  civilCalculations = load(STORAGE.civilCalculations, []);
   const nextRules = { ...defaultRules, ...load(STORAGE.rules, rules) };
   const rulesChanged = JSON.stringify(nextRules) !== JSON.stringify(rules);
   rules = nextRules;
-  renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); if (rulesChanged) loadRulesForm();
+  renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); if (rulesChanged) loadRulesForm();
 }
 window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
-window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
+window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.civilCalculations,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-renderProjects(); renderDocuments(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
+renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
