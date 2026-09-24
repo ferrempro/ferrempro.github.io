@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=20260923-kpi1" />
+  <link rel="stylesheet" href="styles.css?v=20260924-civil1" />
 </head>
 <body>
   <div class="app-shell">
@@ -24,6 +24,7 @@
         <button class="nav-btn active" data-view="dashboard">▦ <span>Dashboard</span></button>
         <button class="nav-btn" data-view="master">⌂ <span>Control Maestro</span></button>
         <button class="nav-btn" data-view="materials">▤ <span>Muros y plafones</span></button>
+        <button class="nav-btn" data-view="civil">▧ <span>Obra civil</span></button>
         <button class="nav-btn" data-view="apu">∑ <span>APU rápido</span></button>
         <button class="nav-btn" data-view="prices">$ <span>Precios</span></button>
         <button class="nav-btn" data-view="settings">⚙ <span>Reglas</span></button>
@@ -146,6 +147,73 @@
             <div id="materialsResult" class="result-list empty">Captura las medidas y calcula.</div>
           </article>
         </div>
+      </section>
+
+      <section id="civil" class="view">
+        <div class="section-head">
+          <div><h2>Calculador de obra civil</h2><p>Fase 1 · concretos y morteros con trazabilidad y sincronización.</p></div>
+        </div>
+        <div class="civil-note">
+          <strong>Base técnica:</strong> calculadora Excel legado auditada. Para f'c = 250 kg/cm² se aplica la regla RemPro 2026 vigente; las demás dosificaciones conservan la tabla del archivo original.
+        </div>
+        <div class="grid-2 civil-layout">
+          <article class="panel form-panel">
+            <div class="form-grid">
+              <label>Tipo de cálculo
+                <select id="civilType">
+                  <option value="concrete">Concreto hecho en obra</option>
+                  <option value="mortar">Mortero hecho en obra</option>
+                </select>
+              </label>
+              <label>Obra vinculada
+                <select id="civilProject"><option value="">Sin vincular a obra</option></select>
+              </label>
+              <label>Etiqueta / elemento
+                <input id="civilLabel" type="text" placeholder="Ej. Zapata corrida eje A">
+              </label>
+              <label id="civilDosageLabel">Resistencia f'c
+                <select id="civilDosage"></select>
+              </label>
+              <label>Peso del saco de cemento
+                <select id="civilBagWeight">
+                  <option value="50">50 kg</option>
+                  <option value="25">25 kg</option>
+                </select>
+              </label>
+            </div>
+            <div class="civil-subhead">Volumen</div>
+            <p class="auth-hint">Puedes capturar dimensiones o escribir directamente los m³. Si existe volumen directo, éste tiene prioridad.</p>
+            <div class="form-grid civil-volume-grid">
+              <label>Largo (m)<input id="civilLength" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label>Ancho / altura (m)<input id="civilWidth" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label>Espesor / peralte (m)<input id="civilThickness" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label>Volumen directo (m³)<input id="civilDirectVolume" type="number" min="0" step="0.001" inputmode="decimal"></label>
+            </div>
+            <div class="civil-subhead">Desperdicios editables</div>
+            <div class="form-grid civil-waste-grid">
+              <label>Cemento (%)<input id="civilWasteCement" type="number" min="0" max="100" step="0.1" value="5"></label>
+              <label>Arena (%)<input id="civilWasteSand" type="number" min="0" max="100" step="0.1" value="20"></label>
+              <label id="civilWasteThirdLabel">Grava (%)<input id="civilWasteThird" type="number" min="0" max="100" step="0.1" value="30"></label>
+            </div>
+            <div class="dialog-actions civil-actions">
+              <button class="secondary" id="civilClearBtn" type="button">Limpiar</button>
+              <button class="primary" id="civilCalculateBtn" type="button">Calcular</button>
+              <button class="primary" id="civilSaveBtn" type="button" disabled>Guardar cálculo</button>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><h3>Resultado</h3><span id="civilSource" class="auth-hint"></span></div>
+            <div id="civilResult" class="empty">Captura los datos y calcula.</div>
+          </article>
+        </div>
+        <article class="panel table-wrap">
+          <div class="panel-head"><h3>Historial de cálculos</h3><small>Sincronizado entre dispositivos cuando hay sesión.</small></div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Obra</th><th>Elemento</th><th>Volumen</th><th>Resultado</th><th>Acciones</th></tr></thead>
+            <tbody id="civilHistoryBody"></tbody>
+          </table>
+          <div id="civilHistoryEmpty" class="empty">Aún no hay cálculos guardados.</div>
+        </article>
       </section>
 
       <section id="apu" class="view">
@@ -303,11 +371,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20260923-kpi1"></script>
-  <script src="supabase-client.js?v=20260923-kpi1"></script>
-  <script src="data-store.js?v=20260923-kpi1"></script>
-  <script src="app.js?v=20260923-kpi1"></script>
-  <script src="sync.js?v=20260923-kpi1"></script>
+  <script src="supabase-config.js?v=20260924-civil1"></script>
+  <script src="supabase-client.js?v=20260924-civil1"></script>
+  <script src="data-store.js?v=20260924-civil1"></script>
+  <script src="civil-calculator.js?v=20260924-civil1"></script>
+  <script src="app.js?v=20260924-civil1"></script>
+  <script src="sync.js?v=20260924-civil1"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>
