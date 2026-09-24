@@ -24,12 +24,29 @@
 
   async function authenticatedFetch(input, init = {}) {
     const url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
-    const sessionToken = state.session && state.session.access_token;
     const isDataRequest =
       /\/rest\/v1\//.test(url) ||
       /\/storage\/v1\//.test(url);
 
-    if (!sessionToken || !isDataRequest) {
+    if (!isDataRequest) {
+      return fetch(input, init);
+    }
+
+    let sessionToken = state.session && state.session.access_token;
+    if (!sessionToken && state.client) {
+      try {
+        const { data } = await state.client.auth.getSession();
+        if (data && data.session) {
+          state.session = data.session;
+          sessionToken = data.session.access_token;
+        }
+      } catch (_) {
+        // Si no hay sesión recuperable, dejamos que Supabase use la API key
+        // y la llamada será tratada como anónima por RLS.
+      }
+    }
+
+    if (!sessionToken) {
       return fetch(input, init);
     }
 
@@ -80,7 +97,10 @@
       );
 
       state.client.auth.getSession().then(({ data }) => {
-        state.session = data && data.session ? data.session : null;
+        const restored = data && data.session ? data.session : null;
+        // Evita que una restauración tardía (sin sesión) borre una sesión
+        // que el usuario acaba de iniciar mientras cargaba la aplicación.
+        if (!state.session || restored) state.session = restored;
         setTimeout(notify, 0);
       });
 
