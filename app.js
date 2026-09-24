@@ -110,6 +110,9 @@ function renderDashboard() {
     }
     if (num(p.cost) > contract && contract > 0) alerts.push(`${p.name}: costo real supera lo contratado.`);
     if (num(p.progress) >= 80 && bal > 0 && contract > 0) alerts.push(`${p.name}: avance ${p.progress}% con saldo por cobrar ${money(bal)}.`);
+    if (/por conciliar|pendiente de conciliar/i.test(String(p.folio || '')) && !alerts.some(x => x.startsWith(`${p.name}:`))) {
+      alerts.push(`${p.name}: existen cifras pendientes de conciliación.`);
+    }
   });
   const old = activePrices().filter(p => (Date.now() - new Date(p.date).getTime()) / 86400000 > 30);
   if (old.length) alerts.push(`${old.length} precio(s) tienen más de 30 días sin verificarse.`);
@@ -610,18 +613,20 @@ function renderBalance() {
   if (!out || !p) { if (out) { out.className='balance-grid empty'; out.textContent='Selecciona una obra para generar el balance.'; } return; }
   const updates = activeProjectUpdates().filter(u => u.project_id === p.id).sort((a,b) => (Date.parse(b.as_of_date || b.created_at) || 0) - (Date.parse(a.as_of_date || a.created_at) || 0));
   const latest = updates[0];
-  const saldo = Math.max(0, num(p.contract) - num(p.collected));
-  const margin = num(p.contract) - num(p.cost);
+  const contract = num(p.contract);
+  const hasContract = contract > 0;
+  const saldo = hasContract ? Math.max(0, contract - num(p.collected)) : null;
+  const margin = hasContract ? contract - num(p.cost) : null;
   out.className='balance-grid';
   out.innerHTML = [
     ['Obra', esc(p.name)],
     ['Cliente', esc(p.client)],
     ['Corte', esc(today())],
-    ['Contratado', money(p.contract)],
+    ['Contratado', hasContract ? money(contract) : 'Por conciliar'],
     ['Cobrado', money(p.collected)],
-    ['Saldo por cobrar', money(saldo)],
+    ['Saldo por cobrar', hasContract ? money(saldo) : 'Por conciliar'],
     ['Costo real acumulado', money(p.cost)],
-    ['Margen preliminar', money(margin)],
+    ['Margen preliminar', hasContract ? money(margin) : 'Por conciliar'],
     ['Avance físico', `${num(p.progress).toFixed(2)}%`],
     ['Último avance ChatGPT', latest ? `${esc(latest.as_of_date || '')} · ${num(latest.progress).toFixed(2)}%` : 'Sin registro histórico'],
     ['Nota de último avance', latest?.notes ? esc(latest.notes) : '—']
