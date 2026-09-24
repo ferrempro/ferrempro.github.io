@@ -9,7 +9,14 @@
     projects: ['id','name','client','folio','status','contract','collected','cost','progress','deleted','updated_at','updated_by'],
     prices: ['id','item','supplier','unit','net','vat','date','deleted','updated_at','updated_by'],
     rules: ['id','liston','canaleta','angle','wire','screws','mini','cajillo','curtain','updated_at','updated_by'],
-    documents: ['id','project_id','title','document_type','folio','amount','status','sent_state','due_date','notes','deleted','updated_at','updated_by']
+    documents: ['id','project_id','title','document_type','folio','amount','status','sent_state','due_date','notes','deleted','updated_at','updated_by'],
+    civilCalculations: ['id','project_id','calculation_type','label','input_payload','result_payload','source_version','deleted','updated_at','updated_by']
+  };
+  const tableNames = {
+    projects: 'rempro_projects',
+    prices: 'rempro_prices',
+    documents: 'rempro_documents',
+    civilCalculations: 'rempro_civil_calculations'
   };
   const stamp = row => Date.parse(row?.updated_at) || 0;
   const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -44,7 +51,7 @@
     if (!written?.length) throw new Error('Otro dispositivo cambió un registro durante la sincronización. Tu versión sigue guardada localmente; exporta un respaldo antes de resolver la diferencia');
   }
   async function syncTable(client,kind,user) {
-    const key=data.keys[kind], table='rempro_'+kind;
+    const key=data.keys[kind], table=tableNames[kind] || ('rempro_'+kind);
     let snapshot=data.ensureRecordMeta(data.local.load(key,[])).list;
     data.local.save(key,snapshot);
     const remote=await readAll(client,table);
@@ -147,11 +154,12 @@
       assertSession(user.id);
       const meta=data.local.load(data.keys.syncMeta,{});
       if (!meta.lastSyncAt && !data.local.load(data.keys.backup,null)) {
-        data.local.save(data.keys.backup,{version:1,exportedAt:new Date().toISOString(),projects:data.local.load(data.keys.projects,[]),prices:data.local.load(data.keys.prices,[]),rules:data.local.load(data.keys.rules,{}),apu:data.local.load(data.keys.apu,null)});
+        data.local.save(data.keys.backup,{version:1,exportedAt:new Date().toISOString(),projects:data.local.load(data.keys.projects,[]),prices:data.local.load(data.keys.prices,[]),rules:data.local.load(data.keys.rules,{}),apu:data.local.load(data.keys.apu,null),civilCalculations:data.local.load(data.keys.civilCalculations,[])});
       }
       await syncTable(client,'projects',user);
       await syncTable(client,'prices',user);
       await syncTable(client,'documents',user);
+      await syncTable(client,'civilCalculations',user);
       await syncApu(client,user);
       await syncRules(client,user);
       assertSession(user.id);

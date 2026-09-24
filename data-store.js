@@ -10,7 +10,8 @@
     apu: 'rempro_apu_v2',
     priceHistory: 'rempro_price_history_v1',
     projectUpdates: 'rempro_project_updates_v1',
-    documents: 'rempro_documents_v1'
+    documents: 'rempro_documents_v1',
+    civilCalculations: 'rempro_civil_calculations_v1'
   });
 
   const local = Object.freeze({
