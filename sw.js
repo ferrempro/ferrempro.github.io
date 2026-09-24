@@ -11,7 +11,7 @@
 // El SDK de Supabase se carga desde jsDelivr (otro origen) y se deja fuera
 // del precache a propósito: sin red, la app sigue funcionando en modo local.
 const CACHE_PREFIX = 'rempro-control-v2-';
-const CACHE = CACHE_PREFIX + '9';
+const CACHE = CACHE_PREFIX + '10';
 const ASSETS = [
   './',
   './index.html',
