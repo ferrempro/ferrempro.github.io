@@ -22,6 +22,29 @@
     });
   }
 
+  async function authenticatedFetch(input, init = {}) {
+    const url = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
+    const sessionToken = state.session && state.session.access_token;
+    const isDataRequest =
+      /\/rest\/v1\//.test(url) ||
+      /\/storage\/v1\//.test(url);
+
+    if (!sessionToken || !isDataRequest) {
+      return fetch(input, init);
+    }
+
+    const inheritedHeaders = input && input.headers ? input.headers : undefined;
+    const headers = new Headers(inheritedHeaders || undefined);
+    new Headers(init.headers || undefined).forEach((value, key) => headers.set(key, value));
+
+    // Chromium en Windows llegó a autenticar correctamente al usuario,
+    // pero algunas solicitudes PostgREST conservaron la publishable key
+    // como Authorization. Forzamos aquí el JWT de la sesión activa.
+    headers.set('Authorization', `Bearer ${sessionToken}`);
+
+    return fetch(input, { ...init, headers });
+  }
+
   function initialize() {
     const config = window.REMPRO_SUPABASE_CONFIG;
 
@@ -44,6 +67,9 @@
         config.url,
         config.publishableKey,
         {
+          global: {
+            fetch: authenticatedFetch
+          },
           auth: {
             persistSession: true,
             autoRefreshToken: true,
