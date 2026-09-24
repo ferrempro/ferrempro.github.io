@@ -62,3 +62,24 @@ test('newer cloud APU replaces older local saved APU',async()=>{
  assert.equal(h.loadApu().rows[0].desc,'Nube');
  assert.equal(h.ctx.RemProSync.status.status,'synced');
 });
+
+
+test('cálculo de obra civil local se sube a la tabla sincronizada', async()=>{
+ const h=harness();
+ const row={
+   id:'civil-1',
+   project_id:null,
+   calculation_type:'concrete',
+   label:'Zapata',
+   input_payload:{directVolume:1,fc:'250'},
+   result_payload:{volumeM3:1,materials:[]},
+   source_version:'civil-v1',
+   deleted:false,
+   updated_at:'2026-09-24T07:00:00.000Z'
+ };
+ h.ctx.RemProData.local.save(h.ctx.RemProData.keys.civilCalculations,[row]);
+ await h.ctx.RemProSync.syncNow();
+ assert.equal(h.tables.rempro_civil_calculations.length,1);
+ assert.equal(h.tables.rempro_civil_calculations[0].label,'Zapata');
+ assert.equal(h.ctx.RemProSync.status.status,'synced');
+});
