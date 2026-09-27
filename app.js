@@ -315,12 +315,48 @@ function updateCivilProjectOptions() {
   if ([...select.options].some(o => o.value === previous)) select.value = previous;
 }
 
+function updateCivilMasonryUnitOptions() {
+  const select = document.getElementById('civilMasonryUnit');
+  if (!select || !window.RemProCivil) return;
+  if (!select.options.length) {
+    select.innerHTML = Object.entries(window.RemProCivil.masonryUnits)
+      .map(([key, unit]) => `<option value="${esc(key)}">${esc(unit.label)}</option>`).join('');
+    select.value = 'block12';
+    applyCivilMasonryPreset();
+  }
+}
+
+function applyCivilMasonryPreset() {
+  const preset = window.RemProCivil?.masonryUnits?.[val('civilMasonryUnit')];
+  if (!preset || val('civilMasonryUnit') === 'custom') return;
+  document.getElementById('civilUnitLength').value = preset.length;
+  document.getElementById('civilUnitHeight').value = preset.height;
+  document.getElementById('civilUnitDepth').value = preset.depth;
+}
+
+function updateCivilTypeFields() {
+  const type = val('civilType');
+  const masonry = type === 'masonry_wall';
+  const fields = document.getElementById('civilMasonryFields');
+  if (fields) fields.hidden = !masonry;
+  document.getElementById('civilThicknessLabel').hidden = masonry;
+  document.getElementById('civilDirectVolumeLabel').hidden = masonry;
+  document.getElementById('civilVolumeHeading').textContent = masonry ? 'Geometría del muro' : 'Volumen';
+  document.getElementById('civilVolumeHint').textContent = masonry
+    ? 'El área neta descuenta los vanos. Las dimensiones de pieza y juntas permanecen editables.'
+    : 'Puedes capturar dimensiones o escribir directamente los m³. Si existe volumen directo, éste tiene prioridad.';
+  document.getElementById('civilLengthLabel').firstChild.nodeValue = masonry ? 'Largo del muro (m)' : 'Largo (m)';
+  document.getElementById('civilWidthLabel').firstChild.nodeValue = masonry ? 'Alto del muro (m)' : 'Ancho / altura (m)';
+  updateCivilMasonryUnitOptions();
+}
+
 function updateCivilDosageOptions() {
   const type = val('civilType');
   const select = document.getElementById('civilDosage');
   const label = document.getElementById('civilDosageLabel');
   const thirdLabel = document.getElementById('civilWasteThirdLabel');
   if (!select || !window.RemProCivil) return;
+  updateCivilTypeFields();
   const previous = select.value;
   if (type === 'concrete') {
     if (label?.firstChild) label.firstChild.nodeValue = "Resistencia f'c ";
@@ -330,7 +366,7 @@ function updateCivilDosageOptions() {
       .map(fc => `<option value="${fc}">${fc} kg/cm²</option>`).join('');
     select.value = [...select.options].some(o=>o.value===previous) ? previous : '250';
   } else {
-    if (label?.firstChild) label.firstChild.nodeValue = 'Proporción ';
+    if (label?.firstChild) label.firstChild.nodeValue = type === 'masonry_wall' ? 'Mortero para juntas y repellado ' : 'Proporción ';
     if (thirdLabel?.firstChild) thirdLabel.firstChild.nodeValue = 'Cal (%)';
     select.innerHTML = Object.keys(window.RemProCivil.mortarDosages)
       .map(mix => `<option value="${esc(mix)}">${esc(mix.replace(/^\./,''))}</option>`).join('');
@@ -341,15 +377,38 @@ function updateCivilDosageOptions() {
 function civilInputPayload() {
   const type = val('civilType');
   const dosage = val('civilDosage');
+  const common = {
+    bagWeight: num(val('civilBagWeight')) || 50,
+    wasteCement: num(val('civilWasteCement')),
+    wasteSand: num(val('civilWasteSand')),
+    wasteThird: num(val('civilWasteThird'))
+  };
+  if (type === 'masonry_wall') {
+    const unit = window.RemProCivil.masonryUnits[val('civilMasonryUnit')];
+    return {
+      ...common,
+      length: num(val('civilLength')),
+      height: num(val('civilWidth')),
+      openingArea: num(val('civilOpeningArea')),
+      unitLength: num(val('civilUnitLength')),
+      unitHeight: num(val('civilUnitHeight')),
+      unitDepth: num(val('civilUnitDepth')),
+      unitLabel: unit?.label || 'Pieza personalizada',
+      jointHorizontal: num(val('civilJointHorizontal')),
+      jointVertical: num(val('civilJointVertical')),
+      plasterFaces: num(val('civilPlasterFaces')),
+      plasterThickness: num(val('civilPlasterThickness')),
+      wasteUnits: num(val('civilWasteUnits')),
+      wasteMortar: num(val('civilWasteMortar')),
+      mix: dosage
+    };
+  }
   return {
+    ...common,
     directVolume: num(val('civilDirectVolume')),
     length: num(val('civilLength')),
     width: num(val('civilWidth')),
     thickness: num(val('civilThickness')),
-    bagWeight: num(val('civilBagWeight')) || 50,
-    wasteCement: num(val('civilWasteCement')),
-    wasteSand: num(val('civilWasteSand')),
-    wasteThird: num(val('civilWasteThird')),
     ...(type === 'concrete' ? { fc: dosage } : { mix: dosage })
   };
 }
@@ -367,9 +426,14 @@ function renderCivilResult(result) {
   out.className = '';
   if (source) source.textContent = result.source || '';
   const nf = new Intl.NumberFormat('es-MX',{maximumFractionDigits:3});
+  const primarySummary = result.type === 'masonry_wall'
+    ? `<div><span>Área neta de muro</span><strong>${nf.format(result.netAreaM2)} m²</strong></div>
+       <div><span>Piezas</span><strong>${nf.format(result.pieceCount)} pzas</strong></div>
+       <div><span>Mortero total</span><strong>${nf.format(result.volumeM3)} m³</strong></div>`
+    : `<div><span>Volumen calculado</span><strong>${nf.format(result.volumeM3)} m³</strong></div>`;
   out.innerHTML = `
     <div class="civil-result-summary">
-      <div><span>Volumen calculado</span><strong>${nf.format(result.volumeM3)} m³</strong></div>
+      ${primarySummary}
       <div><span>Dosificación</span><strong>${esc(result.dosage)}${result.type==='concrete' ? ' kg/cm²' : ''}</strong></div>
     </div>
     <table class="civil-result-table">
@@ -404,6 +468,15 @@ function clearCivilCalculator() {
   document.getElementById('civilWasteSand').value='20';
   document.getElementById('civilWasteThird').value='30';
   document.getElementById('civilProject').value='';
+  document.getElementById('civilOpeningArea').value='0';
+  document.getElementById('civilJointHorizontal').value='0.01';
+  document.getElementById('civilJointVertical').value='0.01';
+  document.getElementById('civilPlasterFaces').value='0';
+  document.getElementById('civilPlasterThickness').value='0.015';
+  document.getElementById('civilWasteUnits').value='5';
+  document.getElementById('civilWasteMortar').value='10';
+  document.getElementById('civilMasonryUnit').value='block12';
+  applyCivilMasonryPreset();
   civilLastResult=null;
   document.getElementById('civilSaveBtn').disabled=true;
   renderCivilResult(null);
@@ -415,10 +488,10 @@ function saveCivilCalculation() {
     id: crypto.randomUUID(),
     project_id: val('civilProject') || null,
     calculation_type: civilLastResult.type,
-    label: val('civilLabel').trim() || (civilLastResult.type === 'concrete' ? 'Concreto' : 'Mortero'),
+    label: val('civilLabel').trim() || ({ concrete: 'Concreto', mortar: 'Mortero', masonry_wall: 'Muro de mampostería' }[civilLastResult.type] || 'Obra civil'),
     input_payload: civilLastResult.input,
     result_payload: civilLastResult.result,
-    source_version: 'civil-v1',
+    source_version: 'civil-v2',
     deleted: false,
     updated_at: nowISO(),
     updated_by: currentEmail()
@@ -444,10 +517,12 @@ function renderCivilHistory() {
     const r=c.result_payload || {};
     return `<tr>
       <td>${esc((c.updated_at || '').slice(0,10) || '—')}</td>
-      <td>${c.calculation_type==='concrete'?'Concreto':'Mortero'}</td>
+      <td>${({concrete:'Concreto',mortar:'Mortero',masonry_wall:'Muro mampostería'}[c.calculation_type] || esc(c.calculation_type))}</td>
       <td>${esc(p?.name || 'Sin vincular')}</td>
       <td>${esc(c.label || '—')}</td>
-      <td>${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³</td>
+      <td>${c.calculation_type === 'masonry_wall'
+        ? `${Number(r.netAreaM2 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m²`
+        : `${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³`}</td>
       <td><small>${esc(civilResultSummary(r))}</small></td>
       <td><div class="civil-history-actions"><button class="mini-btn" data-civil-load="${esc(c.id)}">Cargar</button><button class="mini-btn" data-civil-remove="${esc(c.id)}">Eliminar</button></div></td>
     </tr>`;
@@ -472,6 +547,21 @@ function loadCivilCalculation(id) {
   document.getElementById('civilWasteSand').value=i.wasteSand ?? 20;
   document.getElementById('civilWasteThird').value=i.wasteThird ?? 30;
   document.getElementById('civilDosage').value=c.calculation_type==='concrete' ? String(i.fc || '250') : String(i.mix || '.1:4');
+  if (c.calculation_type === 'masonry_wall') {
+    const presetKey = Object.entries(window.RemProCivil.masonryUnits)
+      .find(([,u]) => u.label === i.unitLabel)?.[0] || 'custom';
+    document.getElementById('civilMasonryUnit').value=presetKey;
+    document.getElementById('civilUnitLength').value=i.unitLength || '';
+    document.getElementById('civilUnitHeight').value=i.unitHeight || '';
+    document.getElementById('civilUnitDepth').value=i.unitDepth || '';
+    document.getElementById('civilOpeningArea').value=i.openingArea || 0;
+    document.getElementById('civilJointHorizontal').value=i.jointHorizontal || 0.01;
+    document.getElementById('civilJointVertical').value=i.jointVertical || 0.01;
+    document.getElementById('civilPlasterFaces').value=String(i.plasterFaces || 0);
+    document.getElementById('civilPlasterThickness').value=i.plasterThickness || 0.015;
+    document.getElementById('civilWasteUnits').value=i.wasteUnits ?? 5;
+    document.getElementById('civilWasteMortar').value=i.wasteMortar ?? 10;
+  }
   civilLastResult={type:c.calculation_type,input:i,result:c.result_payload};
   renderCivilResult(c.result_payload);
   document.getElementById('civilSaveBtn').disabled=true;
@@ -499,6 +589,11 @@ document.getElementById('civilType')?.addEventListener('change',()=>{
   document.getElementById('civilSaveBtn').disabled=true;
   renderCivilResult(null);
 });
+document.getElementById('civilMasonryUnit')?.addEventListener('change',()=>{
+  applyCivilMasonryPreset();
+  civilLastResult=null;
+  document.getElementById('civilSaveBtn').disabled=true;
+});
 document.getElementById('civilCalculateBtn')?.addEventListener('click',calculateCivil);
 document.getElementById('civilSaveBtn')?.addEventListener('click',saveCivilCalculation);
 document.getElementById('civilClearBtn')?.addEventListener('click',clearCivilCalculator);
@@ -508,7 +603,7 @@ document.getElementById('civilHistoryBody')?.addEventListener('click',e=>{
   const removeId=e.target.closest('[data-civil-remove]')?.dataset.civilRemove;
   if (removeId) removeCivilCalculation(removeId);
 });
-['civilLength','civilWidth','civilThickness','civilDirectVolume','civilDosage','civilBagWeight','civilWasteCement','civilWasteSand','civilWasteThird'].forEach(id=>{
+['civilLength','civilWidth','civilThickness','civilDirectVolume','civilDosage','civilBagWeight','civilWasteCement','civilWasteSand','civilWasteThird','civilUnitLength','civilUnitHeight','civilUnitDepth','civilJointHorizontal','civilJointVertical','civilOpeningArea','civilPlasterFaces','civilPlasterThickness','civilWasteUnits','civilWasteMortar'].forEach(id=>{
   document.getElementById(id)?.addEventListener('input',()=>{
     civilLastResult=null;
     document.getElementById('civilSaveBtn').disabled=true;
@@ -879,7 +974,7 @@ async function importData(file) {
       ['unsent','sent'].includes(d.sent_state)
     ))) throw new Error('Documento inválido');
     if (data.civilCalculations && (!Array.isArray(data.civilCalculations) || !data.civilCalculations.every(c =>
-      c && ['concrete','mortar'].includes(c.calculation_type) &&
+      c && ['concrete','mortar','masonry_wall'].includes(c.calculation_type) &&
       c.input_payload && typeof c.input_payload === 'object' &&
       c.result_payload && typeof c.result_payload === 'object'
     ))) throw new Error('Cálculo de obra civil inválido');

@@ -7,13 +7,14 @@ Aplicación estática de obras, cobros acumulados, costos, avance, precios y APU
 - **Control Maestro:** agregar, editar, buscar y filtrar obras; actualizar contratado, cobrado y costo. El avance físico queda de solo lectura en la interfaz y se registra mediante ChatGPT/voz. Incluye balance de obra con corte al momento y control de documentos con estado financiero independiente del estado de envío.
 - **Precios:** alta, edición y eliminación con proveedor, IVA y fecha.
 - **APU:** captura continua sin perder el foco; conserva el último análisis en este navegador. El APU se incluye en el respaldo exportado y no se sincroniza con la nube.
+- **Obra civil:** concretos y morteros hechos en obra, además de muros de tabique/block con piezas, juntas, vanos, desperdicios y repellado editables. Los cálculos guardados se incluyen en el respaldo y se sincronizan con RLS cuando hay sesión.
 - **Reglas:** factores positivos para las estimaciones de materiales.
 - **Respaldos:** exportar/importar JSON y descargar el respaldo automático anterior a la primera sincronización o a la última importación. Una importación inválida se rechaza antes de cambiar datos. Importar reemplaza el contenido local; los registros que siguen en la nube pueden reaparecer al sincronizar. Para eliminarlos, utiliza Eliminar en la aplicación.
 - **Sin conexión:** después de una primera visita con conexión, el service worker permite abrir el control y registrar cambios sin red. Si el SDK no se cargó al abrir sin conexión, recarga al recuperar internet para activar la nube.
 
 ## Sincronización y límites
 
-Las tablas activas de la interfaz V2 son `rempro_projects`, `rempro_prices`, `rempro_rules`, `rempro_price_history`, `rempro_project_updates`, `rempro_documents` y la lista de acceso `rempro_members`. No se aplica ni modifica el borrador de arquitectura contable contenido en las migraciones antiguas. Los importes son acumulados: esta interfaz no representa un libro de movimientos individuales de cobros y gastos.
+Las tablas activas de la interfaz V2 son `rempro_projects`, `rempro_prices`, `rempro_rules`, `rempro_price_history`, `rempro_project_updates`, `rempro_documents`, `rempro_civil_calculations` y la lista de acceso `rempro_members`. No se aplica ni modifica el borrador de arquitectura contable contenido en las migraciones antiguas. Los importes son acumulados: esta interfaz no representa un libro de movimientos individuales de cobros y gastos.
 
 La sincronización lee antes de escribir, pagina los resultados, conserva eliminaciones como marcas, evita ejecuciones paralelas en la pestaña y vuelve a consultar las filas confirmadas por el servidor. Los registros antiguos sin fecha reciben una fecha base, nunca la hora actual. Las actualizaciones comprueban que la versión remota no cambió durante la petición. Los cambios locales hechos mientras hay peticiones pendientes se conservan y se envían en el siguiente ciclo. Un fallo parcial actualiza la pantalla con los datos ya confirmados y muestra el error sin declarar sincronización completa.
 
@@ -62,3 +63,8 @@ Las obras eliminadas desde cualquier dispositivo se conservan automáticamente e
 ## APU rápido sincronizado
 
 El borrador activo de APU rápido se guarda localmente y, cuando existe una sesión RemPro autorizada, se sincroniza con Supabase mediante `rempro_apu_drafts`. La comparación usa `updated_at`: prevalece la versión guardada más reciente y las actualizaciones se propagan entre iPhone, iPad y navegadores de escritorio. El botón **Guardar insumos** fuerza el guardado explícito y solicita sincronización inmediata; las ediciones siguen conservándose localmente durante el trabajo.
+
+
+## Calculador de Obra Civil
+
+La Fase 2 incorpora muros de mampostería sin fijar precios ni dimensiones obsoletas. Los presets de block y tabique son referencias editables; el cálculo usa área neta descontando vanos, módulo pieza+junta, mortero de asentado, cero/una/dos caras de repellado y desperdicios separados. La regla RemPro vigente prevalece sobre el Excel legado cuando existe una corrección documentada. Costo directo, precio comercial, IVA, indirectos y utilidad permanecen fuera de este cuantificador de materiales.
