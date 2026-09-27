@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=20260924-civil1" />
+  <link rel="stylesheet" href="styles.css?v=20260926-civil2" />
 </head>
 <body>
   <div class="app-shell">
@@ -151,7 +151,7 @@
 
       <section id="civil" class="view">
         <div class="section-head">
-          <div><h2>Calculador de obra civil</h2><p>Fase 1 · concretos y morteros con trazabilidad y sincronización.</p></div>
+          <div><h2>Calculador de obra civil</h2><p>Fase 2 · concretos, morteros y muros de mampostería con trazabilidad y sincronización.</p></div>
         </div>
         <div class="civil-note">
           <strong>Base técnica:</strong> calculadora Excel legado auditada. Para f'c = 250 kg/cm² se aplica la regla RemPro 2026 vigente; las demás dosificaciones conservan la tabla del archivo original.
@@ -163,6 +163,7 @@
                 <select id="civilType">
                   <option value="concrete">Concreto hecho en obra</option>
                   <option value="mortar">Mortero hecho en obra</option>
+                  <option value="masonry_wall">Muro de tabique / block</option>
                 </select>
               </label>
               <label>Obra vinculada
@@ -181,13 +182,33 @@
                 </select>
               </label>
             </div>
-            <div class="civil-subhead">Volumen</div>
-            <p class="auth-hint">Puedes capturar dimensiones o escribir directamente los m³. Si existe volumen directo, éste tiene prioridad.</p>
+            <div id="civilMasonryFields" hidden>
+              <div class="civil-subhead">Pieza, juntas y acabados</div>
+              <div class="form-grid">
+                <label>Tipo de pieza
+                  <select id="civilMasonryUnit"></select>
+                </label>
+                <label>Largo de pieza (m)<input id="civilUnitLength" type="number" min="0" step="0.001" inputmode="decimal"></label>
+                <label>Alto de pieza (m)<input id="civilUnitHeight" type="number" min="0" step="0.001" inputmode="decimal"></label>
+                <label>Espesor de pieza / muro (m)<input id="civilUnitDepth" type="number" min="0" step="0.001" inputmode="decimal"></label>
+                <label>Junta horizontal (m)<input id="civilJointHorizontal" type="number" min="0" step="0.001" value="0.01" inputmode="decimal"></label>
+                <label>Junta vertical (m)<input id="civilJointVertical" type="number" min="0" step="0.001" value="0.01" inputmode="decimal"></label>
+                <label>Área de vanos (m²)<input id="civilOpeningArea" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Caras con repellado
+                  <select id="civilPlasterFaces"><option value="0">Sin repellado</option><option value="1">1 cara</option><option value="2">2 caras</option></select>
+                </label>
+                <label>Espesor de repellado (m)<input id="civilPlasterThickness" type="number" min="0" step="0.001" value="0.015" inputmode="decimal"></label>
+                <label>Desperdicio de piezas (%)<input id="civilWasteUnits" type="number" min="0" max="100" step="0.1" value="5"></label>
+                <label>Desperdicio de mortero (%)<input id="civilWasteMortar" type="number" min="0" max="100" step="0.1" value="10"></label>
+              </div>
+            </div>
+            <div class="civil-subhead" id="civilVolumeHeading">Volumen</div>
+            <p class="auth-hint" id="civilVolumeHint">Puedes capturar dimensiones o escribir directamente los m³. Si existe volumen directo, éste tiene prioridad.</p>
             <div class="form-grid civil-volume-grid">
-              <label>Largo (m)<input id="civilLength" type="number" min="0" step="0.001" inputmode="decimal"></label>
-              <label>Ancho / altura (m)<input id="civilWidth" type="number" min="0" step="0.001" inputmode="decimal"></label>
-              <label>Espesor / peralte (m)<input id="civilThickness" type="number" min="0" step="0.001" inputmode="decimal"></label>
-              <label>Volumen directo (m³)<input id="civilDirectVolume" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label id="civilLengthLabel">Largo (m)<input id="civilLength" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label id="civilWidthLabel">Ancho / altura (m)<input id="civilWidth" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label id="civilThicknessLabel">Espesor / peralte (m)<input id="civilThickness" type="number" min="0" step="0.001" inputmode="decimal"></label>
+              <label id="civilDirectVolumeLabel">Volumen directo (m³)<input id="civilDirectVolume" type="number" min="0" step="0.001" inputmode="decimal"></label>
             </div>
             <div class="civil-subhead">Desperdicios editables</div>
             <div class="form-grid civil-waste-grid">
@@ -371,12 +392,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20260924-civil1"></script>
-  <script src="supabase-client.js?v=20260924-civil1"></script>
-  <script src="data-store.js?v=20260924-civil1"></script>
-  <script src="civil-calculator.js?v=20260924-civil1"></script>
-  <script src="app.js?v=20260924-civil1"></script>
-  <script src="sync.js?v=20260924-civil1"></script>
+  <script src="supabase-config.js?v=20260926-civil2"></script>
+  <script src="supabase-client.js?v=20260926-civil2"></script>
+  <script src="data-store.js?v=20260926-civil2"></script>
+  <script src="civil-calculator.js?v=20260926-civil2"></script>
+  <script src="app.js?v=20260926-civil2"></script>
+  <script src="sync.js?v=20260926-civil2"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>
