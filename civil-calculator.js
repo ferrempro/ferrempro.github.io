@@ -32,6 +32,14 @@
     '.1:3:12':{ cementKg: 160,  sandM3: 1.09, limeBags25: 6.0, waterL: 225 }
   });
 
+  const MASONRY_UNITS = Object.freeze({
+    block12: { label: 'Block de concreto 12 × 20 × 40 cm', length: 0.40, height: 0.20, depth: 0.12 },
+    block15: { label: 'Block de concreto 15 × 20 × 40 cm', length: 0.40, height: 0.20, depth: 0.15 },
+    block20: { label: 'Block de concreto 20 × 20 × 40 cm', length: 0.40, height: 0.20, depth: 0.20 },
+    redBrick: { label: 'Tabique rojo 7 × 14 × 28 cm', length: 0.28, height: 0.07, depth: 0.14 },
+    custom: { label: 'Pieza personalizada', length: 0.40, height: 0.20, depth: 0.12 }
+  });
+
   const n = value => Number(value || 0);
   const validPositive = value => Number.isFinite(n(value)) && n(value) > 0;
   const pct = value => Math.max(0, n(value)) / 100;
@@ -112,18 +120,101 @@
     };
   }
 
+  function calcMasonryWall(input) {
+    const length = n(input.length);
+    const height = n(input.height);
+    const openingArea = Math.max(0, n(input.openingArea));
+    const unitLength = n(input.unitLength);
+    const unitHeight = n(input.unitHeight);
+    const unitDepth = n(input.unitDepth);
+    const jointHorizontal = n(input.jointHorizontal);
+    const jointVertical = n(input.jointVertical);
+    const plasterFaces = Math.max(0, Math.min(2, Math.trunc(n(input.plasterFaces))));
+    const plasterThickness = plasterFaces > 0 ? n(input.plasterThickness) : 0;
+    const mix = String(input.mix || '.1:4');
+    const bagWeight = validPositive(input.bagWeight) ? n(input.bagWeight) : 50;
+
+    if (![length, height, unitLength, unitHeight, unitDepth].every(validPositive)) {
+      throw new Error('Captura dimensiones positivas para el muro y la pieza.');
+    }
+    if (![jointHorizontal, jointVertical].every(validPositive)) {
+      throw new Error('Las juntas horizontal y vertical deben ser mayores que cero.');
+    }
+    if (plasterFaces > 0 && !validPositive(plasterThickness)) {
+      throw new Error('Captura un espesor positivo para el repellado.');
+    }
+
+    const grossArea = length * height;
+    if (openingArea >= grossArea) {
+      throw new Error('El área de vanos debe ser menor que el área total del muro.');
+    }
+
+    const netArea = grossArea - openingArea;
+    const moduleArea = (unitLength + jointVertical) * (unitHeight + jointHorizontal);
+    const piecesPerM2 = 1 / moduleArea;
+    const basePieces = netArea * piecesPerM2;
+    const pieceCount = Math.ceil(basePieces * (1 + pct(input.wasteUnits)));
+
+    // Volumen de junta por módulo: volumen del prisma modular menos la pieza.
+    // Se cuantifica con piezas base para evitar que el desperdicio de piezas
+    // incremente artificialmente el mortero colocado en el muro.
+    const moduleVolume = moduleArea * unitDepth;
+    const unitVolume = unitLength * unitHeight * unitDepth;
+    const layingMortarBase = basePieces * Math.max(0, moduleVolume - unitVolume);
+    const layingMortarM3 = layingMortarBase * (1 + pct(input.wasteMortar));
+    const plasterMortarM3 = netArea * plasterFaces * plasterThickness * (1 + pct(input.wasteMortar));
+    const mortarVolume = layingMortarM3 + plasterMortarM3;
+
+    const mortar = calcMortar({
+      directVolume: mortarVolume,
+      mix,
+      bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+
+    return {
+      type: 'masonry_wall',
+      areaM2: round(grossArea, 4),
+      netAreaM2: round(netArea, 4),
+      volumeM3: round(mortarVolume, 4),
+      dosage: mix,
+      unitLabel: String(input.unitLabel || 'Pieza de mampostería'),
+      piecesPerM2: round(piecesPerM2, 3),
+      pieceCount,
+      layingMortarM3: round(layingMortarM3, 4),
+      plasterMortarM3: round(plasterMortarM3, 4),
+      plasterFaces,
+      source: 'Excel legado · lógica de muro; dimensiones y juntas editables · RemPro 2026',
+      materials: [
+        {
+          key: 'masonry_units',
+          description: String(input.unitLabel || 'Pieza de mampostería'),
+          unit: 'pza',
+          quantity: pieceCount,
+          baseQuantity: round(basePieces, 2)
+        },
+        ...mortar.materials
+      ]
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
+    if (type === 'masonry_wall') return calcMasonryWall(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
   return Object.freeze({
     concreteDosages: CONCRETE,
     mortarDosages: MORTAR,
+    masonryUnits: MASONRY_UNITS,
     resolveVolume,
     calcConcrete,
     calcMortar,
+    calcMasonryWall,
     calculate
   });
 });
