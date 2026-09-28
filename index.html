@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=20260926-civil2" />
+  <link rel="stylesheet" href="styles.css?v=20260928-civil3" />
 </head>
 <body>
   <div class="app-shell">
@@ -151,7 +151,7 @@
 
       <section id="civil" class="view">
         <div class="section-head">
-          <div><h2>Calculador de obra civil</h2><p>Fase 2 · concretos, morteros y muros de mampostería con trazabilidad y sincronización.</p></div>
+          <div><h2>Calculador de obra civil</h2><p>Fase 3 · concretos, morteros, muros de mampostería y columnas de concreto armado.</p></div>
         </div>
         <div class="civil-note">
           <strong>Base técnica:</strong> calculadora Excel legado auditada. Para f'c = 250 kg/cm² se aplica la regla RemPro 2026 vigente; las demás dosificaciones conservan la tabla del archivo original.
@@ -164,6 +164,7 @@
                   <option value="concrete">Concreto hecho en obra</option>
                   <option value="mortar">Mortero hecho en obra</option>
                   <option value="masonry_wall">Muro de tabique / block</option>
+                  <option value="column">Columna de concreto armado</option>
                 </select>
               </label>
               <label>Obra vinculada
@@ -200,6 +201,23 @@
                 <label>Espesor de repellado (m)<input id="civilPlasterThickness" type="number" min="0" step="0.001" value="0.015" inputmode="decimal"></label>
                 <label>Desperdicio de piezas (%)<input id="civilWasteUnits" type="number" min="0" max="100" step="0.1" value="5"></label>
                 <label>Desperdicio de mortero (%)<input id="civilWasteMortar" type="number" min="0" max="100" step="0.1" value="10"></label>
+              </div>
+            </div>
+            <div id="civilColumnFields" hidden>
+              <div class="civil-subhead">Acero, estribos y cimbra</div>
+              <p class="auth-hint">La cuantificación no sustituye el diseño estructural. Captura el armado definido en planos o por el responsable estructural.</p>
+              <div class="form-grid">
+                <label>Número de columnas<input id="civilColumnCount" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+                <label>Varillas longitudinales<input id="civilLongitudinalBars" type="number" min="4" step="1" value="4" inputmode="numeric"></label>
+                <label>Diámetro longitudinal (mm)<input id="civilLongitudinalDiameter" type="number" min="0" step="0.1" value="12.7" inputmode="decimal"></label>
+                <label>Longitud extra por varilla (m)<input id="civilExtraBarLength" type="number" min="0" step="0.01" value="0.60" inputmode="decimal"></label>
+                <label>Diámetro de estribo (mm)<input id="civilStirrupDiameter" type="number" min="0" step="0.1" value="6" inputmode="decimal"></label>
+                <label>Separación de estribos (m)<input id="civilStirrupSpacing" type="number" min="0" step="0.01" value="0.20" inputmode="decimal"></label>
+                <label>Configuración de estribos<select id="civilStirrupMultiplicity"><option value="1">Simple</option><option value="2">Doble</option><option value="3">Triple</option></select></label>
+                <label>Recubrimiento (m)<input id="civilCover" type="number" min="0" step="0.005" value="0.025" inputmode="decimal"></label>
+                <label>Gancho por extremo (m)<input id="civilHookLength" type="number" min="0" step="0.01" value="0.10" inputmode="decimal"></label>
+                <label>Desperdicio de acero (%)<input id="civilWasteSteel" type="number" min="0" max="100" step="0.1" value="5"></label>
+                <label>Desperdicio de cimbra (%)<input id="civilWasteFormwork" type="number" min="0" max="100" step="0.1" value="5"></label>
               </div>
             </div>
             <div class="civil-subhead" id="civilVolumeHeading">Volumen</div>
@@ -392,12 +410,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20260926-civil2"></script>
-  <script src="supabase-client.js?v=20260926-civil2"></script>
-  <script src="data-store.js?v=20260926-civil2"></script>
-  <script src="civil-calculator.js?v=20260926-civil2"></script>
-  <script src="app.js?v=20260926-civil2"></script>
-  <script src="sync.js?v=20260926-civil2"></script>
+  <script src="supabase-config.js?v=20260928-civil3"></script>
+  <script src="supabase-client.js?v=20260928-civil3"></script>
+  <script src="data-store.js?v=20260928-civil3"></script>
+  <script src="civil-calculator.js?v=20260928-civil3"></script>
+  <script src="app.js?v=20260928-civil3"></script>
+  <script src="sync.js?v=20260928-civil3"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>

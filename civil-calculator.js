@@ -40,6 +40,10 @@
     custom: { label: 'Pieza personalizada', length: 0.40, height: 0.20, depth: 0.12 }
   });
 
+  // Peso nominal por metro: d² / 162, con d en milímetros.
+  // Se mantiene editable el diámetro; estas referencias sólo alimentan la UI.
+  const REBAR_DIAMETERS = Object.freeze([6, 8, 9.5, 12.7, 15.9, 19.1, 25.4]);
+
   const n = value => Number(value || 0);
   const validPositive = value => Number.isFinite(n(value)) && n(value) > 0;
   const pct = value => Math.max(0, n(value)) / 100;
@@ -200,10 +204,97 @@
     };
   }
 
+  function rebarKgPerM(diameterMm) {
+    const diameter = n(diameterMm);
+    if (!validPositive(diameter)) throw new Error('El diámetro de la varilla debe ser mayor que cero.');
+    return diameter * diameter / 162;
+  }
+
+  function calcColumn(input) {
+    const width = n(input.width);
+    const depth = n(input.depth);
+    const height = n(input.height);
+    const count = n(input.count);
+    const longitudinalBars = n(input.longitudinalBars);
+    const longitudinalDiameter = n(input.longitudinalDiameter);
+    const extraBarLength = Math.max(0, n(input.extraBarLength));
+    const stirrupDiameter = n(input.stirrupDiameter);
+    const stirrupSpacing = n(input.stirrupSpacing);
+    const stirrupMultiplicity = n(input.stirrupMultiplicity) || 1;
+    const cover = n(input.cover);
+    const hookLength = Math.max(0, n(input.hookLength));
+    const fc = String(input.fc || '250');
+    const wasteSteel = 1 + pct(input.wasteSteel);
+    const wasteFormwork = 1 + pct(input.wasteFormwork);
+
+    if (![width, depth, height].every(validPositive) || !Number.isInteger(count) || count < 1) {
+      throw new Error('Captura sección, altura y número de columnas positivos.');
+    }
+    if (!Number.isInteger(longitudinalBars) || longitudinalBars < 4) {
+      throw new Error('La columna debe tener al menos cuatro varillas longitudinales.');
+    }
+    if (![longitudinalDiameter, stirrupDiameter, stirrupSpacing, cover].every(validPositive)) {
+      throw new Error('Captura diámetros, separación de estribos y recubrimiento positivos.');
+    }
+    if (![1, 2, 3].includes(stirrupMultiplicity)) {
+      throw new Error('Selecciona estribo simple, doble o triple.');
+    }
+    if (cover * 2 >= Math.min(width, depth)) {
+      throw new Error('El recubrimiento debe ser menor que la mitad de la sección.');
+    }
+
+    const volume = width * depth * height * count;
+    const concrete = calcConcrete({
+      directVolume: volume,
+      fc,
+      bagWeight: input.bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+
+    const longitudinalBaseM = longitudinalBars * (height + extraBarLength) * count;
+    const longitudinalM = longitudinalBaseM * wasteSteel;
+    const longitudinalKg = longitudinalM * rebarKgPerM(longitudinalDiameter);
+
+    // Incluye estribo en ambos extremos. La multiplicidad representa el número
+    // de lazos del detalle estructural en cada nivel, sin inventar geometrías.
+    const stirrupLevelsPerColumn = Math.ceil(height / stirrupSpacing) + 1;
+    const stirrupCount = stirrupLevelsPerColumn * stirrupMultiplicity * count;
+    const stirrupLengthEach = 2 * ((width - 2 * cover) + (depth - 2 * cover)) + 2 * hookLength;
+    const stirrupBaseM = stirrupCount * stirrupLengthEach;
+    const stirrupM = stirrupBaseM * wasteSteel;
+    const stirrupKg = stirrupM * rebarKgPerM(stirrupDiameter);
+    const formworkBaseM2 = 2 * (width + depth) * height * count;
+    const formworkM2 = formworkBaseM2 * wasteFormwork;
+
+    return {
+      type: 'column',
+      volumeM3: round(volume, 4),
+      dosage: fc,
+      count,
+      longitudinalLengthM: round(longitudinalM, 2),
+      longitudinalSteelKg: round(longitudinalKg, 2),
+      stirrupCount,
+      stirrupLengthM: round(stirrupM, 2),
+      stirrupSteelKg: round(stirrupKg, 2),
+      steelKg: round(longitudinalKg + stirrupKg, 2),
+      formworkM2: round(formworkM2, 2),
+      source: 'Excel legado · lógica de columnas; geometría, acero y desperdicios editables · RemPro 2026',
+      materials: [
+        ...concrete.materials,
+        { key: 'longitudinal_rebar', description: `Acero longitudinal Ø ${longitudinalDiameter} mm`, unit: 'kg', quantity: round(longitudinalKg, 2), baseQuantity: round(longitudinalBaseM * rebarKgPerM(longitudinalDiameter), 2) },
+        { key: 'stirrup_rebar', description: `Acero para estribos Ø ${stirrupDiameter} mm`, unit: 'kg', quantity: round(stirrupKg, 2), baseQuantity: round(stirrupBaseM * rebarKgPerM(stirrupDiameter), 2) },
+        { key: 'formwork', description: 'Cimbra de contacto en cuatro caras', unit: 'm²', quantity: round(formworkM2, 2), baseQuantity: round(formworkBaseM2, 2) }
+      ]
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
     if (type === 'masonry_wall') return calcMasonryWall(input);
+    if (type === 'column') return calcColumn(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
@@ -211,10 +302,13 @@
     concreteDosages: CONCRETE,
     mortarDosages: MORTAR,
     masonryUnits: MASONRY_UNITS,
+    rebarDiameters: REBAR_DIAMETERS,
     resolveVolume,
     calcConcrete,
     calcMortar,
     calcMasonryWall,
+    rebarKgPerM,
+    calcColumn,
     calculate
   });
 });
