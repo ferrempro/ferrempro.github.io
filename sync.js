@@ -56,6 +56,9 @@
     data.local.save(key,snapshot);
     const remote=await readAll(client,table);
     assertSession(user.id);
+    // A read may finish after the user edited the local collection. Restart
+    // before reconciling project IDs or uploading an obsolete snapshot.
+    if (!same(snapshot,data.local.load(key,[]))) { requested=true; return; }
     const remoteMap=new Map(remote.map(r=>[r.id,r]));
     if (kind==='projects') {
       const canonicalByIdentity=new Map();
@@ -104,6 +107,7 @@
     const {data:rows,error}=await client.from('rempro_apu_drafts').select('*').eq('id','default').limit(1);
     if(error) throw error;
     assertSession(user.id);
+    if (!same(local,data.local.load(key,null))) { requested=true; return; }
     const remote=rows?.[0] || null;
     const localStamp=stamp(local);
     const remoteStamp=stamp(remote);
@@ -115,7 +119,10 @@
         : client.from('rempro_apu_drafts').upsert(payload,{onConflict:'id',ignoreDuplicates:true});
       const {data:written,error:writeError}=await query.select();
       if(writeError) throw writeError;
+      assertSession(user.id);
       if(!written?.length) throw new Error('El APU cambió en otro dispositivo durante la sincronización. Los datos locales se conservan.');
+      // An edit made during the write must be uploaded in the next pass.
+      if (!same(local,data.local.load(key,null))) requested=true;
     } else if (remote && (!local || remoteStamp>localStamp)) {
       data.local.save(key,{...(remote.payload||{}),updated_at:remote.updated_at,updated_by:remote.updated_by});
     }
@@ -163,6 +170,7 @@
       await syncApu(client,user);
       await syncRules(client,user);
       assertSession(user.id);
+      if (requested) return;
       state.lastSyncAt=new Date().toISOString();
       data.local.save(data.keys.syncMeta,{lastSyncAt:state.lastSyncAt});
       setStatus('synced',`Sincronizado ${new Date(state.lastSyncAt).toLocaleTimeString('es-MX')}`);
