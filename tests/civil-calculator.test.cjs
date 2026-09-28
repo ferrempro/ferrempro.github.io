@@ -76,3 +76,39 @@ test('preset block15 conserva dimensiones editables de referencia', () => {
     depth: 0.15
   });
 });
+
+test('columna cuantifica concreto, acero longitudinal, estribos y cimbra', () => {
+  const r = civil.calcColumn({
+    width: 0.25, depth: 0.30, height: 3, count: 2,
+    longitudinalBars: 6, longitudinalDiameter: 12.7, extraBarLength: 0.60,
+    stirrupDiameter: 6, stirrupSpacing: 0.20, stirrupMultiplicity: 1,
+    cover: 0.025, hookLength: 0.10,
+    fc: 250, bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0,
+    wasteSteel: 5, wasteFormwork: 5
+  });
+  assert.equal(r.type, 'column');
+  assert.equal(r.volumeM3, 0.45);
+  assert.equal(r.count, 2);
+  assert.equal(r.stirrupCount, 32);
+  assert.equal(r.longitudinalLengthM, 45.36);
+  assert.equal(r.stirrupLengthM, 36.96);
+  assert.equal(r.longitudinalSteelKg, 45.16);
+  assert.equal(r.stirrupSteelKg, 8.21);
+  assert.equal(r.steelKg, 53.37);
+  assert.equal(r.formworkM2, 6.93);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 3.6);
+});
+
+test('columna exige armado mínimo y recubrimiento geométricamente válido', () => {
+  const base = {
+    width: 0.20, depth: 0.20, height: 3, count: 1,
+    longitudinalBars: 4, longitudinalDiameter: 12.7,
+    stirrupDiameter: 6, stirrupSpacing: 0.20, stirrupMultiplicity: 1,
+    cover: 0.025, hookLength: 0.10, fc: 250
+  };
+  assert.throws(() => civil.calcColumn({ ...base, longitudinalBars: 3 }), /cuatro varillas/);
+  assert.throws(() => civil.calcColumn({ ...base, count: 1.5 }), /número de columnas/);
+  assert.throws(() => civil.calcColumn({ ...base, cover: 0.10 }), /recubrimiento/);
+  assert.throws(() => civil.calcColumn({ ...base, stirrupMultiplicity: 4 }), /simple, doble o triple/);
+});
