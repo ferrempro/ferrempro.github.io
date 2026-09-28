@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
-function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,fail=false,member=true,writeConflict=false}={}) {
+function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,requestHook,fail=false,member=true,writeConflict=false}={}) {
  const storage=new Map();const events=[]; let reads=0;
  const tables={rempro_projects:structuredClone(remote),rempro_prices:[],rempro_documents:[],rempro_civil_calculations:[],rempro_rules:[],rempro_apu_drafts:remoteApu?[structuredClone(remoteApu)]:[],rempro_members:member?[{email:'test@example.test'}]:[]};
  const ctx={console,crypto:require('node:crypto').webcrypto,Date,Map,Set,JSON,setTimeout,clearTimeout,CustomEvent:class{constructor(type){this.type=type;}}};
@@ -13,6 +13,7 @@ function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,fail=fals
   select(){return q;},order(){return q;},range(a,b){start=a;end=b;return q;},limit(n){end=Math.min(end,start+n-1);return q;},eq(k,v){filters.push([k,v]);return q;},
   upsert(p,o){mode='insert';payload=p;opts=o;return q;},update(p){mode='update';payload=p;return q;},
   async then(resolve,reject){try {
+   await requestHook?.({table,mode,tables,storage,ctx});
    if(fail && table==='rempro_projects') return resolve({error:{message:'offline'}});
    if(table==='rempro_projects' && mode==='read'){reads++;await hook?.({reads,tables,storage,ctx});}
    let result;
@@ -32,6 +33,38 @@ function harness({local=[],remote=[],localApu=null,remoteApu=null,hook,fail=fals
  return {ctx,tables,events,storage,load:()=>ctx.RemProData.local.load(ctx.RemProData.keys.projects,[]),loadApu:()=>ctx.RemProData.local.load(ctx.RemProData.keys.apu,null)};
 }
 const row=(id,name,updated_at='2026-09-20T00:00:00.000Z')=>({id,name,client:'Test',updated_at,deleted:false});
+for (const change of ['edit','add','delete','legacy']) {
+ test(`first remote read preserves concurrent ${change}`,async()=>{
+  const id=change==='legacy'?'local-id':'a';
+  const original=row(id,'Original');
+  const edited={...original,name:change==='legacy'?'Original':'Edited',updated_at:'2026-09-21T00:00:00.000Z',deleted:change==='delete',cost:123};
+  const h=harness({local:[original],remote:[row('a','Original')],hook:({reads,ctx})=>{
+   if(reads===1)ctx.RemProData.local.save(ctx.RemProData.keys.projects,change==='add'?[original,row('b','Added')]:[edited]);
+  }});
+  await h.ctx.RemProSync.syncNow();
+  assert.equal(h.ctx.RemProSync.status.status,'synced');
+  if(change==='add') {assert.ok(h.load().some(r=>r.id==='b'));assert.ok(h.tables.rempro_projects.some(r=>r.id==='b'));}
+  else {assert.equal(h.load()[0].cost,123);assert.equal(h.tables.rempro_projects[0].cost,123);assert.equal(h.load()[0].deleted,change==='delete');}
+  if(change==='legacy') {assert.equal(h.load()[0].id,'a');assert.equal(h.tables.rempro_projects.length,1);}
+ });
+}
+for (const phase of ['read','insert','update']) {
+ test(`APU edit during ${phase} survives and reaches cloud`,async()=>{
+  const old={rows:[{desc:'Old'}],fields:{},updated_at:'2026-09-20T00:00:00.000Z'};
+  const edited={rows:[{desc:'Edited'}],fields:{},updated_at:'2026-09-23T00:00:00.000Z'};
+  let changed=false;
+  const remoteApu=phase==='insert'?null:{id:'default',payload:{rows:[{desc:'Cloud'}],fields:{}},updated_at:phase==='read'?'2026-09-22T00:00:00.000Z':'2026-09-19T00:00:00.000Z'};
+  const h=harness({localApu:old,remoteApu,requestHook:({table,mode,ctx})=>{
+   if(table==='rempro_apu_drafts' && mode===phase && !changed){changed=true;ctx.RemProData.local.save(ctx.RemProData.keys.apu,edited);}
+  }});
+  const statuses=[];
+  h.ctx.RemProSync.onStatusChange(s=>statuses.push(s.status));
+  await h.ctx.RemProSync.syncNow();
+  assert.equal(h.loadApu().rows[0].desc,'Edited');
+  assert.equal(h.tables.rempro_apu_drafts[0].payload.rows[0].desc,'Edited');
+  assert.equal(statuses.filter(s=>s==='synced').length,1);
+ });
+}
 test('first sync keeps server records and uploads local records, with safety backup',async()=>{const h=harness({local:[row('local','Local')],remote:[row('cloud','Cloud')]});await h.ctx.RemProSync.syncNow();assert.equal(h.load().length,2);assert.equal(h.tables.rempro_projects.length,2);assert.ok(h.storage.has(h.ctx.RemProData.keys.backup));assert.equal(h.ctx.RemProSync.status.status,'synced');assert.ok(h.events.includes('rempro:synced'));});
 test('legacy record without timestamp never replaces newer cloud version',async()=>{const h=harness({local:[{id:'a',name:'Old'}],remote:[row('a','New')]});await h.ctx.RemProSync.syncNow();assert.equal(h.load()[0].name,'New');});
 test('edits made during a network read survive and are uploaded in queued pass',async()=>{const h=harness({local:[row('a','Original')],remote:[row('a','Original')],hook:({reads,ctx})=>{if(reads===2)ctx.RemProData.local.save(ctx.RemProData.keys.projects,[row('a','Edited','2026-09-21T00:00:00.000Z')]);}});await h.ctx.RemProSync.syncNow();assert.equal(h.load()[0].name,'Edited');assert.equal(h.tables.rempro_projects[0].name,'Edited');});
