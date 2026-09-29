@@ -112,3 +112,39 @@ test('columna exige armado mínimo y recubrimiento geométricamente válido', ()
   assert.throws(() => civil.calcColumn({ ...base, cover: 0.10 }), /recubrimiento/);
   assert.throws(() => civil.calcColumn({ ...base, stirrupMultiplicity: 4 }), /simple, doble o triple/);
 });
+
+test('trabe cuantifica concreto, acero longitudinal, estribos y cimbra a tres caras', () => {
+  const r = civil.calcBeam({
+    width: 0.25, depth: 0.40, length: 4, count: 2,
+    topBars: 2, bottomBars: 3, longitudinalDiameter: 12.7, extraBarLength: 0.60,
+    stirrupDiameter: 6, stirrupSpacing: 0.20, stirrupMultiplicity: 1,
+    cover: 0.025, hookLength: 0.10,
+    fc: 250, bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0,
+    wasteSteel: 5, wasteFormwork: 5
+  });
+  assert.equal(r.type, 'beam');
+  assert.equal(r.volumeM3, 0.8);
+  assert.equal(r.count, 2);
+  assert.equal(r.stirrupCount, 42);
+  assert.equal(r.longitudinalLengthM, 48.3);
+  assert.equal(r.stirrupLengthM, 57.33);
+  assert.equal(r.longitudinalSteelKg, 48.09);
+  assert.equal(r.stirrupSteelKg, 12.74);
+  assert.equal(r.steelKg, 60.83);
+  assert.equal(r.formworkM2, 8.82);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 6.4);
+});
+
+test('trabe valida armado, número de elementos y recubrimiento', () => {
+  const base = {
+    width: 0.20, depth: 0.35, length: 3, count: 1,
+    topBars: 2, bottomBars: 2, longitudinalDiameter: 12.7,
+    stirrupDiameter: 6, stirrupSpacing: 0.20, stirrupMultiplicity: 1,
+    cover: 0.025, hookLength: 0.10, fc: 250
+  };
+  assert.throws(() => civil.calcBeam({ ...base, topBars: 0 }), /superior/);
+  assert.throws(() => civil.calcBeam({ ...base, count: 1.5 }), /número de trabes/);
+  assert.throws(() => civil.calcBeam({ ...base, cover: 0.10 }), /recubrimiento/);
+  assert.throws(() => civil.calcBeam({ ...base, stirrupMultiplicity: 4 }), /simple, doble o triple/);
+});
