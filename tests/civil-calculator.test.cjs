@@ -148,3 +148,43 @@ test('trabe valida armado, número de elementos y recubrimiento', () => {
   assert.throws(() => civil.calcBeam({ ...base, cover: 0.10 }), /recubrimiento/);
   assert.throws(() => civil.calcBeam({ ...base, stirrupMultiplicity: 4 }), /simple, doble o triple/);
 });
+
+
+test('zapata con dado cuantifica concreto, parrilla, acero vertical, estribos y cimbra', () => {
+  const r = civil.calcFooting({
+    length: 2, width: 2, thickness: 0.30, count: 2,
+    barsX: 11, barsY: 11, diameter: 12.7, cover: 0.075,
+    dadoLength: 0.40, dadoWidth: 0.40, dadoHeight: 0.60,
+    dadoBars: 4, dadoDiameter: 12.7, dadoExtraBarLength: 0.60,
+    stirrupDiameter: 9.5, stirrupSpacing: 0.20, hookLength: 0.10,
+    fc: 250, bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0,
+    wasteSteel: 5, wasteFormwork: 5
+  });
+  assert.equal(r.type, 'footing');
+  assert.equal(r.subtype, 'footing_with_dado');
+  assert.equal(r.footingConcreteM3, 2.4);
+  assert.equal(r.dadoConcreteM3, 0.192);
+  assert.equal(r.volumeM3, 2.592);
+  assert.equal(r.dado.stirrupCount, 8);
+  assert.ok(r.footingSteelKg > 0);
+  assert.ok(r.dadoSteelKg > 0);
+  assert.ok(r.formworkM2 > 0);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 20.74);
+  assert.equal(r.materials.find(x => x.key === 'footing_rebar').unit, 'kg');
+});
+
+test('zapata aislada omite el dado y valida parrilla, recubrimiento y datos parciales', () => {
+  const base = {
+    length: 1.5, width: 1.5, thickness: 0.25, count: 1,
+    barsX: 9, barsY: 9, diameter: 12.7, cover: 0.075,
+    fc: 250, wasteSteel: 5, wasteFormwork: 5
+  };
+  const r = civil.calcFooting(base);
+  assert.equal(r.subtype, 'isolated_footing');
+  assert.equal(r.dado, null);
+  assert.equal(r.dadoConcreteM3, 0);
+  assert.throws(() => civil.calcFooting({ ...base, barsX: 1 }), /dos varillas/);
+  assert.throws(() => civil.calcFooting({ ...base, cover: 0.75 }), /recubrimiento/);
+  assert.throws(() => civil.calcFooting({ ...base, dadoLength: 0.40 }), /todas las dimensiones/);
+});

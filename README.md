@@ -70,3 +70,8 @@ El borrador activo de APU rápido se guarda localmente y, cuando existe una sesi
 La Fase 4 incorpora columnas y trabes de concreto armado sin convertir el cuantificador en una herramienta de diseño estructural. El usuario captura la sección y el armado definido en planos: número y diámetro de varillas longitudinales, longitud adicional de anclaje/traslape, diámetro, separación y multiplicidad de estribos, recubrimiento, ganchos, cimbra y desperdicios. En trabes se distinguen las varillas superiores e inferiores y la cimbra se cuantifica en fondo y dos laterales. El peso nominal del acero se calcula con `d²/162` kg/m. Los estribos incluyen ambos extremos y su geometría se obtiene de la sección menos recubrimientos.
 
 Los presets de block y tabique siguen siendo referencias editables; el cálculo usa área neta descontando vanos, módulo pieza+junta, mortero de asentado, cero/una/dos caras de repellado y desperdicios separados. La regla RemPro vigente prevalece sobre el Excel legado cuando existe una corrección documentada. Costo directo, flujo, precio comercial, IVA, indirectos y utilidad permanecen fuera de este cuantificador de materiales.
+
+
+### Fase 5 · zapatas y dados
+
+El motor único del Calculador Civil incorpora zapatas aisladas y zapatas con dado. Cuantifica concreto, parrilla en ambos sentidos, acero vertical y estribos del dado, y cimbra lateral. La geometría, el armado, recubrimientos y desperdicios se capturan desde el plano o la instrucción estructural vigente; RemPro Control no dimensiona ni diseña elementos estructurales. Los resultados usan la misma separación de historial, sincronización privada, respaldo/importación y dosificaciones RemPro que los demás módulos.
