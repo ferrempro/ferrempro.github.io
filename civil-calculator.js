@@ -375,12 +375,142 @@
     };
   }
 
+
+  function calcFooting(input) {
+    const length = n(input.length);
+    const width = n(input.width);
+    const thickness = n(input.thickness);
+    const count = n(input.count);
+    const barsX = n(input.barsX);
+    const barsY = n(input.barsY);
+    const diameter = n(input.diameter);
+    const cover = n(input.cover);
+    const dadoLength = n(input.dadoLength);
+    const dadoWidth = n(input.dadoWidth);
+    const dadoHeight = n(input.dadoHeight);
+    const dadoBars = n(input.dadoBars);
+    const dadoDiameter = n(input.dadoDiameter || diameter);
+    const stirrupDiameter = n(input.stirrupDiameter || diameter);
+    const stirrupSpacing = n(input.stirrupSpacing);
+    const hookLength = Math.max(0, n(input.hookLength));
+    const fc = String(input.fc || '250');
+    const wasteSteel = 1 + pct(input.wasteSteel);
+    const wasteFormwork = 1 + pct(input.wasteFormwork);
+
+    if (![length, width, thickness].every(validPositive) || !Number.isInteger(count) || count < 1) {
+      throw new Error('Captura largo, ancho, espesor y número de zapatas positivos.');
+    }
+    if (![barsX, barsY].every(v => Number.isInteger(v) && v >= 2)) {
+      throw new Error('Captura al menos dos varillas en ambos sentidos.');
+    }
+    if (![diameter, cover].every(validPositive)) {
+      throw new Error('Captura diámetro y recubrimiento positivos.');
+    }
+    if (cover * 2 >= Math.min(length, width)) {
+      throw new Error('El recubrimiento no es compatible con la zapata.');
+    }
+
+    const footingConcreteM3 = length * width * thickness * count;
+    const footingBarLengthX = length - 2 * cover;
+    const footingBarLengthY = width - 2 * cover;
+    const footingBaseSteelM = (barsX * footingBarLengthX + barsY * footingBarLengthY) * count;
+    const footingSteelM = footingBaseSteelM * wasteSteel;
+    const footingSteelKg = footingSteelM * rebarKgPerM(diameter);
+
+    let dado = null;
+    let dadoConcreteM3 = 0;
+    let dadoSteelKg = 0;
+    let dadoFormworkM2 = 0;
+    let dadoMaterials = [];
+
+    if ([dadoLength, dadoWidth, dadoHeight].some(validPositive)) {
+      if (![dadoLength, dadoWidth, dadoHeight].every(validPositive)) {
+        throw new Error('Completa todas las dimensiones del dado o déjalas en cero.');
+      }
+      if (!Number.isInteger(dadoBars) || dadoBars < 4) {
+        throw new Error('El dado debe tener al menos cuatro varillas verticales.');
+      }
+      if (!validPositive(stirrupSpacing)) {
+        throw new Error('Captura la separación de estribos del dado.');
+      }
+      if (cover * 2 >= Math.min(dadoLength, dadoWidth)) {
+        throw new Error('El recubrimiento no es compatible con el dado.');
+      }
+
+      dadoConcreteM3 = dadoLength * dadoWidth * dadoHeight * count;
+      const verticalBaseM = dadoBars * (dadoHeight + Math.max(0, n(input.dadoExtraBarLength))) * count;
+      const verticalM = verticalBaseM * wasteSteel;
+      const verticalKg = verticalM * rebarKgPerM(dadoDiameter);
+      const levels = Math.ceil(dadoHeight / stirrupSpacing) + 1;
+      const stirrupCount = levels * count;
+      const stirrupEachM = 2 * ((dadoLength - 2 * cover) + (dadoWidth - 2 * cover)) + 2 * hookLength;
+      const stirrupBaseM = stirrupCount * stirrupEachM;
+      const stirrupM = stirrupBaseM * wasteSteel;
+      const stirrupKg = stirrupM * rebarKgPerM(stirrupDiameter);
+      dadoSteelKg = verticalKg + stirrupKg;
+      dadoFormworkM2 = 2 * (dadoLength + dadoWidth) * dadoHeight * count * wasteFormwork;
+      dadoMaterials = [
+        { key: 'dado_vertical_rebar', description: `Acero vertical de dado Ø ${dadoDiameter} mm`, unit: 'kg', quantity: round(verticalKg, 2), baseQuantity: round(verticalBaseM * rebarKgPerM(dadoDiameter), 2) },
+        { key: 'dado_stirrup_rebar', description: `Acero para estribos de dado Ø ${stirrupDiameter} mm`, unit: 'kg', quantity: round(stirrupKg, 2), baseQuantity: round(stirrupBaseM * rebarKgPerM(stirrupDiameter), 2) }
+      ];
+      dado = {
+        concreteM3: round(dadoConcreteM3, 4),
+        verticalLengthM: round(verticalM, 2),
+        verticalSteelKg: round(verticalKg, 2),
+        stirrupCount,
+        stirrupLengthM: round(stirrupM, 2),
+        stirrupSteelKg: round(stirrupKg, 2),
+        steelKg: round(dadoSteelKg, 2),
+        formworkM2: round(dadoFormworkM2, 2)
+      };
+    }
+
+    const concreteM3 = footingConcreteM3 + dadoConcreteM3;
+    const concrete = calcConcrete({
+      directVolume: concreteM3,
+      fc,
+      bagWeight: input.bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+    const footingFormworkBaseM2 = 2 * (length + width) * thickness * count;
+    const footingFormworkM2 = footingFormworkBaseM2 * wasteFormwork;
+    const formworkM2 = footingFormworkM2 + dadoFormworkM2;
+
+    return {
+      type: 'footing',
+      subtype: dado ? 'footing_with_dado' : 'isolated_footing',
+      count,
+      volumeM3: round(concreteM3, 4),
+      concreteM3: round(concreteM3, 4),
+      footingConcreteM3: round(footingConcreteM3, 4),
+      dadoConcreteM3: round(dadoConcreteM3, 4),
+      steelKg: round(footingSteelKg + dadoSteelKg, 2),
+      footingSteelKg: round(footingSteelKg, 2),
+      dadoSteelKg: round(dadoSteelKg, 2),
+      formworkM2: round(formworkM2, 2),
+      footingFormworkM2: round(footingFormworkM2, 2),
+      dosage: fc,
+      dado,
+      source: 'Excel legado · lógica de zapatas/dados; geometría, armado, cimbra y desperdicios editables · RemPro 2026',
+      structuralDesignNote: 'Cuantificación a partir del armado y geometría capturados. No propone dimensiones, cuantías ni separación estructural.',
+      materials: [
+        ...concrete.materials,
+        { key: 'footing_rebar', description: `Acero de parrilla Ø ${diameter} mm`, unit: 'kg', quantity: round(footingSteelKg, 2), baseQuantity: round(footingBaseSteelM * rebarKgPerM(diameter), 2) },
+        ...dadoMaterials,
+        { key: 'formwork', description: dado ? 'Cimbra lateral de zapata y dado' : 'Cimbra lateral de zapata', unit: 'm²', quantity: round(formworkM2, 2), baseQuantity: round(footingFormworkBaseM2 + (dado ? 2 * (dadoLength + dadoWidth) * dadoHeight * count : 0), 2) }
+      ]
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
     if (type === 'masonry_wall') return calcMasonryWall(input);
     if (type === 'column') return calcColumn(input);
     if (type === 'beam') return calcBeam(input);
+    if (type === 'footing') return calcFooting(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
@@ -396,6 +526,7 @@
     rebarKgPerM,
     calcColumn,
     calcBeam,
+    calcFooting,
     calculate
   });
 });
