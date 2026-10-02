@@ -504,10 +504,75 @@
     };
   }
 
+
+  function calcStoneMasonry(input) {
+    const directVolume = n(input.directVolume);
+    const length = n(input.length);
+    const height = n(input.height);
+    const thickness = n(input.thickness);
+    const openingArea = Math.max(0, n(input.openingArea));
+    const stoneFactor = n(input.stoneFactor);
+    const mortarFactor = n(input.mortarFactor);
+    const mix = String(input.mix || '.1:4');
+
+    let volume;
+    if (validPositive(directVolume)) {
+      volume = directVolume;
+    } else {
+      if (![length, height, thickness].every(validPositive)) {
+        throw new Error('Captura un volumen directo o largo, alto y espesor positivos para la mampostería.');
+      }
+      const grossArea = length * height;
+      if (openingArea >= grossArea) {
+        throw new Error('El área de vanos debe ser menor que el área total de la mampostería.');
+      }
+      volume = (grossArea - openingArea) * thickness;
+    }
+    if (![stoneFactor, mortarFactor].every(validPositive)) {
+      throw new Error('Los coeficientes de piedra y mortero deben ser mayores que cero.');
+    }
+
+    const stoneBaseM3 = volume * stoneFactor;
+    const stoneM3 = stoneBaseM3 * (1 + pct(input.wasteStone));
+    const mortarBaseM3 = volume * mortarFactor;
+    const mortarVolumeM3 = mortarBaseM3 * (1 + pct(input.wasteMortar));
+    const mortar = calcMortar({
+      directVolume: mortarVolumeM3,
+      mix,
+      bagWeight: input.bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+
+    return {
+      type: 'stone_masonry',
+      volumeM3: round(volume, 4),
+      stoneFactor: round(stoneFactor, 4),
+      mortarFactor: round(mortarFactor, 4),
+      stoneM3: round(stoneM3, 4),
+      mortarVolumeM3: round(mortarVolumeM3, 4),
+      dosage: mix,
+      source: 'Excel/manual legado · geometría de mampostería; coeficientes de consumo editables · RemPro 2026',
+      ruleNote: 'Los coeficientes representan consumo por m³ ejecutado y deben ajustarse a la piedra, junta y aparejo reales.',
+      materials: [
+        {
+          key: 'stone',
+          description: 'Piedra para mampostería',
+          unit: 'm³',
+          quantity: round(stoneM3, 3),
+          baseQuantity: round(stoneBaseM3, 3)
+        },
+        ...mortar.materials
+      ]
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
     if (type === 'masonry_wall') return calcMasonryWall(input);
+    if (type === 'stone_masonry') return calcStoneMasonry(input);
     if (type === 'column') return calcColumn(input);
     if (type === 'beam') return calcBeam(input);
     if (type === 'footing') return calcFooting(input);
@@ -523,6 +588,7 @@
     calcConcrete,
     calcMortar,
     calcMasonryWall,
+    calcStoneMasonry,
     rebarKgPerM,
     calcColumn,
     calcBeam,

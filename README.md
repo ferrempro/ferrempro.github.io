@@ -7,7 +7,7 @@ Aplicación estática de obras, cobros acumulados, costos, avance, precios y APU
 - **Control Maestro:** agregar, editar, buscar y filtrar obras; actualizar contratado, cobrado y costo. El avance físico queda de solo lectura en la interfaz y se registra mediante ChatGPT/voz. Incluye balance de obra con corte al momento y control de documentos con estado financiero independiente del estado de envío.
 - **Precios:** alta, edición y eliminación con proveedor, IVA y fecha.
 - **APU:** captura continua sin perder el foco; conserva el último análisis en este navegador. El APU se incluye en el respaldo exportado y no se sincroniza con la nube.
-- **Obra civil:** concretos y morteros hechos en obra; muros de tabique/block con piezas, juntas, vanos, desperdicios y repellado; y columnas y trabes de concreto armado con geometría, acero longitudinal, estribos simples/dobles/triples, cimbra y desperdicios editables. Los cálculos guardados se incluyen en el respaldo y se sincronizan con RLS cuando hay sesión.
+- **Obra civil:** concretos y morteros hechos en obra; muros de tabique/block con piezas, juntas, vanos, desperdicios y repellado; mampostería de piedra con consumos editables; y columnas, trabes, zapatas y dados de concreto armado con geometría, acero, cimbra y desperdicios editables. Los cálculos guardados se incluyen en el respaldo y se sincronizan con RLS cuando hay sesión.
 - **Reglas:** factores positivos para las estimaciones de materiales.
 - **Respaldos:** exportar/importar JSON y descargar el respaldo automático anterior a la primera sincronización o a la última importación. Una importación inválida se rechaza antes de cambiar datos. Importar reemplaza el contenido local; los registros que siguen en la nube pueden reaparecer al sincronizar. Para eliminarlos, utiliza Eliminar en la aplicación.
 - **Sin conexión:** después de una primera visita con conexión, el service worker permite abrir el control y registrar cambios sin red. Si el SDK no se cargó al abrir sin conexión, recarga al recuperar internet para activar la nube.
@@ -75,3 +75,8 @@ Los presets de block y tabique siguen siendo referencias editables; el cálculo 
 ### Fase 5 · zapatas y dados
 
 El motor único del Calculador Civil incorpora zapatas aisladas y zapatas con dado. Cuantifica concreto, parrilla en ambos sentidos, acero vertical y estribos del dado, y cimbra lateral. La geometría, el armado, recubrimientos y desperdicios se capturan desde el plano o la instrucción estructural vigente; RemPro Control no dimensiona ni diseña elementos estructurales. Los resultados usan la misma separación de historial, sincronización privada, respaldo/importación y dosificaciones RemPro que los demás módulos.
+
+
+### Fase 6 · mampostería de piedra
+
+El módulo cuantifica el volumen ejecutado a partir de un volumen directo o de largo × alto × espesor, descontando vanos. La piedra y el mortero se obtienen mediante coeficientes de consumo por m³ ejecutado, editables para ajustarse a la piedra, junta y aparejo reales; los valores iniciales 1.20 m³ de piedra y 0.30 m³ de mortero por m³ ejecutado son referencias de captura, no una regla estructural rígida. El mortero reutiliza las dosificaciones auditadas del motor único. El resultado conserva historial, sincronización privada con RLS, respaldo/importación y funcionamiento PWA. El módulo cuantifica materiales y mantiene fuera costo directo, flujo, precio comercial, IVA, indirectos y utilidad.
