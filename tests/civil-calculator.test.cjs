@@ -188,3 +188,36 @@ test('zapata aislada omite el dado y valida parrilla, recubrimiento y datos parc
   assert.throws(() => civil.calcFooting({ ...base, cover: 0.75 }), /recubrimiento/);
   assert.throws(() => civil.calcFooting({ ...base, dadoLength: 0.40 }), /todas las dimensiones/);
 });
+
+
+test('mampostería de piedra descuenta vanos y aplica consumos editables', () => {
+  const r = civil.calcStoneMasonry({
+    length: 5, height: 2, thickness: 0.40, openingArea: 2,
+    stoneFactor: 1.20, mortarFactor: 0.30,
+    wasteStone: 5, wasteMortar: 10,
+    mix: '.1:4', bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0
+  });
+  assert.equal(r.type, 'stone_masonry');
+  assert.equal(r.volumeM3, 3.2);
+  assert.equal(r.stoneM3, 4.032);
+  assert.equal(r.mortarVolumeM3, 1.056);
+  assert.equal(r.materials.find(x => x.key === 'stone').quantity, 4.032);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 7.69);
+});
+
+test('mampostería de piedra prioriza volumen directo y valida geometría y coeficientes', () => {
+  const direct = civil.calcStoneMasonry({
+    directVolume: 2, length: 99, height: 99, thickness: 99, openingArea: 0,
+    stoneFactor: 1.10, mortarFactor: 0.25, mix: '.1:4'
+  });
+  assert.equal(direct.volumeM3, 2);
+  assert.equal(direct.stoneM3, 2.2);
+  assert.throws(() => civil.calcStoneMasonry({
+    length: 2, height: 2, thickness: 0.4, openingArea: 4,
+    stoneFactor: 1.2, mortarFactor: 0.3
+  }), /vanos/);
+  assert.throws(() => civil.calcStoneMasonry({
+    directVolume: 1, stoneFactor: 0, mortarFactor: 0.3
+  }), /coeficientes/);
+});
