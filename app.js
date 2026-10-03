@@ -771,7 +771,7 @@ function loadCivilCalculation(id) {
   document.getElementById('civilWasteCement').value=i.wasteCement ?? 5;
   document.getElementById('civilWasteSand').value=i.wasteSand ?? 20;
   document.getElementById('civilWasteThird').value=i.wasteThird ?? 30;
-  document.getElementById('civilDosage').value=['concrete','column','beam','footing'].includes(c.calculation_type) ? String(i.fc || '250') : String(i.mix || '.1:4');
+  document.getElementById('civilDosage').value=['concrete','column','beam','footing','reinforced_wall','reinforced_slab'].includes(c.calculation_type) ? String(i.fc || '250') : String(i.mix || '.1:4');
   if (c.calculation_type === 'masonry_wall') {
     const presetKey = Object.entries(window.RemProCivil.masonryUnits)
       .find(([,u]) => u.label === i.unitLabel)?.[0] || 'custom';
