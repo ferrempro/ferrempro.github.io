@@ -80,3 +80,8 @@ El motor único del Calculador Civil incorpora zapatas aisladas y zapatas con da
 ### Fase 6 · mampostería de piedra
 
 El módulo cuantifica el volumen ejecutado a partir de un volumen directo o de largo × alto × espesor, descontando vanos. La piedra y el mortero se obtienen mediante coeficientes de consumo por m³ ejecutado, editables para ajustarse a la piedra, junta y aparejo reales; los valores iniciales 1.20 m³ de piedra y 0.30 m³ de mortero por m³ ejecutado son referencias de captura, no una regla estructural rígida. El mortero reutiliza las dosificaciones auditadas del motor único. El resultado conserva historial, sincronización privada con RLS, respaldo/importación y funcionamiento PWA. El módulo cuantifica materiales y mantiene fuera costo directo, flujo, precio comercial, IVA, indirectos y utilidad.
+
+
+### Fase 7 · muros y losas de concreto reforzado
+
+El motor único incorpora muros y losas macizas de concreto reforzado a partir de la geometría y del armado definido en planos. Para muros cuantifica volumen neto descontando vanos, retícula vertical y horizontal en una o dos caras, longitud adicional, acero por peso nominal y cimbra en cero, una o dos caras. Para losas cuantifica concreto, acero en ambos sentidos para una o dos parrillas y cimbra inferior opcional para distinguir losas elevadas de losas sobre terreno. Los vanos no descuentan acero automáticamente: los refuerzos perimetrales deben provenir del detalle estructural. El módulo no diseña espesores, diámetros, separaciones, apoyos ni traslapes. Historial, sincronización privada con RLS, respaldo/importación y PWA permanecen integrados; costos directos, flujo, precio comercial, IVA, indirectos y utilidad siguen separados.

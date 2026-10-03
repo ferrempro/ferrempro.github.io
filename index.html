@@ -151,7 +151,7 @@
 
       <section id="civil" class="view">
         <div class="section-head">
-          <div><h2>Calculador de obra civil</h2><p>Fase 6 · concretos, morteros, muros de tabique/block y piedra, columnas, trabes, zapatas y dados.</p></div>
+          <div><h2>Calculador de obra civil</h2><p>Fase 7 · concretos, morteros, mamposterías y elementos de concreto reforzado.</p></div>
         </div>
         <div class="civil-note">
           <strong>Base técnica:</strong> calculadora Excel legado auditada. Para f'c = 250 kg/cm² se aplica la regla RemPro 2026 vigente; las demás dosificaciones conservan la tabla del archivo original.
@@ -168,6 +168,8 @@
                   <option value="column">Columna de concreto armado</option>
                   <option value="beam">Trabe de concreto armado</option>
                   <option value="footing">Zapata aislada / zapata con dado</option>
+                  <option value="reinforced_wall">Muro de concreto reforzado</option>
+                  <option value="reinforced_slab">Losa de concreto reforzado</option>
                 </select>
               </label>
               <label>Obra vinculada
@@ -272,6 +274,39 @@
                 <label>Gancho por extremo (m)<input id="civilDadoHookLength" type="number" min="0" step="0.01" value="0.10" inputmode="decimal"></label>
                 <label>Desperdicio de acero (%)<input id="civilFootingWasteSteel" type="number" min="0" max="100" step="0.1" value="5"></label>
                 <label>Desperdicio de cimbra (%)<input id="civilFootingWasteFormwork" type="number" min="0" max="100" step="0.1" value="5"></label>
+              </div>
+            </div>
+            <div id="civilReinforcedWallFields" hidden>
+              <div class="civil-subhead">Retícula y cimbra del muro</div>
+              <p class="auth-hint">Captura el armado definido en planos. Los vanos descuentan concreto y cimbra; los refuerzos perimetrales se consideran mediante la longitud adicional o el detalle estructural.</p>
+              <div class="form-grid">
+                <label>Número de muros<input id="civilReinforcedWallCount" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+                <label>Área de vanos por muro (m²)<input id="civilReinforcedWallOpeningArea" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Diámetro vertical (mm)<input id="civilWallVerticalDiameter" type="number" min="0" step="0.1" value="12.7" inputmode="decimal"></label>
+                <label>Separación vertical (m)<input id="civilWallVerticalSpacing" type="number" min="0" step="0.01" value="0.20" inputmode="decimal"></label>
+                <label>Diámetro horizontal (mm)<input id="civilWallHorizontalDiameter" type="number" min="0" step="0.1" value="9.5" inputmode="decimal"></label>
+                <label>Separación horizontal (m)<input id="civilWallHorizontalSpacing" type="number" min="0" step="0.01" value="0.20" inputmode="decimal"></label>
+                <label>Caras con refuerzo<select id="civilWallReinforcementFaces"><option value="1">1 cara</option><option value="2" selected>2 caras</option></select></label>
+                <label>Longitud adicional por varilla (m)<input id="civilWallExtraBarLength" type="number" min="0" step="0.01" value="0.60" inputmode="decimal"></label>
+                <label>Caras con cimbra<select id="civilWallFormworkFaces"><option value="0">Sin cimbra</option><option value="1">1 cara</option><option value="2" selected>2 caras</option></select></label>
+                <label>Desperdicio de acero (%)<input id="civilWallWasteSteel" type="number" min="0" max="100" step="0.1" value="5"></label>
+                <label>Desperdicio de cimbra (%)<input id="civilWallWasteFormwork" type="number" min="0" max="100" step="0.1" value="5"></label>
+              </div>
+            </div>
+            <div id="civilReinforcedSlabFields" hidden>
+              <div class="civil-subhead">Parrillas y cimbra de la losa</div>
+              <p class="auth-hint">Captura el armado definido en planos. El cálculo cuantifica una o dos parrillas; no determina espesores, apoyos ni traslapes.</p>
+              <div class="form-grid">
+                <label>Número de losas<input id="civilReinforcedSlabCount" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+                <label>Diámetro sentido largo (mm)<input id="civilSlabDiameterX" type="number" min="0" step="0.1" value="9.5" inputmode="decimal"></label>
+                <label>Separación sentido largo (m)<input id="civilSlabSpacingX" type="number" min="0" step="0.01" value="0.20" inputmode="decimal"></label>
+                <label>Diámetro sentido ancho (mm)<input id="civilSlabDiameterY" type="number" min="0" step="0.1" value="9.5" inputmode="decimal"></label>
+                <label>Separación sentido ancho (m)<input id="civilSlabSpacingY" type="number" min="0" step="0.01" value="0.20" inputmode="decimal"></label>
+                <label>Parrillas de refuerzo<select id="civilSlabReinforcementLayers"><option value="1">1 parrilla</option><option value="2">2 parrillas</option></select></label>
+                <label>Longitud adicional por varilla (m)<input id="civilSlabExtraBarLength" type="number" min="0" step="0.01" value="0.40" inputmode="decimal"></label>
+                <label>Cimbra<select id="civilSlabFormworkMode"><option value="bottom">Fondo completo</option><option value="none">Sin cimbra</option></select></label>
+                <label>Desperdicio de acero (%)<input id="civilSlabWasteSteel" type="number" min="0" max="100" step="0.1" value="5"></label>
+                <label>Desperdicio de cimbra (%)<input id="civilSlabWasteFormwork" type="number" min="0" max="100" step="0.1" value="5"></label>
               </div>
             </div>
             <div class="civil-subhead" id="civilVolumeHeading">Volumen</div>
@@ -464,12 +499,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20261001-civil6"></script>
-  <script src="supabase-client.js?v=20261001-civil6"></script>
-  <script src="data-store.js?v=20261001-civil6"></script>
-  <script src="civil-calculator.js?v=20261001-civil6"></script>
-  <script src="app.js?v=20261001-civil6"></script>
-  <script src="sync.js?v=20261001-civil6"></script>
+  <script src="supabase-config.js?v=20261002-civil7"></script>
+  <script src="supabase-client.js?v=20261002-civil7"></script>
+  <script src="data-store.js?v=20261002-civil7"></script>
+  <script src="civil-calculator.js?v=20261002-civil7"></script>
+  <script src="app.js?v=20261002-civil7"></script>
+  <script src="sync.js?v=20261002-civil7"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>

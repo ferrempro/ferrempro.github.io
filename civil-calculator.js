@@ -568,6 +568,168 @@
     };
   }
 
+
+  function calcReinforcedWall(input) {
+    const length = n(input.length);
+    const height = n(input.height);
+    const thickness = n(input.thickness);
+    const count = n(input.count);
+    const openingArea = Math.max(0, n(input.openingArea));
+    const verticalDiameter = n(input.verticalDiameter);
+    const verticalSpacing = n(input.verticalSpacing);
+    const horizontalDiameter = n(input.horizontalDiameter);
+    const horizontalSpacing = n(input.horizontalSpacing);
+    const reinforcementFaces = n(input.reinforcementFaces);
+    const extraBarLength = Math.max(0, n(input.extraBarLength));
+    const formworkFaces = n(input.formworkFaces);
+    const fc = String(input.fc || '250');
+    const wasteSteel = 1 + pct(input.wasteSteel);
+    const wasteFormwork = 1 + pct(input.wasteFormwork);
+
+    if (![length, height, thickness].every(validPositive) || !Number.isInteger(count) || count < 1) {
+      throw new Error('Captura largo, alto, espesor y número de muros positivos.');
+    }
+    const grossAreaEach = length * height;
+    if (openingArea >= grossAreaEach) {
+      throw new Error('El área de vanos debe ser menor que el área total de cada muro.');
+    }
+    if (![verticalDiameter, verticalSpacing, horizontalDiameter, horizontalSpacing].every(validPositive)) {
+      throw new Error('Captura diámetros y separaciones de acero positivos.');
+    }
+    if (![1, 2].includes(reinforcementFaces)) {
+      throw new Error('Selecciona una o dos caras de refuerzo.');
+    }
+    if (![0, 1, 2].includes(formworkFaces)) {
+      throw new Error('Selecciona cero, una o dos caras de cimbra.');
+    }
+
+    const netAreaM2 = (grossAreaEach - openingArea) * count;
+    const volumeM3 = netAreaM2 * thickness;
+    const concrete = calcConcrete({
+      directVolume: volumeM3,
+      fc,
+      bagWeight: input.bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+
+    // La retícula se cuantifica sobre la cara completa. Los vanos descuentan
+    // concreto y cimbra, pero no acero: sus refuerzos perimetrales deben venir
+    // del detalle estructural y se capturan mediante la longitud adicional.
+    const verticalBarsPerFace = Math.ceil(length / verticalSpacing) + 1;
+    const horizontalBarsPerFace = Math.ceil(height / horizontalSpacing) + 1;
+    const verticalBaseM = verticalBarsPerFace * (height + extraBarLength) * reinforcementFaces * count;
+    const horizontalBaseM = horizontalBarsPerFace * (length + extraBarLength) * reinforcementFaces * count;
+    const verticalM = verticalBaseM * wasteSteel;
+    const horizontalM = horizontalBaseM * wasteSteel;
+    const verticalKg = verticalM * rebarKgPerM(verticalDiameter);
+    const horizontalKg = horizontalM * rebarKgPerM(horizontalDiameter);
+    const formworkBaseM2 = netAreaM2 * formworkFaces;
+    const formworkM2 = formworkBaseM2 * wasteFormwork;
+
+    return {
+      type: 'reinforced_wall',
+      count,
+      netAreaM2: round(netAreaM2, 4),
+      volumeM3: round(volumeM3, 4),
+      dosage: fc,
+      verticalBarsPerFace,
+      horizontalBarsPerFace,
+      verticalLengthM: round(verticalM, 2),
+      horizontalLengthM: round(horizontalM, 2),
+      verticalSteelKg: round(verticalKg, 2),
+      horizontalSteelKg: round(horizontalKg, 2),
+      steelKg: round(verticalKg + horizontalKg, 2),
+      formworkM2: round(formworkM2, 2),
+      source: 'Excel/manual legado · muro de concreto reforzado; geometría, retícula, cimbra y desperdicios editables · RemPro 2026',
+      structuralDesignNote: 'Cuantifica el armado capturado. No define espesores, diámetros, separaciones ni refuerzos alrededor de vanos.',
+      materials: [
+        ...concrete.materials,
+        { key: 'wall_vertical_rebar', description: `Acero vertical de muro Ø ${verticalDiameter} mm`, unit: 'kg', quantity: round(verticalKg, 2), baseQuantity: round(verticalBaseM * rebarKgPerM(verticalDiameter), 2) },
+        { key: 'wall_horizontal_rebar', description: `Acero horizontal de muro Ø ${horizontalDiameter} mm`, unit: 'kg', quantity: round(horizontalKg, 2), baseQuantity: round(horizontalBaseM * rebarKgPerM(horizontalDiameter), 2) },
+        { key: 'formwork', description: `Cimbra de contacto (${formworkFaces} cara${formworkFaces === 1 ? '' : 's'})`, unit: 'm²', quantity: round(formworkM2, 2), baseQuantity: round(formworkBaseM2, 2) }
+      ]
+    };
+  }
+
+  function calcReinforcedSlab(input) {
+    const length = n(input.length);
+    const width = n(input.width);
+    const thickness = n(input.thickness);
+    const count = n(input.count);
+    const diameterX = n(input.diameterX);
+    const spacingX = n(input.spacingX);
+    const diameterY = n(input.diameterY);
+    const spacingY = n(input.spacingY);
+    const reinforcementLayers = n(input.reinforcementLayers);
+    const extraBarLength = Math.max(0, n(input.extraBarLength));
+    const formworkMode = String(input.formworkMode || 'bottom');
+    const fc = String(input.fc || '250');
+    const wasteSteel = 1 + pct(input.wasteSteel);
+    const wasteFormwork = 1 + pct(input.wasteFormwork);
+
+    if (![length, width, thickness].every(validPositive) || !Number.isInteger(count) || count < 1) {
+      throw new Error('Captura largo, ancho, espesor y número de losas positivos.');
+    }
+    if (![diameterX, spacingX, diameterY, spacingY].every(validPositive)) {
+      throw new Error('Captura diámetros y separaciones de acero positivos.');
+    }
+    if (![1, 2].includes(reinforcementLayers)) {
+      throw new Error('Selecciona una o dos parrillas de refuerzo.');
+    }
+    if (!['none', 'bottom'].includes(formworkMode)) {
+      throw new Error('Selecciona una opción válida de cimbra para la losa.');
+    }
+
+    const areaM2 = length * width * count;
+    const volumeM3 = areaM2 * thickness;
+    const concrete = calcConcrete({
+      directVolume: volumeM3,
+      fc,
+      bagWeight: input.bagWeight,
+      wasteCement: input.wasteCement,
+      wasteSand: input.wasteSand,
+      wasteThird: input.wasteThird
+    });
+
+    const barsXPerLayer = Math.ceil(width / spacingX) + 1;
+    const barsYPerLayer = Math.ceil(length / spacingY) + 1;
+    const baseXM = barsXPerLayer * (length + extraBarLength) * reinforcementLayers * count;
+    const baseYM = barsYPerLayer * (width + extraBarLength) * reinforcementLayers * count;
+    const xM = baseXM * wasteSteel;
+    const yM = baseYM * wasteSteel;
+    const xKg = xM * rebarKgPerM(diameterX);
+    const yKg = yM * rebarKgPerM(diameterY);
+    const formworkBaseM2 = formworkMode === 'bottom' ? areaM2 : 0;
+    const formworkM2 = formworkBaseM2 * wasteFormwork;
+
+    return {
+      type: 'reinforced_slab',
+      count,
+      areaM2: round(areaM2, 4),
+      volumeM3: round(volumeM3, 4),
+      dosage: fc,
+      barsXPerLayer,
+      barsYPerLayer,
+      reinforcementLayers,
+      xLengthM: round(xM, 2),
+      yLengthM: round(yM, 2),
+      xSteelKg: round(xKg, 2),
+      ySteelKg: round(yKg, 2),
+      steelKg: round(xKg + yKg, 2),
+      formworkM2: round(formworkM2, 2),
+      source: 'Excel/manual legado · losa de concreto reforzado; geometría, parrillas, cimbra y desperdicios editables · RemPro 2026',
+      structuralDesignNote: 'Cuantifica el armado capturado. No define espesores, diámetros, separaciones, traslapes ni apoyos.',
+      materials: [
+        ...concrete.materials,
+        { key: 'slab_rebar_x', description: `Acero de losa sentido largo Ø ${diameterX} mm`, unit: 'kg', quantity: round(xKg, 2), baseQuantity: round(baseXM * rebarKgPerM(diameterX), 2) },
+        { key: 'slab_rebar_y', description: `Acero de losa sentido ancho Ø ${diameterY} mm`, unit: 'kg', quantity: round(yKg, 2), baseQuantity: round(baseYM * rebarKgPerM(diameterY), 2) },
+        { key: 'formwork', description: formworkMode === 'bottom' ? 'Cimbra de contacto en fondo de losa' : 'Cimbra no incluida', unit: 'm²', quantity: round(formworkM2, 2), baseQuantity: round(formworkBaseM2, 2) }
+      ]
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
@@ -576,6 +738,8 @@
     if (type === 'column') return calcColumn(input);
     if (type === 'beam') return calcBeam(input);
     if (type === 'footing') return calcFooting(input);
+    if (type === 'reinforced_wall') return calcReinforcedWall(input);
+    if (type === 'reinforced_slab') return calcReinforcedSlab(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
@@ -593,6 +757,8 @@
     calcColumn,
     calcBeam,
     calcFooting,
+    calcReinforcedWall,
+    calcReinforcedSlab,
     calculate
   });
 });

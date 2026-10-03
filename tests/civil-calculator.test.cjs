@@ -221,3 +221,72 @@ test('mampostería de piedra prioriza volumen directo y valida geometría y coef
     directVolume: 1, stoneFactor: 0, mortarFactor: 0.3
   }), /coeficientes/);
 });
+
+
+test('muro de concreto reforzado cuantifica concreto, retícula y cimbra', () => {
+  const r = civil.calcReinforcedWall({
+    length: 4, height: 3, thickness: 0.15, count: 1, openingArea: 2,
+    verticalDiameter: 12.7, verticalSpacing: 0.20,
+    horizontalDiameter: 9.5, horizontalSpacing: 0.20,
+    reinforcementFaces: 2, extraBarLength: 0.60, formworkFaces: 2,
+    fc: 250, bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0,
+    wasteSteel: 5, wasteFormwork: 5
+  });
+  assert.equal(r.type, 'reinforced_wall');
+  assert.equal(r.netAreaM2, 10);
+  assert.equal(r.volumeM3, 1.5);
+  assert.equal(r.verticalBarsPerFace, 21);
+  assert.equal(r.horizontalBarsPerFace, 16);
+  assert.equal(r.formworkM2, 21);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 12);
+  assert.ok(r.steelKg > 0);
+});
+
+test('muro reforzado valida vanos, retícula, caras y número de elementos', () => {
+  const base = {
+    length: 4, height: 3, thickness: 0.15, count: 1, openingArea: 0,
+    verticalDiameter: 12.7, verticalSpacing: 0.20,
+    horizontalDiameter: 9.5, horizontalSpacing: 0.20,
+    reinforcementFaces: 2, formworkFaces: 2, fc: 250
+  };
+  assert.throws(() => civil.calcReinforcedWall({ ...base, openingArea: 12 }), /vanos/);
+  assert.throws(() => civil.calcReinforcedWall({ ...base, verticalSpacing: 0 }), /separaciones/);
+  assert.throws(() => civil.calcReinforcedWall({ ...base, reinforcementFaces: 3 }), /caras de refuerzo/);
+  assert.throws(() => civil.calcReinforcedWall({ ...base, count: 1.5 }), /número de muros/);
+});
+
+test('losa de concreto reforzado cuantifica dos parrillas y cimbra inferior', () => {
+  const r = civil.calcReinforcedSlab({
+    length: 5, width: 4, thickness: 0.12, count: 1,
+    diameterX: 9.5, spacingX: 0.20,
+    diameterY: 9.5, spacingY: 0.20,
+    reinforcementLayers: 2, extraBarLength: 0.40, formworkMode: 'bottom',
+    fc: 250, bagWeight: 50,
+    wasteCement: 0, wasteSand: 0, wasteThird: 0,
+    wasteSteel: 5, wasteFormwork: 5
+  });
+  assert.equal(r.type, 'reinforced_slab');
+  assert.equal(r.areaM2, 20);
+  assert.equal(r.volumeM3, 2.4);
+  assert.equal(r.barsXPerLayer, 21);
+  assert.equal(r.barsYPerLayer, 26);
+  assert.equal(r.formworkM2, 21);
+  assert.equal(r.materials.find(x => x.key === 'cement').quantity, 19.2);
+  assert.ok(r.steelKg > 0);
+});
+
+test('losa reforzada admite losa sobre terreno y valida parrillas', () => {
+  const base = {
+    length: 5, width: 4, thickness: 0.12, count: 1,
+    diameterX: 9.5, spacingX: 0.20,
+    diameterY: 9.5, spacingY: 0.20,
+    reinforcementLayers: 1, formworkMode: 'none', fc: 250
+  };
+  const r = civil.calcReinforcedSlab(base);
+  assert.equal(r.formworkM2, 0);
+  assert.equal(r.materials.find(x => x.key === 'formwork').quantity, 0);
+  assert.throws(() => civil.calcReinforcedSlab({ ...base, reinforcementLayers: 3 }), /parrillas/);
+  assert.throws(() => civil.calcReinforcedSlab({ ...base, formworkMode: 'edges' }), /cimbra/);
+  assert.throws(() => civil.calcReinforcedSlab({ ...base, spacingY: 0 }), /separaciones/);
+});
