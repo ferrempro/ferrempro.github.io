@@ -2,12 +2,16 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const engine=require('../cost-engine.js');
 
-test('fracciona caja de 100 piezas',()=>{
+test('redondea caja de 100 piezas a compra comercial completa',()=>{
   const price={item:'Carga industrial c/100 pzas',unit:'caja 100 pzas',net:100,vat:16,date:'2026-10-01'};
-  const row=engine.costWithPrice({description:'Fulminantes',quantity:25,unit:'pzas'},price);
+  const row=engine.costWithPrice({description:'Fulminantes',quantity:125,unit:'pzas'},price);
   assert.equal(row.status,'priced');
+  assert.equal(row.purchaseMode,'whole-package');
+  assert.equal(row.purchaseQuantity,2);
+  assert.equal(row.unusedQuantity,75);
+  assert.equal(row.inventoryDisposition,'not-added');
   assert.equal(Number(row.unitCost.toFixed(2)),1.16);
-  assert.equal(Number(row.amount.toFixed(2)),29);
+  assert.equal(Number(row.amount.toFixed(2)),232);
 });
 
 test('fracciona millar de tornillos',()=>{
