@@ -1111,46 +1111,109 @@ document.getElementById('civilHistoryBody')?.addEventListener('click',e=>{
   });
 });
 
-function calcMaterials() {
-  const type = val('systemType'), L = num(val('matLength')), H = num(val('matHeight')), w = num(val('matWaste')) / 100,
-    layers = num(val('matLayers')), area = L * H, panelArea = 1.22 * 2.44, f = 1 + w;
-  if (![L,H,layers].every(n => Number.isFinite(n) && n > 0) || !Number.isInteger(layers) || !Number.isFinite(w) || w < 0 || w > 1) { alert('Captura medidas positivas, capas enteras y desperdicio entre 0 y 100%.'); return; }
-  let items = [];
-  if (type === 'wall1' || type === 'wall2') {
-    const faces = type === 'wall2' ? 2 : 1;
-    const boards = Math.ceil(area * faces * layers / panelArea * f);
-    const studPositions = Math.ceil(L / num(rules.studSpacing || .61)) + 1;
-    const piecesPerPosition = Math.ceil(H / num(rules.studLength || 3.05));
-    const studs = studPositions * piecesPerPosition;
-    const track = Math.ceil((L * 2) / num(rules.trackLength || 3.05));
-    const heightNote = H > num(rules.studLength || 3.05) ? ' · altura mayor a la pieza comercial: validar empalme o perfil especial' : '';
-    items = [
-      ['Paneles', boards, 'pzas', val('panelType')],
-      ['Postes / montenes', studs, `pzas de ${num(rules.studLength || 3.05).toFixed(2)} m`, `Modulación ${num(rules.studSpacing || .61).toFixed(2)} m${heightNote}`],
-      ['Canal', track, `pzas de ${num(rules.trackLength || 3.05).toFixed(2)} m`, 'Canal superior + inferior'],
-      ['Tornillos', Math.ceil(boards * rules.screws), 'pzas', `${rules.screws} por panel`],
-      ['Pasta / tratamiento', Number((area * faces * layers * 1.1 * f).toFixed(2)), 'kg aprox.', 'Estimación preliminar']
-    ];
-  } else {
-    const boards = Math.ceil(area * layers / panelArea * f);
-    const listonMl = (Math.ceil(H / rules.liston) + 1) * L;
-    const canaletaMl = (Math.ceil(L / rules.canaleta) + 1) * H;
-    const angleMl = 2 * (L + H);
-    items = [
-      ['Paneles', boards, 'pzas', val('panelType')],
-      ['Listón', Math.ceil(listonMl / 3.05), 'pzas de 3.05 m', `Separación ${rules.liston} m`],
-      ['Canaleta', Math.ceil(canaletaMl / 3.05), 'pzas de 3.05 m', `Separación ${rules.canaleta} m`],
-      ['Ángulo perimetral', Math.ceil(angleMl / rules.angle), 'pzas', `Largo comercial ${rules.angle} m`],
-      ['Mini pija', Math.ceil(area * rules.mini * f), 'pzas', `${rules.mini}/m²`],
-      ['Tornillos', Math.ceil(boards * rules.screws), 'pzas', `${rules.screws} por panel`]
-    ];
+function setupMaterialControls() {
+  const system=document.getElementById('systemType');
+  if (!system.querySelector('option[value="cementWall1"]')) {
+    system.insertAdjacentHTML('beforeend',
+      '<option value="cementWall1">Muro Permabase / Durock · 1 cara</option>'+
+      '<option value="cementWall2">Muro Permabase / Durock · 2 caras</option>'+
+      '<option value="cementCeiling">Plafón Permabase / Durock · canal listón @ 0.405 m</option>');
   }
-  document.getElementById('areaBadge').textContent = `${area.toFixed(2)} m²`;
-  const out = document.getElementById('materialsResult');
-  out.className = 'result-list';
-  out.innerHTML = items.map(x => `<div class="result-row"><div><strong>${x[0]}</strong><small>${esc(x[3] || '')}</small></div><div><strong>${x[1]}</strong> <small>${x[2]}</small></div></div>`).join('');
+  const panel=document.getElementById('panelType');
+  if (![...panel.options].some(o=>o.textContent.startsWith('Durock'))) {
+    panel.insertAdjacentHTML('beforeend','<option>Durock 1.22×2.44</option>');
+  }
+  if (!document.getElementById('matProfileWidth')) {
+    const hint=panel.parentElement.nextElementSibling;
+    const wrap=document.createElement('div');
+    wrap.className='form-grid';
+    wrap.innerHTML='<label>Ancho de estructura galvanizada<select id="matProfileWidth"><option value="4.10">4.10 cm · 1 5/8&quot;</option><option value="6.35" selected>6.35 cm · 2 1/2&quot;</option><option value="9.20">9.20 cm · 3 5/8&quot;</option><option value="15.24">15.24 cm · 6&quot;</option></select></label>'+
+      '<label>Aislante termoacústico<select id="matInsulation"><option value="none">Sin aislante</option><option value="Colchoneta R-8">Colchoneta R-8</option><option value="Colchoneta R-11">Colchoneta R-11</option><option value="FOAMULAR 1/2 pulg">FOAMULAR Owens Corning · 1/2&quot;</option><option value="FOAMULAR 1 pulg">FOAMULAR Owens Corning · 1&quot;</option><option value="FOAMULAR 1 1/2 pulg">FOAMULAR Owens Corning · 1 1/2&quot;</option><option value="FOAMULAR 2 pulg">FOAMULAR Owens Corning · 2&quot;</option></select></label>';
+    hint.parentNode.insertBefore(wrap,hint);
+    const membrane=document.createElement('label');
+    membrane.className='check-row';
+    membrane.innerHTML='<input id="matMembrane" type="checkbox"> Incluir membrana hidrófuga tipo Tyvek en muro cementicio';
+    hint.parentNode.insertBefore(membrane,hint);
+    hint.textContent='Permabase/Durock: muros con estructura galvanizada cal. 20 @ 0.405 m (16 pulg) c/c; plafón cementicio con canal listón @ 0.405 m c/c. El aislamiento se cuantifica por área real.';
+  }
 }
-document.getElementById('calcMaterialsBtn').onclick = calcMaterials;
+setupMaterialControls();
+
+function calcMaterials() {
+  const type=val('systemType'), L=num(val('matLength')), H=num(val('matHeight')), w=num(val('matWaste'))/100,
+    layers=num(val('matLayers')), area=L*H, panelArea=1.22*2.44, f=1+w;
+  if (![L,H,layers].every(n=>Number.isFinite(n)&&n>0)||!Number.isInteger(layers)||!Number.isFinite(w)||w<0||w>1) {
+    alert('Captura medidas positivas, capas enteras y desperdicio entre 0 y 100%.'); return;
+  }
+  const cementWall=type==='cementWall1'||type==='cementWall2';
+  const ceiling=type==='ceiling'||type==='cementCeiling';
+  const cementCeiling=type==='cementCeiling';
+  const faces=(type==='wall2'||type==='cementWall2')?2:1;
+  const profileWidth=val('matProfileWidth')||'6.35';
+  const insulation=val('matInsulation')||'none';
+  const membrane=document.getElementById('matMembrane')?.checked;
+  const panel=val('panelType');
+  let items=[];
+
+  if (!ceiling) {
+    const coveredArea=area*faces*layers;
+    const boards=Math.ceil(coveredArea/panelArea*f);
+    const spacing=cementWall?0.405:num(rules.studSpacing||.61);
+    const studLength=num(rules.studLength||3.05);
+    const studPositions=Math.ceil(L/spacing)+1;
+    const studs=studPositions*Math.ceil(H/studLength);
+    const trackLength=num(rules.trackLength||3.05);
+    const track=Math.ceil((L*2*1.05)/trackLength);
+    const tapeMl=coveredArea*1.35*f;
+    items=[
+      ['Paneles',boards,'pzas',panel],
+      ['Postes / montenes',studs,`pzas de ${studLength.toFixed(2)} m`,`${cementWall?'Cal. 20 · ':''}ancho ${profileWidth} cm · @ ${spacing.toFixed(3)} m c/c`],
+      ['Canal superior + inferior',track,`pzas de ${trackLength.toFixed(2)} m`,`${cementWall?'Cal. 20 · ':''}ancho ${profileWidth} cm`],
+      ['Mini pija',Math.ceil(area*num(rules.mini||8)*f),'pzas',`${num(rules.mini||8)}/m²`],
+      ['Tornillos para panel',Math.ceil(boards*num(rules.screws||50)),'pzas',`${num(rules.screws||50)} por panel`],
+      [cementWall?'Cinta / malla para juntas cementicias':'Perfacinta',Number(tapeMl.toFixed(2)),'ml','1.35 ml/m² de superficie de panel'],
+      [cementWall?'Base Coat / tratamiento cementicio':'Pasta Ready Mix',Number((coveredArea*(cementWall?3.33:1.0)*f).toFixed(2)),'kg aprox.',cementWall?'3.33 kg/m²; validar ficha del sistema':'Tratamiento de juntas 1.00 kg/m²']
+    ];
+    if (cementWall&&membrane) items.push(['Membrana hidrófuga tipo Tyvek',Number((area*f).toFixed(2)),'m²','Una capa sobre la cara exterior del bastidor']);
+    if (insulation!=='none') items.push([`Aislante termoacústico · ${insulation}`,Number((area*f).toFixed(2)),'m²','Área de elevación + desperdicio']);
+  } else {
+    const coveredArea=area*layers;
+    const boards=Math.ceil(coveredArea/panelArea*f);
+    const listonSpacing=cementCeiling?0.405:num(rules.liston||.61);
+    const canaletaSpacing=num(rules.canaleta||.90);
+    const listonLines=Math.ceil(H/listonSpacing)+1;
+    const canaletaLines=Math.ceil(L/canaletaSpacing)+1;
+    const listonMl=listonLines*L, canaletaMl=canaletaLines*H;
+    const perimeter=2*(L+H);
+    const hangers=canaletaLines*(Math.ceil(H/.90)+1);
+    const ties=listonLines*canaletaLines;
+    const angleFixings=Math.ceil((perimeter/.60)*f);
+    items=[
+      ['Paneles',boards,'pzas',panel],
+      ['Canal listón',Math.ceil(listonMl/3.05*f),'pzas de 3.05 m',`${cementCeiling?'Cal. 20 · ':''}@ ${listonSpacing.toFixed(3)} m c/c`],
+      ['Canaleta de carga',Math.ceil(canaletaMl/3.05*f),'pzas de 3.05 m',`@ ${canaletaSpacing.toFixed(2)} m c/c`],
+      ['Ángulo perimetral',Math.ceil(perimeter/num(rules.angle||3.05)*f),'pzas',`Largo comercial ${num(rules.angle||3.05).toFixed(2)} m`],
+      ['Mini pija',Math.ceil(area*num(rules.mini||8)*f),'pzas',`${num(rules.mini||8)}/m²`],
+      ['Tornillos para panel',Math.ceil(boards*num(rules.screws||50)),'pzas',`${num(rules.screws||50)} por panel`],
+      [cementCeiling?'Cinta / malla para juntas cementicias':'Perfacinta',Number((coveredArea*1.35*f).toFixed(2)),'ml','1.35 ml/m² de superficie de panel'],
+      [cementCeiling?'Base Coat / tratamiento cementicio':'Pasta Ready Mix',Number((coveredArea*(cementCeiling?3.33:1.0)*f).toFixed(2)),'kg aprox.',cementCeiling?'3.33 kg/m²; validar ficha del sistema':'Tratamiento de juntas 1.00 kg/m²'],
+      ['Colgantes',hangers,'pzas','Puntos sobre canaleta @ 0.90 m'],
+      ['Alambre galvanizado para colgantes',Number((hangers*.70).toFixed(2)),'ml','0.70 m por colgante'],
+      ['Anclas para colgantes',hangers,'pzas','1 por colgante'],
+      ['Fulminantes para anclas de colgantes',hangers,'pzas','1 por ancla'],
+      ['Amarres canal listón–canaleta',ties,'pzas','1 por cruce'],
+      ['Alambre galvanizado para amarres',Number((ties*num(rules.wire||.70)).toFixed(2)),'ml',`${num(rules.wire||.70).toFixed(2)} m por amarre`],
+      ['Clavos para ángulo perimetral',angleFixings,'pzas','Fijación @ 0.60 m + desperdicio'],
+      ['Fulminantes para clavos de ángulo',angleFixings,'pzas','1 por clavo']
+    ];
+    if (insulation!=='none') items.push([`Aislante termoacústico · ${insulation}`,Number((area*f).toFixed(2)),'m²','Área de plafón + desperdicio']);
+  }
+  document.getElementById('areaBadge').textContent=`${area.toFixed(2)} m²`;
+  const out=document.getElementById('materialsResult');
+  out.className='result-list';
+  out.innerHTML=items.map(x=>`<div class="result-row"><div><strong>${esc(x[0])}</strong><small>${esc(x[3]||'')}</small></div><div><strong>${x[1]}</strong> <small>${esc(x[2])}</small></div></div>`).join('');
+}
+document.getElementById('calcMaterialsBtn').onclick=calcMaterials;
 
 let apuRows = load(STORAGE.apu, null)?.rows || [{ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }, { type: 'Mano de obra', desc: '', sourcePriceId: '', qty: 1, unit: 'jor', pu: 0 }];
 function latestPriceOptions(selected='') {
