@@ -41,7 +41,7 @@ const views = {
   dashboard: ['Dashboard', 'Resumen general de RemPro'],
   master: ['Control Maestro', 'Obras, cobros y costos'],
   materials: ['Muros y plafones', 'Cuantificación paramétrica'],
-  civil: ['Obra civil', 'Concretos, morteros y cuantificación'],
+  civil: ['Obra civil', 'Materiales, elementos, destajos y generador libre'],
   apu: ['APU rápido', 'Costo directo y precio comercial'],
   prices: ['Precios', 'Histórico de insumos'],
   settings: ['Reglas RemPro', 'Factores de cálculo y sincronización']
