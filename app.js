@@ -1146,14 +1146,212 @@ function setupMaterialControls() {
     if (membrane) membrane.disabled=!['cementWall1','cementWall2'].includes(system.value);
   };
   if (!system.dataset.materialSyncBound) {
-    system.addEventListener('change',()=>{syncPanelToSystem();calcMaterials();});
+    system.addEventListener('change',()=>{syncPanelToSystem();calcMaterials(true);});
     system.dataset.materialSyncBound='1';
   }
   syncPanelToSystem();
 }
 setupMaterialControls();
 
-function calcMaterials() {
+function profileCatalogHint(profileWidth, kind) {
+  const sizes = {
+    '4.10': '1 5/8',
+    '6.35': '2 1/2',
+    '9.20': '3 5/8',
+    '15.24': '6 pulg'
+  };
+  const size=sizes[String(profileWidth)] || '';
+  if (!size) return [kind];
+  return [`${kind} ${size} calibre 20`, `${kind} ${size}`];
+}
+
+function pricingMaterialFromRow(row, context={}) {
+  const [description, quantity, unit, note] = row;
+  const n = window.RemProCostEngine?.normalize(description) || String(description).toLowerCase();
+  let hints=[];
+  let costable=true;
+  let reason='';
+
+  if (n === 'paneles') {
+    const panel=String(context.panel || '');
+    if (/permabase/i.test(panel)) hints=['hoja permabase','permabase'];
+    else if (/guard rey/i.test(panel)) hints=['hoja yeso guard rey','guard rey'];
+    else if (/durock/i.test(panel)) hints=['durock'];
+    else if (/adpanel/i.test(panel)) hints=['adpanel'];
+    else hints=['hoja yeso estandar','tablaroca estandar'];
+  } else if (n.includes('postes') || n.includes('montenes')) {
+    hints=profileCatalogHint(context.profileWidth,'poste');
+  } else if (n.includes('canal superior')) {
+    hints=profileCatalogHint(context.profileWidth,'canal');
+  } else if (n === 'canal liston') {
+    hints=['canal liston'];
+  } else if (n.includes('canaleta de carga')) {
+    hints=['canal de carga'];
+  } else if (n.includes('angulo perimetral')) {
+    hints=['angulo 1 1/2 calibre 25','angulo perimetral'];
+  } else if (n === 'mini pija') {
+    hints=['tornillo para metal 8 x 1/2'];
+  } else if (n.includes('tornillos para panel')) {
+    hints=(context.cementWall || context.cementCeiling)
+      ? ['tornillo para tablacemento 8 x 1 1/4','tornillo tablacemento']
+      : ['tornillo para metal 6 x 1 1/4','tornillo panel yeso'];
+  } else if (n.includes('perfacinta')) {
+    hints=['perfacinta'];
+  } else if (n.includes('cinta') || n.includes('malla para juntas')) {
+    hints=['cinta para juntas cementicias','malla para juntas cementicias'];
+  } else if (n.includes('base coat') || n.includes('tratamiento cementicio')) {
+    hints=['hi tech bond','base coat'];
+  } else if (n.includes('pasta ready mix')) {
+    hints=['unimax ready mix','ready mix'];
+  } else if (n.includes('membrana hidrofuga')) {
+    hints=['membrana impermeable elite','membrana hidrofuga'];
+  } else if (n.includes('aislante termoacustico')) {
+    hints=[String(description).split('·').pop().trim()];
+  } else if (n.includes('alambre galvanizado')) {
+    hints=['alambre galvanizado num 12','alambre galvanizado'];
+  } else if (n.includes('anclas para colgantes')) {
+    hints=['clavo ancla 1 1/4','clavo ancla'];
+  } else if (n.includes('fulminantes')) {
+    hints=['carga industrial calibre 27 amarilla','carga industrial calibre 27'];
+  } else if (n.includes('clavos para angulo')) {
+    hints=['clavo para pistola con rondana 1 1/4','clavo para pistola con rondana'];
+  } else if (n === 'colgantes' || n.includes('amarres canal liston')) {
+    costable=false;
+    reason='Renglón auxiliar de cuantificación; su material se costea en los renglones de alambre/fijaciones.';
+  } else {
+    hints=[description];
+  }
+
+  return { description, quantity:Number(quantity), unit, note, hints, costable, reason };
+}
+
+function pricingCivilMaterial(material) {
+  const description=String(material?.description || '');
+  const n=window.RemProCostEngine?.normalize(description) || description.toLowerCase();
+  let hints=[description];
+  if (n.includes('cemento')) hints=['cemento gris portland','cemento gris','cemento'];
+  else if (n.includes('arena')) hints=['arena para construccion','arena'];
+  else if (n.includes('grava')) hints=['grava'];
+  else if (n === 'agua') hints=['agua'];
+  else if (n.includes('calhidra')) hints=['calhidra','cal hidratada'];
+  else if (n.includes('piedra')) hints=['piedra para mamposteria','piedra'];
+  else if (n.includes('acero')) {
+    const mm=n.match(/(\d+(?:[.,]\d+)?)\s*mm/);
+    const map={'6':'1/4','9.5':'3/8','12.7':'1/2','15.9':'5/8','19.1':'3/4'};
+    const diameter=mm ? mm[1].replace(',','.') : '';
+    hints=map[diameter] ? [`varilla ${map[diameter]}`,`acero ${diameter} mm`] : [description];
+  } else if (n.includes('cimbra')) hints=['triplay cimbra','cimbra'];
+  return {
+    description,
+    quantity:Number(material?.quantity || 0),
+    unit:material?.unit || '',
+    note:'',
+    hints,
+    costable:true
+  };
+}
+
+function costCalculatedMaterials(materials, prices=activePrices()) {
+  if (!window.RemProCostEngine) {
+    return {
+      rows:materials.map(m=>({...m,status:'missing-price',reason:'Motor de costeo no disponible.',price:null,unitCost:null,amount:null})),
+      subtotal:0, pricedCount:0, pendingCount:materials.length, auxiliaryCount:0, complete:false
+    };
+  }
+  return window.RemProCostEngine.costMaterials(materials, prices);
+}
+
+function apuAutoPendingRows() {
+  return apuRows.filter(r => r.pricingStatus && !['priced','manual'].includes(r.pricingStatus));
+}
+
+function applyAutomaticApu(costing, meta) {
+  const previousKey=apuRows.find(r=>r.autoSourceKey)?.autoSourceKey || null;
+  const preserveSupport=previousKey===meta.sourceKey
+    ? apuRows.filter(r => r.type !== 'Material' && (!r.autoGenerated || r.pricingStatus === 'manual'))
+    : [];
+
+  const materialRows=costing.rows
+    .filter(r=>r.status !== 'auxiliary')
+    .map(r=>({
+      type:'Material',
+      desc:r.description,
+      sourcePriceId:r.price?.id || '',
+      qty:Number(r.quantity || 0),
+      unit:r.unit || '',
+      pu:r.status === 'priced' ? Number(r.unitCost.toFixed(4)) : 0,
+      autoGenerated:true,
+      autoSourceKey:meta.sourceKey,
+      pricingStatus:r.status,
+      pricingReason:r.status === 'priced'
+        ? `${r.price?.supplier || 'Proveedor'} · ${r.price?.date || 'sin fecha'} · ${r.price?.unit || ''}`
+        : r.reason || 'Precio pendiente'
+    }));
+
+  let supportRows=preserveSupport;
+  if (!supportRows.length && meta.requiresLabor !== false) {
+    supportRows=[{
+      type:'Mano de obra',
+      desc:'Mano de obra · pendiente de automatizar para este sistema',
+      sourcePriceId:'',
+      qty:1,
+      unit:'lote',
+      pu:0,
+      autoGenerated:true,
+      autoSourceKey:meta.sourceKey,
+      autoPlaceholder:true,
+      pricingStatus:'pending-labor',
+      pricingReason:'El costo de materiales ya está integrado; falta la regla automática de mano de obra de este sistema.'
+    }];
+  }
+
+  apuRows=[...materialRows,...supportRows];
+  if (document.getElementById('apuConceptDescription')) document.getElementById('apuConceptDescription').value=meta.description || '';
+  if (document.getElementById('apuSaleQty')) document.getElementById('apuSaleQty').value=Number(meta.saleQty || 1).toFixed(3).replace(/\.000$/,'');
+  if (document.getElementById('apuSaleUnit')) document.getElementById('apuSaleUnit').value=meta.saleUnit || 'u';
+  renderApu();
+  saveApuInputs(false);
+}
+
+function renderCostedMaterialList(costing, area) {
+  const out=document.getElementById('materialsResult');
+  const nf=new Intl.NumberFormat('es-MX',{maximumFractionDigits:3});
+  out.className='';
+  const rows=costing.rows.map(r=>{
+    const status=r.status === 'priced'
+      ? `<strong>${money(r.unitCost)}</strong><small>${esc(r.price?.supplier || '')} · ${esc(r.price?.date || '')}</small>`
+      : r.status === 'auxiliary'
+        ? '<strong>Auxiliar</strong><small>Sin compra independiente</small>'
+        : `<strong>⚠ Pendiente</strong><small>${esc(r.reason || 'Sin precio')}</small>`;
+    const amount=r.status === 'priced' ? money(r.amount) : '—';
+    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small></td><td>${nf.format(r.quantity)}</td><td>${esc(r.unit)}</td><td>${status}</td><td>${amount}</td></tr>`;
+  }).join('');
+  const pendingNote=costing.pendingCount
+    ? `⚠ ${costing.pendingCount} insumo(s) requieren precio o conversión antes de cerrar el APU.`
+    : '✓ Todos los materiales comprables tienen precio y conversión trazables.';
+  out.innerHTML=`
+    <table class="civil-result-table">
+      <thead><tr><th>Material</th><th>Cantidad</th><th>Unidad</th><th>P.U. material</th><th>Importe</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="civil-result-summary">
+      <div><span>Costo conocido de materiales</span><strong>${money(costing.subtotal)}</strong></div>
+      <div><span>Estado</span><strong>${costing.complete ? 'Costeo completo' : 'Costeo incompleto'}</strong></div>
+    </div>
+    <p class="civil-source-note">${pendingNote} Los P.U. de materiales usan el precio vigente con IVA del catálogo RemPro y fraccionan la presentación comercial cuando la equivalencia es verificable.</p>
+    <button type="button" class="secondary" id="openAutoApuBtn">Ver APU automático</button>`;
+  document.getElementById('areaBadge').textContent=`${area.toFixed(2)} m²`;
+}
+
+function materialApuDescription(context) {
+  const system=document.getElementById('systemType')?.selectedOptions?.[0]?.textContent || 'Sistema ligero';
+  const extras=[];
+  if (context.insulation && context.insulation !== 'none') extras.push(context.insulation);
+  if (context.membrane) extras.push('membrana hidrófuga');
+  return `Suministro y colocación de ${system.toLowerCase()} con ${context.panel}, estructura galvanizada, tratamiento de juntas${extras.length ? ', '+extras.join(', ') : ''}, materiales, mano de obra, herramienta y lo necesario para su correcta ejecución.`;
+}
+
+function calcMaterials(autoApu=true) {
   const type=val('systemType'), L=num(val('matLength')), H=num(val('matHeight')), w=num(val('matWaste'))/100,
     layers=num(val('matLayers')), area=L*H, panelArea=1.22*2.44, f=1+w;
   if (![L,H,layers].every(n=>Number.isFinite(n)&&n>0)||!Number.isInteger(layers)||!Number.isFinite(w)||w<0||w>1) {
@@ -1222,12 +1420,25 @@ function calcMaterials() {
     ];
     if (insulation!=='none') items.push([`Aislante termoacústico · ${insulation}`,Number((area*f).toFixed(2)),'m²','Área de plafón + desperdicio']);
   }
-  document.getElementById('areaBadge').textContent=`${area.toFixed(2)} m²`;
-  const out=document.getElementById('materialsResult');
-  out.className='result-list';
-  out.innerHTML=items.map(x=>`<div class="result-row"><div><strong>${esc(x[0])}</strong><small>${esc(x[3]||'')}</small></div><div><strong>${x[1]}</strong> <small>${esc(x[2])}</small></div></div>`).join('');
+  const pricingContext={cementWall,cementCeiling,panel,profileWidth,insulation,membrane};
+  const pricingRows=items.map(row=>pricingMaterialFromRow(row,pricingContext));
+  const costing=costCalculatedMaterials(pricingRows);
+  renderCostedMaterialList(costing,area);
+  if (autoApu) {
+    applyAutomaticApu(costing,{
+      sourceKey:`materials:${type}:${panel}:${profileWidth}:${insulation}:${membrane?'1':'0'}:${layers}`,
+      description:materialApuDescription(pricingContext),
+      saleQty:area,
+      saleUnit:'m²',
+      requiresLabor:true
+    });
+  }
 }
-document.getElementById('calcMaterialsBtn').onclick=calcMaterials;
+document.getElementById('calcMaterialsBtn').onclick=()=>calcMaterials(true);
+document.getElementById('materialsResult').addEventListener('click',e=>{
+  if (!e.target.closest('#openAutoApuBtn')) return;
+  showView('apu');
+});
 
 let apuRows = load(STORAGE.apu, null)?.rows || [{ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }, { type: 'Mano de obra', desc: '', sourcePriceId: '', qty: 1, unit: 'jor', pu: 0 }];
 function latestPriceOptions(selected='') {
@@ -1710,7 +1921,7 @@ window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloud
 window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.civilCalculations,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
+renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials(false);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   let remproReloadingForUpdate = false;
 
