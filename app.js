@@ -1136,6 +1136,20 @@ function setupMaterialControls() {
     hint.parentNode.insertBefore(membrane,hint);
     hint.textContent='Permabase/Durock: muros con estructura galvanizada cal. 20 @ 0.405 m (16 pulg) c/c; plafón cementicio con canal listón @ 0.405 m c/c. El aislamiento se cuantifica por área real.';
   }
+  const syncPanelToSystem=()=>{
+    const cement=['cementWall1','cementWall2','cementCeiling'].includes(system.value);
+    if (cement && !/Permabase|Durock/.test(panel.value)) {
+      const option=[...panel.options].find(o=>o.textContent.startsWith('Permabase'));
+      if (option) panel.value=option.value;
+    }
+    const membrane=document.getElementById('matMembrane');
+    if (membrane) membrane.disabled=!['cementWall1','cementWall2'].includes(system.value);
+  };
+  if (!system.dataset.materialSyncBound) {
+    system.addEventListener('change',()=>{syncPanelToSystem();calcMaterials();});
+    system.dataset.materialSyncBound='1';
+  }
+  syncPanelToSystem();
 }
 setupMaterialControls();
 
