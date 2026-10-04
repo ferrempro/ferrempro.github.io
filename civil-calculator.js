@@ -730,6 +730,90 @@
     };
   }
 
+
+  function calcCrewWork(input) {
+    const quantity = n(input.quantity);
+    const unit = String(input.unit || '').trim();
+    const productivityPerDay = n(input.productivityPerDay);
+    const workDaysPerWeek = n(input.workDaysPerWeek);
+    const contingencyPercent = Math.max(0, n(input.contingencyPercent));
+    const pieceworkUnitRate = Math.max(0, n(input.pieceworkUnitRate));
+    const selectedMethod = String(input.selectedMethod || 'crew');
+    const rawRoles = Array.isArray(input.roles) ? input.roles : [];
+
+    if (!validPositive(quantity) || !unit) throw new Error('Captura una cantidad total positiva y su unidad.');
+    if (!validPositive(productivityPerDay)) throw new Error('Captura un rendimiento diario positivo.');
+    if (!Number.isInteger(workDaysPerWeek) || workDaysPerWeek < 1 || workDaysPerWeek > 7) {
+      throw new Error('Los días laborables por semana deben ser un entero entre 1 y 7.');
+    }
+    if (!['crew', 'piecework'].includes(selectedMethod)) {
+      throw new Error('Selecciona cuadrilla o destajo como método de ejecución.');
+    }
+
+    const roles = rawRoles.map((row, index) => {
+      const role = String(row.role || '').trim();
+      const count = n(row.count);
+      const weeklyCost = n(row.weeklyCost);
+      if (!role || !Number.isInteger(count) || count < 0 || weeklyCost < 0) {
+        throw new Error(`Revisa la integración del puesto ${index + 1}.`);
+      }
+      return { role, count, weeklyCost: round(weeklyCost, 2), weeklySubtotal: round(count * weeklyCost, 2) };
+    }).filter(row => row.count > 0);
+
+    const crewWeeklyCost = roles.reduce((sum, row) => sum + row.weeklySubtotal, 0);
+    if (selectedMethod === 'crew' && crewWeeklyCost <= 0) {
+      throw new Error('Captura al menos un integrante con costo semanal para calcular por cuadrilla.');
+    }
+    if (selectedMethod === 'piecework' && pieceworkUnitRate <= 0) {
+      throw new Error('Captura un precio unitario de destajo positivo.');
+    }
+
+    const baseDays = quantity / productivityPerDay;
+    const plannedDays = baseDays * (1 + contingencyPercent / 100);
+    const plannedWeeks = plannedDays / workDaysPerWeek;
+    const crewDailyCost = crewWeeklyCost / workDaysPerWeek;
+    const crewDirectCost = crewDailyCost * plannedDays;
+    const pieceworkDirectCost = quantity * pieceworkUnitRate;
+    const selectedDirectCost = selectedMethod === 'crew' ? crewDirectCost : pieceworkDirectCost;
+    const periods = Math.ceil(plannedDays / workDaysPerWeek);
+    const dailyPlannedQuantity = quantity / plannedDays;
+    const cashFlow = [];
+    let remainingDays = plannedDays;
+    let remainingQuantity = quantity;
+    for (let period = 1; period <= periods; period += 1) {
+      const days = Math.min(workDaysPerWeek, remainingDays);
+      const periodQuantity = period === periods ? remainingQuantity : Math.min(remainingQuantity, dailyPlannedQuantity * days);
+      const amount = selectedMethod === 'crew' ? crewDailyCost * days : pieceworkUnitRate * periodQuantity;
+      cashFlow.push({ period, days: round(days, 3), quantity: round(periodQuantity, 3), amount: round(amount, 2) });
+      remainingDays -= days;
+      remainingQuantity -= periodQuantity;
+    }
+
+    return {
+      type: 'crew_work',
+      quantity: round(quantity, 3),
+      unit,
+      productivityPerDay: round(productivityPerDay, 3),
+      baseDays: round(baseDays, 3),
+      contingencyPercent: round(contingencyPercent, 2),
+      plannedDays: round(plannedDays, 3),
+      plannedWeeks: round(plannedWeeks, 3),
+      workDaysPerWeek,
+      roles,
+      crewWeeklyCost: round(crewWeeklyCost, 2),
+      crewDailyCost: round(crewDailyCost, 2),
+      crewDirectCost: round(crewDirectCost, 2),
+      pieceworkUnitRate: round(pieceworkUnitRate, 2),
+      pieceworkDirectCost: round(pieceworkDirectCost, 2),
+      selectedMethod,
+      selectedDirectCost: round(selectedDirectCost, 2),
+      differencePieceworkMinusCrew: round(pieceworkDirectCost - crewDirectCost, 2),
+      cashFlow,
+      source: 'Excel/manual legado · destajos y cuadrillas; rendimientos, integración y costos editables · RemPro 2026',
+      costBoundaryNote: 'Este módulo calcula mano de obra directa y flujo estimado. No agrega materiales, precio comercial, IVA, indirectos ni utilidad.'
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
@@ -740,6 +824,7 @@
     if (type === 'footing') return calcFooting(input);
     if (type === 'reinforced_wall') return calcReinforcedWall(input);
     if (type === 'reinforced_slab') return calcReinforcedSlab(input);
+    if (type === 'crew_work') return calcCrewWork(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
@@ -759,6 +844,7 @@
     calcFooting,
     calcReinforcedWall,
     calcReinforcedSlab,
+    calcCrewWork,
     calculate
   });
 });

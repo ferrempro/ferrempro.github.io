@@ -170,6 +170,7 @@
                   <option value="footing">Zapata aislada / zapata con dado</option>
                   <option value="reinforced_wall">Muro de concreto reforzado</option>
                   <option value="reinforced_slab">Losa de concreto reforzado</option>
+                  <option value="crew_work">Destajo / cuadrilla</option>
                 </select>
               </label>
               <label>Obra vinculada
@@ -181,7 +182,7 @@
               <label id="civilDosageLabel">Resistencia f'c
                 <select id="civilDosage"></select>
               </label>
-              <label>Peso del saco de cemento
+              <label id="civilBagWeightLabel">Peso del saco de cemento
                 <select id="civilBagWeight">
                   <option value="50">50 kg</option>
                   <option value="25">25 kg</option>
@@ -309,6 +310,35 @@
                 <label>Desperdicio de cimbra (%)<input id="civilSlabWasteFormwork" type="number" min="0" max="100" step="0.1" value="5"></label>
               </div>
             </div>
+
+            <div id="civilCrewFields" hidden>
+              <div class="civil-subhead">Destajo y cuadrilla</div>
+              <p class="auth-hint">Compara mano de obra directa por cuadrilla contra destajo. Los costos se capturan en cada cálculo y no se publican como valores predeterminados.</p>
+              <div class="form-grid">
+                <label>Cantidad total<input id="civilCrewQuantity" type="number" min="0" step="0.001" inputmode="decimal"></label>
+                <label>Unidad<select id="civilCrewUnit"><option value="m²">m²</option><option value="m³">m³</option><option value="ml">ml</option><option value="pza">pza</option><option value="jornada">jornada</option></select></label>
+                <label>Rendimiento de la cuadrilla por día<input id="civilCrewProductivity" type="number" min="0" step="0.001" inputmode="decimal"></label>
+                <label>Días laborables por semana<input id="civilCrewDaysPerWeek" type="number" min="1" max="7" step="1" value="6" inputmode="numeric"></label>
+                <label>Contingencia de tiempo (%)<input id="civilCrewContingency" type="number" min="0" max="100" step="0.1" value="0" inputmode="decimal"></label>
+                <label>Método para flujo<select id="civilCrewMethod"><option value="crew">Cuadrilla</option><option value="piecework">Destajo</option></select></label>
+                <label>Precio unitario de destajo<input id="civilCrewPieceRate" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+              </div>
+              <div class="civil-subhead">Integración semanal de cuadrilla</div>
+              <p class="auth-hint">Captura el costo semanal por persona. Los campos sin integrantes se omiten.</p>
+              <div class="form-grid">
+                <label>Oficiales<input id="civilCrewOfficialCount" type="number" min="0" step="1" value="1" inputmode="numeric"></label>
+                <label>Costo semanal por oficial<input id="civilCrewOfficialCost" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Ayudantes<input id="civilCrewHelperCount" type="number" min="0" step="1" value="1" inputmode="numeric"></label>
+                <label>Costo semanal por ayudante<input id="civilCrewHelperCost" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Cabos<input id="civilCrewForemanCount" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+                <label>Costo semanal por cabo<input id="civilCrewForemanCost" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Supervisores<input id="civilCrewSupervisorCount" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+                <label>Costo semanal por supervisor<input id="civilCrewSupervisorCost" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+                <label>Especialistas<input id="civilCrewSpecialistCount" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+                <label>Costo semanal por especialista<input id="civilCrewSpecialistCost" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+              </div>
+            </div>
+            <div id="civilMaterialFields">
             <div class="civil-subhead" id="civilVolumeHeading">Volumen</div>
             <p class="auth-hint" id="civilVolumeHint">Puedes capturar dimensiones o escribir directamente los m³. Si existe volumen directo, éste tiene prioridad.</p>
             <div class="form-grid civil-volume-grid">
@@ -322,6 +352,7 @@
               <label>Cemento (%)<input id="civilWasteCement" type="number" min="0" max="100" step="0.1" value="5"></label>
               <label>Arena (%)<input id="civilWasteSand" type="number" min="0" max="100" step="0.1" value="20"></label>
               <label id="civilWasteThirdLabel">Grava (%)<input id="civilWasteThird" type="number" min="0" max="100" step="0.1" value="30"></label>
+            </div>
             </div>
             <div class="dialog-actions civil-actions">
               <button class="secondary" id="civilClearBtn" type="button">Limpiar</button>
@@ -337,7 +368,7 @@
         <article class="panel table-wrap">
           <div class="panel-head"><h3>Historial de cálculos</h3><small>Sincronizado entre dispositivos cuando hay sesión.</small></div>
           <table>
-            <thead><tr><th>Fecha</th><th>Tipo</th><th>Obra</th><th>Elemento</th><th>Volumen / área</th><th>Resultado</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Obra</th><th>Elemento</th><th>Magnitud</th><th>Resultado</th><th>Acciones</th></tr></thead>
             <tbody id="civilHistoryBody"></tbody>
           </table>
           <div id="civilHistoryEmpty" class="empty">Aún no hay cálculos guardados.</div>
@@ -499,12 +530,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20261002-civil7"></script>
-  <script src="supabase-client.js?v=20261002-civil7"></script>
-  <script src="data-store.js?v=20261002-civil7"></script>
-  <script src="civil-calculator.js?v=20261002-civil7"></script>
-  <script src="app.js?v=20261002-civil7"></script>
-  <script src="sync.js?v=20261002-civil7"></script>
+  <script src="supabase-config.js?v=20261003-civil8"></script>
+  <script src="supabase-client.js?v=20261003-civil8"></script>
+  <script src="data-store.js?v=20261003-civil8"></script>
+  <script src="civil-calculator.js?v=20261003-civil8"></script>
+  <script src="app.js?v=20261003-civil8"></script>
+  <script src="sync.js?v=20261003-civil8"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>
