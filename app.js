@@ -1122,6 +1122,8 @@ document.getElementById('civilMasonryUnit')?.addEventListener('change',()=>{
 });
 document.getElementById('civilCalculateBtn')?.addEventListener('click',calculateCivil);
 document.getElementById('civilResult')?.addEventListener('click',e=>{
+  const priceKey=e.target.closest('[data-add-pending-price]')?.dataset.addPendingPrice;
+  if (priceKey) { openPendingPrice(priceKey); return; }
   if (e.target.closest('[data-open-civil-apu]')) showView('apu');
 });
 document.getElementById('civilSaveBtn')?.addEventListener('click',saveCivilCalculation);
@@ -1202,11 +1204,12 @@ function pricingMaterialFromRow(row, context={}) {
 
   if (n === 'paneles') {
     const panel=String(context.panel || '');
-    if (/permabase/i.test(panel)) hints=['hoja permabase','permabase'];
+    if (/light rey/i.test(panel)) hints=['hoja de yeso 1/2 light rey','light rey','hyu1248pr'];
+    else if (/permabase/i.test(panel)) hints=['hoja permabase','permabase'];
     else if (/guard rey/i.test(panel)) hints=['hoja yeso guard rey','guard rey'];
     else if (/durock/i.test(panel)) hints=['durock'];
     else if (/adpanel/i.test(panel)) hints=['adpanel'];
-    else hints=['hoja yeso estandar','tablaroca estandar'];
+    else hints=['hoja de yeso 1/2','light rey','hoja yeso estandar','tablaroca estandar'];
   } else if (n.includes('postes') || n.includes('montenes')) {
     hints=profileCatalogHint(context.profileWidth,'poste');
   } else if (n.includes('canal superior')) {
@@ -1327,12 +1330,39 @@ function civilApuMeta(result, input={}) {
   };
 }
 
+let pendingPriceSeeds=new Map();
+let pendingPriceRecalcSource=null;
+
+function registerPendingPriceSeed(row, source) {
+  const key=crypto.randomUUID();
+  pendingPriceSeeds.set(key,{
+    item:Array.isArray(row?.hints) && row.hints.length ? row.hints[0] : row?.description || '',
+    requiredUnit:row?.unit || '',
+    source
+  });
+  return key;
+}
+
+function pendingPriceButton(row, source) {
+  if (!row || row.status==='priced' || row.status==='auxiliary') return '';
+  const key=registerPendingPriceSeed(row,source);
+  return `<button type="button" class="mini-btn inline-price-btn" data-add-pending-price="${key}">Capturar precio</button>`;
+}
+
+function openPendingPrice(seedKey) {
+  const seed=pendingPriceSeeds.get(seedKey);
+  if (!seed) return;
+  pendingPriceRecalcSource=seed.source || null;
+  openPrice(null,seed);
+}
+
 function renderCivilCosting(costing, nf) {
   const rows=costing.rows.map(r=>{
     const pu=r.status==='priced'
       ? `<strong>${money(r.unitCost)}</strong><small>${esc(r.price?.supplier || '')} · ${esc(r.price?.date || '')}</small>`
       : `<strong>⚠ Pendiente</strong><small>${esc(r.reason || 'Sin precio')}</small>`;
-    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small></td><td>${esc(r.unit)}</td><td>${nf.format(r.quantity)}</td><td>${pu}</td><td>${r.status==='priced' ? money(r.amount) : '—'}</td></tr>`;
+    const action=pendingPriceButton(r,'civil');
+    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small>${action}</td><td>${esc(r.unit)}</td><td>${nf.format(r.quantity)}</td><td>${pu}</td><td>${r.status==='priced' ? money(r.amount) : '—'}</td></tr>`;
   }).join('');
   return `
     <table class="civil-result-table">
@@ -1422,7 +1452,8 @@ function renderCostedMaterialList(costing, area) {
         ? '<strong>Auxiliar</strong><small>Sin compra independiente</small>'
         : `<strong>⚠ Pendiente</strong><small>${esc(r.reason || 'Sin precio')}</small>`;
     const amount=r.status === 'priced' ? money(r.amount) : '—';
-    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small></td><td>${nf.format(r.quantity)}</td><td>${esc(r.unit)}</td><td>${status}</td><td>${amount}</td></tr>`;
+    const action=pendingPriceButton(r,'materials');
+    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small>${action}</td><td>${nf.format(r.quantity)}</td><td>${esc(r.unit)}</td><td>${status}</td><td>${amount}</td></tr>`;
   }).join('');
   const pendingNote=costing.pendingCount
     ? `⚠ ${costing.pendingCount} insumo(s) requieren precio o conversión antes de cerrar el APU.`
@@ -1572,8 +1603,9 @@ function calcMaterials(autoApu=true) {
 }
 document.getElementById('calcMaterialsBtn').onclick=()=>calcMaterials(true);
 document.getElementById('materialsResult').addEventListener('click',e=>{
-  if (!e.target.closest('#openAutoApuBtn')) return;
-  showView('apu');
+  const priceKey=e.target.closest('[data-add-pending-price]')?.dataset.addPendingPrice;
+  if (priceKey) { openPendingPrice(priceKey); return; }
+  if (e.target.closest('#openAutoApuBtn')) showView('apu');
 });
 
 let apuRows = load(STORAGE.apu, null)?.rows || [{ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }, { type: 'Mano de obra', desc: '', sourcePriceId: '', qty: 1, unit: 'jor', pu: 0 }];
@@ -1800,12 +1832,22 @@ function removePrice(id) {
 }
 const prd = document.getElementById('priceDialog');
 let editingPrice = null, editingPriceVersion = null;
-function openPrice(id = null) {
+function openPrice(id = null, seed = null) {
   editingPrice = id;
   const price = prices.find(p => p.id === id && !p.deleted);
   editingPriceVersion = price ? JSON.stringify(price) : null;
   document.getElementById('priceForm').reset();
   document.getElementById('prDate').value = today();
+  const hint=document.getElementById('prRequiredUnitHint');
+  if (hint) {
+    hint.textContent=seed?.requiredUnit
+      ? `El cálculo necesita ${seed.requiredUnit}. En “Unidad” captura la presentación real de compra (ej. caja 100 pzas, saco 20 kg, rollo 1.50 × 50 m).`
+      : '';
+  }
+  if (seed && !price) {
+    document.getElementById('prItem').value=seed.item || '';
+    document.getElementById('prSourceType').value='manual';
+  }
   if (price) Object.entries({prItem:'item',prSupplier:'supplier',prUnit:'unit',prNet:'net',prVat:'vat',prDate:'date'}).forEach(([id,key]) => document.getElementById(id).value = price[key] ?? '');
   prd.showModal();
 }
@@ -1843,6 +1885,15 @@ document.getElementById('priceForm').onsubmit = async e => {
   prd.close();
   document.getElementById('priceForm').reset();
   renderPrices(); renderPriceHistory(); renderApu();
+  if (pendingPriceRecalcSource==='materials') {
+    pendingPriceRecalcSource=null;
+    calcMaterials(true);
+  } else if (pendingPriceRecalcSource==='civil' && civilLastResult?.result) {
+    pendingPriceRecalcSource=null;
+    renderCivilResult(civilLastResult.result);
+  } else {
+    pendingPriceRecalcSource=null;
+  }
   window.RemProSync && window.RemProSync.queueSync();
 };
 
@@ -2116,7 +2167,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   async function refreshRemProServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register(
-        './sw.js?v=20261004-autoapu1',
+        './sw.js?v=20261004-lightrey1',
         { updateViaCache: 'none' }
       );
       await registration.update();
