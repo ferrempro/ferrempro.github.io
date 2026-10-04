@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=20261004-autoapu1" />
+  <link rel="stylesheet" href="styles.css?v=20261004-lightrey1" />
 </head>
 <body>
   <div class="app-shell">
@@ -133,6 +133,7 @@
             </div>
             <label>Tipo de panel
               <select id="panelType">
+                <option selected>Light Rey 1/2&quot; 1.22×2.44</option>
                 <option>Tablaroca estándar 1.22×2.44</option>
                 <option>Guard Rey 1.22×2.44</option>
                 <option>Permabase 1.22×2.44</option>
@@ -525,7 +526,7 @@
         </label>
         <label>Evidencia<input id="prEvidence" type="file" accept="image/*,application/pdf,.csv,.xlsx,.xls,.doc,.docx"></label>
       </div>
-      <p class="auth-hint">Las fotos y documentos se guardan como evidencia privada en Supabase. Para adjuntar un archivo debes iniciar sesión; la captura manual funciona también sin archivo.</p>
+      <p id="prRequiredUnitHint" class="auth-hint"></p><p class="auth-hint">Las fotos y documentos se guardan como evidencia privada en Supabase. Para adjuntar un archivo debes iniciar sesión; la captura manual funciona también sin archivo.</p>
       <div class="dialog-actions"><button type="button" onclick="this.closest('dialog').close()" value="cancel" formnovalidate class="secondary">Cancelar</button><button id="savePriceBtn" value="default" class="primary">Guardar</button></div>
     </form>
   </dialog>
@@ -546,13 +547,13 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20261004-autoapu1"></script>
-  <script src="supabase-client.js?v=20261004-autoapu1"></script>
-  <script src="data-store.js?v=20261004-autoapu1"></script>
-  <script src="civil-calculator.js?v=20261004-autoapu1"></script>
-  <script src="cost-engine.js?v=20261004-autoapu1"></script>
-  <script src="app.js?v=20261004-autoapu1"></script>
-  <script src="sync.js?v=20261004-autoapu1"></script>
+  <script src="supabase-config.js?v=20261004-lightrey1"></script>
+  <script src="supabase-client.js?v=20261004-lightrey1"></script>
+  <script src="data-store.js?v=20261004-lightrey1"></script>
+  <script src="civil-calculator.js?v=20261004-lightrey1"></script>
+  <script src="cost-engine.js?v=20261004-lightrey1"></script>
+  <script src="app.js?v=20261004-lightrey1"></script>
+  <script src="sync.js?v=20261004-lightrey1"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>

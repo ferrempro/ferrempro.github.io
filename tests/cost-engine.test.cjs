@@ -47,3 +47,12 @@ test('selecciona el precio compatible mas reciente entre coincidencias',()=>{
   ];
   assert.equal(engine.findBestPrice(prices,['hoja permabase']).id,'new');
 });
+
+
+test('prioriza una coincidencia Light Rey cuando el hint es específico',()=>{
+  const prices=[
+    {id:'generic',item:'Hoja de yeso estándar 1/2',unit:'pieza',net:200,vat:16,date:'2026-10-03'},
+    {id:'light',item:'Hoja de yeso 1/2 pulg. 1.22 x 2.44 m Light Rey P.R. HYU1248PR',unit:'pieza',net:236.68,vat:16,date:'2026-10-02'}
+  ];
+  assert.equal(engine.findBestPrice(prices,['hoja de yeso 1/2 light rey','light rey','hyu1248pr']).id,'light');
+});
