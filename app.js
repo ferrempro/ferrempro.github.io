@@ -305,6 +305,41 @@ document.getElementById('documentForm').onsubmit=e=>{
 
 
 let civilLastResult = null;
+let civilFreeRows = [{ id: crypto.randomUUID(), description: '', operation: 'add', count: 1, length: 0, width: 0, height: 0 }];
+
+
+function readCivilFreeRows() {
+  return [...document.querySelectorAll('#civilFreeRowsBody tr')].map(tr => ({
+    id: tr.dataset.id,
+    description: tr.querySelector('[data-free-field="description"]').value,
+    operation: tr.querySelector('[data-free-field="operation"]').value,
+    count: num(tr.querySelector('[data-free-field="count"]').value),
+    length: num(tr.querySelector('[data-free-field="length"]').value),
+    width: num(tr.querySelector('[data-free-field="width"]').value),
+    height: num(tr.querySelector('[data-free-field="height"]').value)
+  }));
+}
+
+function updateCivilFreeDimensions() {
+  const mode = val('civilFreeMode');
+  document.querySelectorAll('.civil-free-width').forEach(el => { el.hidden = mode === 'linear'; });
+  document.querySelectorAll('.civil-free-height').forEach(el => { el.hidden = mode !== 'volume'; });
+}
+
+function renderCivilFreeRows() {
+  const body = document.getElementById('civilFreeRowsBody');
+  if (!body) return;
+  body.innerHTML = civilFreeRows.map(row => `<tr data-id="${esc(row.id)}">
+    <td><input data-free-field="description" type="text" value="${esc(row.description || '')}" placeholder="Ej. Muro eje A"></td>
+    <td><select data-free-field="operation"><option value="add" ${row.operation !== 'subtract' ? 'selected' : ''}>Agregar</option><option value="subtract" ${row.operation === 'subtract' ? 'selected' : ''}>Descontar</option></select></td>
+    <td><input data-free-field="count" type="number" min="0" step="0.001" value="${esc(row.count ?? 1)}" inputmode="decimal"></td>
+    <td><input data-free-field="length" type="number" min="0" step="0.001" value="${esc(row.length || '')}" inputmode="decimal"></td>
+    <td class="civil-free-width"><input data-free-field="width" type="number" min="0" step="0.001" value="${esc(row.width || '')}" inputmode="decimal"></td>
+    <td class="civil-free-height"><input data-free-field="height" type="number" min="0" step="0.001" value="${esc(row.height || '')}" inputmode="decimal"></td>
+    <td><button class="mini-btn" type="button" data-remove-free-row="${esc(row.id)}">Quitar</button></td>
+  </tr>`).join('');
+  updateCivilFreeDimensions();
+}
 
 function updateCivilProjectOptions() {
   const select = document.getElementById('civilProject');
@@ -344,6 +379,7 @@ function updateCivilTypeFields() {
   const reinforcedWall = type === 'reinforced_wall';
   const reinforcedSlab = type === 'reinforced_slab';
   const crewWork = type === 'crew_work';
+  const freeGenerator = type === 'free_generator';
   const structural = column || beam || footing || reinforcedWall || reinforcedSlab;
   const fields = document.getElementById('civilMasonryFields');
   if (fields) fields.hidden = !masonry;
@@ -359,12 +395,14 @@ function updateCivilTypeFields() {
   if (reinforcedWallFields) reinforcedWallFields.hidden = !reinforcedWall;
   const reinforcedSlabFields = document.getElementById('civilReinforcedSlabFields');
   if (reinforcedSlabFields) reinforcedSlabFields.hidden = !reinforcedSlab;
+  const freeFields = document.getElementById('civilFreeGeneratorFields');
+  if (freeFields) freeFields.hidden = !freeGenerator;
   const crewFields = document.getElementById('civilCrewFields');
   if (crewFields) crewFields.hidden = !crewWork;
   const materialFields = document.getElementById('civilMaterialFields');
-  if (materialFields) materialFields.hidden = crewWork;
-  document.getElementById('civilDosageLabel').hidden = crewWork;
-  document.getElementById('civilBagWeightLabel').hidden = crewWork;
+  if (materialFields) materialFields.hidden = crewWork || freeGenerator;
+  document.getElementById('civilDosageLabel').hidden = crewWork || freeGenerator;
+  document.getElementById('civilBagWeightLabel').hidden = crewWork || freeGenerator;
   document.getElementById('civilThicknessLabel').hidden = masonry;
   document.getElementById('civilDirectVolumeLabel').hidden = masonry || structural;
   document.getElementById('civilVolumeHeading').textContent = masonry ? 'Geometría del muro' : stone ? 'Geometría de la mampostería de piedra' : column ? 'Geometría de la columna' : beam ? 'Geometría de la trabe' : footing ? 'Geometría de la zapata' : reinforcedWall ? 'Geometría del muro de concreto' : reinforcedSlab ? 'Geometría de la losa de concreto' : 'Volumen';
@@ -397,7 +435,7 @@ function updateCivilDosageOptions() {
   if (!select || !window.RemProCivil) return;
   updateCivilTypeFields();
   const previous = select.value;
-  if (type === 'crew_work') {
+  if (['crew_work','free_generator'].includes(type)) {
     select.innerHTML = '';
     return;
   }
@@ -567,6 +605,13 @@ function civilInputPayload() {
     };
   }
 
+
+  if (type === 'free_generator') {
+    return {
+      mode: val('civilFreeMode'),
+      rows: readCivilFreeRows().map(({ id, ...row }) => row)
+    };
+  }
   if (type === 'crew_work') {
     return {
       quantity: num(val('civilCrewQuantity')),
@@ -609,6 +654,22 @@ function renderCivilResult(result) {
   if (source) source.textContent = result.source || '';
   const nf = new Intl.NumberFormat('es-MX',{maximumFractionDigits:3});
 
+
+  if (result.type === 'free_generator') {
+    const rows = result.rows.map(row => `<tr><td>${esc(row.description)}</td><td>${row.operation === 'add' ? 'Agregar' : 'Descontar'}</td><td>${nf.format(row.quantity)} ${esc(result.unit)}</td></tr>`).join('');
+    out.innerHTML = `
+      <div class="civil-result-summary">
+        <div><span>Agregados</span><strong>${nf.format(result.additions)} ${esc(result.unit)}</strong></div>
+        <div><span>Deducciones</span><strong>${nf.format(result.subtractions)} ${esc(result.unit)}</strong></div>
+        <div><span>Cantidad neta</span><strong>${nf.format(result.quantity)} ${esc(result.unit)}</strong></div>
+      </div>
+      <table class="civil-result-table">
+        <thead><tr><th>Renglón</th><th>Operación</th><th>Resultado</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="civil-source-note">${esc(result.boundaryNote)}</p>`;
+    return;
+  }
   if (result.type === 'crew_work') {
     const methodLabel = result.selectedMethod === 'crew' ? 'Cuadrilla' : 'Destajo';
     const roleRows = result.roles.length
@@ -753,6 +814,10 @@ function clearCivilCalculator() {
   document.getElementById('civilSlabWasteSteel').value='5';
   document.getElementById('civilSlabWasteFormwork').value='5';
 
+
+  civilFreeRows=[{ id: crypto.randomUUID(), description: '', operation: 'add', count: 1, length: 0, width: 0, height: 0 }];
+  document.getElementById('civilFreeMode').value='linear';
+  renderCivilFreeRows();
   document.getElementById('civilCrewQuantity').value='';
   document.getElementById('civilCrewUnit').value='m²';
   document.getElementById('civilCrewProductivity').value='';
@@ -788,10 +853,10 @@ function saveCivilCalculation() {
     id: crypto.randomUUID(),
     project_id: val('civilProject') || null,
     calculation_type: civilLastResult.type,
-    label: val('civilLabel').trim() || ({ concrete: 'Concreto', mortar: 'Mortero', masonry_wall: 'Muro de mampostería', stone_masonry: 'Mampostería de piedra', column: 'Columna de concreto armado', beam: 'Trabe de concreto armado', footing: 'Zapata / dado de concreto armado', reinforced_wall: 'Muro de concreto reforzado', reinforced_slab: 'Losa de concreto reforzado', crew_work: 'Destajo / cuadrilla' }[civilLastResult.type] || 'Obra civil'),
+    label: val('civilLabel').trim() || ({ concrete: 'Concreto', mortar: 'Mortero', masonry_wall: 'Muro de mampostería', stone_masonry: 'Mampostería de piedra', column: 'Columna de concreto armado', beam: 'Trabe de concreto armado', footing: 'Zapata / dado de concreto armado', reinforced_wall: 'Muro de concreto reforzado', reinforced_slab: 'Losa de concreto reforzado', crew_work: 'Destajo / cuadrilla', free_generator: 'Generador libre' }[civilLastResult.type] || 'Obra civil'),
     input_payload: civilLastResult.input,
     result_payload: civilLastResult.result,
-    source_version: 'civil-v8',
+    source_version: 'civil-v9',
     deleted: false,
     updated_at: nowISO(),
     updated_by: currentEmail()
@@ -804,6 +869,7 @@ function saveCivilCalculation() {
 }
 
 function civilResultSummary(result) {
+  if (result?.type === 'free_generator') return `Cantidad neta: ${Number(result.quantity || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} ${result.unit || ''}`;
   if (result?.type === 'crew_work') {
     const method = result.selectedMethod === 'crew' ? 'Cuadrilla' : 'Destajo';
     return `${method}: ${money(result.selectedDirectCost)} · ${Number(result.plannedDays || 0).toLocaleString('es-MX',{maximumFractionDigits:2})} días`;
@@ -821,12 +887,12 @@ function renderCivilHistory() {
     const r=c.result_payload || {};
     return `<tr>
       <td>${esc((c.updated_at || '').slice(0,10) || '—')}</td>
-      <td>${({concrete:'Concreto',mortar:'Mortero',masonry_wall:'Muro mampostería',stone_masonry:'Piedra',column:'Columna',beam:'Trabe',footing:'Zapata / dado',reinforced_wall:'Muro de concreto',reinforced_slab:'Losa de concreto',crew_work:'Destajo / cuadrilla'}[c.calculation_type] || esc(c.calculation_type))}</td>
+      <td>${({concrete:'Concreto',mortar:'Mortero',masonry_wall:'Muro mampostería',stone_masonry:'Piedra',column:'Columna',beam:'Trabe',footing:'Zapata / dado',reinforced_wall:'Muro de concreto',reinforced_slab:'Losa de concreto',crew_work:'Destajo / cuadrilla',free_generator:'Generador libre'}[c.calculation_type] || esc(c.calculation_type))}</td>
       <td>${esc(p?.name || 'Sin vincular')}</td>
       <td>${esc(c.label || '—')}</td>
       <td>${c.calculation_type === 'masonry_wall'
         ? `${Number(r.netAreaM2 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m²`
-        : c.calculation_type === 'crew_work'
+        : ['crew_work','free_generator'].includes(c.calculation_type)
           ? `${Number(r.quantity || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} ${esc(r.unit || '')}`
           : `${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³`}</td>
       <td><small>${esc(civilResultSummary(r))}</small></td>
@@ -901,6 +967,13 @@ function loadCivilCalculation(id) {
     document.getElementById('civilSlabWasteFormwork').value=i.wasteFormwork ?? 5;
   }
 
+
+  if (c.calculation_type === 'free_generator') {
+    document.getElementById('civilFreeMode').value=i.mode || 'linear';
+    civilFreeRows=(Array.isArray(i.rows) && i.rows.length ? i.rows : [{ description:'', operation:'add', count:1, length:0, width:0, height:0 }])
+      .map(row=>({ id:crypto.randomUUID(), ...row }));
+    renderCivilFreeRows();
+  }
   if (c.calculation_type === 'crew_work') {
     document.getElementById('civilCrewQuantity').value=i.quantity || '';
     document.getElementById('civilCrewUnit').value=i.unit || 'm²';
@@ -982,6 +1055,7 @@ function removeCivilCalculation(id) {
 }
 
 function renderCivil() {
+  renderCivilFreeRows();
   updateCivilProjectOptions();
   updateCivilDosageOptions();
   renderCivilHistory();
@@ -990,6 +1064,28 @@ function renderCivil() {
 
 document.getElementById('civilType')?.addEventListener('change',()=>{
   updateCivilDosageOptions();
+  civilLastResult=null;
+  document.getElementById('civilSaveBtn').disabled=true;
+  renderCivilResult(null);
+});
+
+document.getElementById('civilFreeMode')?.addEventListener('change',()=>{
+  updateCivilFreeDimensions();
+  civilLastResult=null;
+  document.getElementById('civilSaveBtn').disabled=true;
+  renderCivilResult(null);
+});
+document.getElementById('civilAddFreeRow')?.addEventListener('click',()=>{
+  civilFreeRows=readCivilFreeRows();
+  civilFreeRows.push({ id:crypto.randomUUID(), description:'', operation:'add', count:1, length:0, width:0, height:0 });
+  renderCivilFreeRows();
+});
+document.getElementById('civilFreeRowsBody')?.addEventListener('click',e=>{
+  const id=e.target.closest('[data-remove-free-row]')?.dataset.removeFreeRow;
+  if (!id) return;
+  civilFreeRows=readCivilFreeRows().filter(row=>row.id!==id);
+  if (!civilFreeRows.length) civilFreeRows=[{ id:crypto.randomUUID(), description:'', operation:'add', count:1, length:0, width:0, height:0 }];
+  renderCivilFreeRows();
   civilLastResult=null;
   document.getElementById('civilSaveBtn').disabled=true;
   renderCivilResult(null);
@@ -1379,7 +1475,7 @@ async function importData(file) {
       ['unsent','sent'].includes(d.sent_state)
     ))) throw new Error('Documento inválido');
     if (data.civilCalculations && (!Array.isArray(data.civilCalculations) || !data.civilCalculations.every(c =>
-      c && ['concrete','mortar','masonry_wall','stone_masonry','column','beam','footing','reinforced_wall','reinforced_slab','crew_work'].includes(c.calculation_type) &&
+      c && ['concrete','mortar','masonry_wall','stone_masonry','column','beam','footing','reinforced_wall','reinforced_slab','crew_work','free_generator'].includes(c.calculation_type) &&
       c.input_payload && typeof c.input_payload === 'object' &&
       c.result_payload && typeof c.result_payload === 'object'
     ))) throw new Error('Cálculo de obra civil inválido');

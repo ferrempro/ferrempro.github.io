@@ -337,3 +337,42 @@ test('destajos y cuadrillas valida rendimiento, calendario y método seleccionad
   assert.throws(() => civil.calcCrewWork({ ...base, roles: [] }), /integrante/);
   assert.throws(() => civil.calcCrewWork({ ...base, selectedMethod: 'piecework', pieceworkUnitRate: 0 }), /destajo positivo/);
 });
+
+
+test('generador libre suma y descuenta longitudes, áreas y volúmenes', () => {
+  const area = civil.calcFreeGenerator({
+    mode: 'area',
+    rows: [
+      { description: 'Muro', operation: 'add', count: 2, length: 5, width: 3 },
+      { description: 'Vano', operation: 'subtract', count: 1, length: 1, width: 2 }
+    ]
+  });
+  assert.equal(area.unit, 'm²');
+  assert.equal(area.additions, 30);
+  assert.equal(area.subtractions, 2);
+  assert.equal(area.quantity, 28);
+  const volume = civil.calcFreeGenerator({
+    mode: 'volume',
+    rows: [{ description: 'Losa', operation: 'add', count: 1, length: 5, width: 4, height: 0.12 }]
+  });
+  assert.equal(volume.quantity, 2.4);
+});
+
+test('generador libre conserva precisión y no ejecuta fórmulas de texto', () => {
+  const r = civil.calcFreeGenerator({
+    mode: 'linear',
+    rows: [{ description: '=2+2', operation: 'add', count: 3, length: 1.25 }]
+  });
+  assert.equal(r.quantity, 3.75);
+  assert.equal(r.rows[0].description, '=2+2');
+});
+
+test('generador libre valida dimensiones, operaciones y deducciones', () => {
+  assert.throws(() => civil.calcFreeGenerator({ mode: 'area', rows: [{ operation: 'add', count: 1, length: 2, width: 0 }] }), /ancho/);
+  assert.throws(() => civil.calcFreeGenerator({ mode: 'volume', rows: [{ operation: 'add', count: 1, length: 2, width: 2, height: 0 }] }), /alto/);
+  assert.throws(() => civil.calcFreeGenerator({ mode: 'linear', rows: [{ operation: 'multiply', count: 1, length: 2 }] }), /Operación inválida/);
+  assert.throws(() => civil.calcFreeGenerator({ mode: 'linear', rows: [
+    { operation: 'add', count: 1, length: 1 },
+    { operation: 'subtract', count: 1, length: 2 }
+  ] }), /deducciones/);
+});

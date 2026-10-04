@@ -814,6 +814,47 @@
     };
   }
 
+
+  function calcFreeGenerator(input) {
+    const mode = String(input.mode || 'linear');
+    const unitByMode = { linear: 'ml', area: 'm²', volume: 'm³' };
+    const rawRows = Array.isArray(input.rows) ? input.rows : [];
+    if (!unitByMode[mode]) throw new Error('Selecciona una magnitud válida para el generador libre.');
+    if (!rawRows.length || rawRows.length > 100) throw new Error('Captura entre 1 y 100 renglones de medición.');
+    let additions = 0;
+    let subtractions = 0;
+    const rows = rawRows.map((row, index) => {
+      const description = String(row.description || '').trim() || `Renglón ${index + 1}`;
+      const operation = String(row.operation || 'add');
+      const count = n(row.count);
+      const length = n(row.length);
+      const width = n(row.width);
+      const height = n(row.height);
+      if (!['add', 'subtract'].includes(operation)) throw new Error(`Operación inválida en ${description}.`);
+      if (!validPositive(count) || !validPositive(length)) throw new Error(`Captura cantidad y largo positivos en ${description}.`);
+      if (mode !== 'linear' && !validPositive(width)) throw new Error(`Captura un ancho positivo en ${description}.`);
+      if (mode === 'volume' && !validPositive(height)) throw new Error(`Captura un alto positivo en ${description}.`);
+      const factors = mode === 'linear' ? [count, length] : mode === 'area' ? [count, length, width] : [count, length, width, height];
+      const measuredQuantity = factors.reduce((product, value) => product * value, 1);
+      if (operation === 'add') additions += measuredQuantity;
+      else subtractions += measuredQuantity;
+      return { description, operation, count: round(count, 3), length: round(length, 3), width: round(width, 3), height: round(height, 3), quantity: round(measuredQuantity, 4) };
+    });
+    const quantity = additions - subtractions;
+    if (quantity < 0) throw new Error('Las deducciones no pueden superar las cantidades agregadas.');
+    return {
+      type: 'free_generator',
+      mode,
+      unit: unitByMode[mode],
+      additions: round(additions, 4),
+      subtractions: round(subtractions, 4),
+      quantity: round(quantity, 4),
+      rows,
+      source: 'Excel/manual legado · generador libre de cantidades; operaciones y dimensiones editables · RemPro 2026',
+      boundaryNote: 'Genera cantidades geométricas. No incorpora costos, flujo, precio comercial, IVA, indirectos ni utilidad.'
+    };
+  }
+
   function calculate(type, input) {
     if (type === 'concrete') return calcConcrete(input);
     if (type === 'mortar') return calcMortar(input);
@@ -825,6 +866,7 @@
     if (type === 'reinforced_wall') return calcReinforcedWall(input);
     if (type === 'reinforced_slab') return calcReinforcedSlab(input);
     if (type === 'crew_work') return calcCrewWork(input);
+    if (type === 'free_generator') return calcFreeGenerator(input);
     throw new Error('Tipo de cálculo no disponible.');
   }
 
@@ -845,6 +887,7 @@
     calcReinforcedWall,
     calcReinforcedSlab,
     calcCrewWork,
+    calcFreeGenerator,
     calculate
   });
 });

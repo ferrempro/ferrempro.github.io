@@ -171,6 +171,7 @@
                   <option value="reinforced_wall">Muro de concreto reforzado</option>
                   <option value="reinforced_slab">Losa de concreto reforzado</option>
                   <option value="crew_work">Destajo / cuadrilla</option>
+                  <option value="free_generator">Generador libre</option>
                 </select>
               </label>
               <label>Obra vinculada
@@ -311,6 +312,21 @@
               </div>
             </div>
 
+
+            <div id="civilFreeGeneratorFields" hidden>
+              <div class="civil-subhead">Generador libre de cantidades</div>
+              <p class="auth-hint">Agrega y descuenta renglones sin fórmulas ejecutables. Cada renglón multiplica cantidad × dimensiones según la magnitud seleccionada.</p>
+              <div class="form-grid">
+                <label>Magnitud<select id="civilFreeMode"><option value="linear">Longitud (ml)</option><option value="area">Área (m²)</option><option value="volume">Volumen (m³)</option></select></label>
+              </div>
+              <div class="table-wrap">
+                <table class="civil-result-table">
+                  <thead><tr><th>Descripción</th><th>Operación</th><th>Cantidad</th><th>Largo</th><th class="civil-free-width">Ancho</th><th class="civil-free-height">Alto</th><th></th></tr></thead>
+                  <tbody id="civilFreeRowsBody"></tbody>
+                </table>
+              </div>
+              <button class="secondary" id="civilAddFreeRow" type="button">+ Renglón</button>
+            </div>
             <div id="civilCrewFields" hidden>
               <div class="civil-subhead">Destajo y cuadrilla</div>
               <p class="auth-hint">Compara mano de obra directa por cuadrilla contra destajo. Los costos se capturan en cada cálculo y no se publican como valores predeterminados.</p>
@@ -530,12 +546,12 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20261003-civil8"></script>
-  <script src="supabase-client.js?v=20261003-civil8"></script>
-  <script src="data-store.js?v=20261003-civil8"></script>
-  <script src="civil-calculator.js?v=20261003-civil8"></script>
-  <script src="app.js?v=20261003-civil8"></script>
-  <script src="sync.js?v=20261003-civil8"></script>
+  <script src="supabase-config.js?v=20261003-civil9"></script>
+  <script src="supabase-client.js?v=20261003-civil9"></script>
+  <script src="data-store.js?v=20261003-civil9"></script>
+  <script src="civil-calculator.js?v=20261003-civil9"></script>
+  <script src="app.js?v=20261003-civil9"></script>
+  <script src="sync.js?v=20261003-civil9"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>
