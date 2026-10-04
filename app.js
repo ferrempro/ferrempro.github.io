@@ -1712,5 +1712,28 @@ const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
 renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  let remproReloadingForUpdate = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (remproReloadingForUpdate) return;
+    remproReloadingForUpdate = true;
+    window.location.reload();
+  });
+
+  async function refreshRemProServiceWorker() {
+    try {
+      const registration = await navigator.serviceWorker.register(
+        './sw.js?v=20261004-ipad-pwa1',
+        { updateViaCache: 'none' }
+      );
+      await registration.update();
+    } catch {
+      // La app sigue operando en modo local si el service worker no puede actualizarse.
+    }
+  }
+
+  window.addEventListener('load', refreshRemProServiceWorker, { once: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshRemProServiceWorker();
+  });
 }
