@@ -15,6 +15,7 @@
     session: null,
     listeners: []
   };
+  let refreshPromise = null;
 
   function notify() {
     state.listeners.forEach(fn => {
