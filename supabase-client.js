@@ -32,23 +32,49 @@
       return fetch(input, init);
     }
 
-    let sessionToken = state.session && state.session.access_token;
-    if (!sessionToken && state.client) {
-      try {
+    async function freshSession() {
+      if (!state.client) return state.session;
+      let session = state.session;
+      if (!session) {
         const { data } = await state.client.auth.getSession();
-        if (data && data.session) {
-          state.session = data.session;
-          sessionToken = data.session.access_token;
-        }
-      } catch (_) {
-        // Si no hay sesión recuperable, dejamos que Supabase use la API key
-        // y la llamada será tratada como anónima por RLS.
+        session = data && data.session ? data.session : null;
+        if (session) state.session = session;
       }
+      if (!session) return null;
+
+      const expiresAt = Number(session.expires_at || 0);
+      const nearExpiry = expiresAt > 0 && expiresAt <= Math.floor(Date.now() / 1000) + 60;
+      if (!nearExpiry) return session;
+
+      if (!refreshPromise) {
+        refreshPromise = state.client.auth.refreshSession().then(({ data, error }) => {
+          if (error) throw error;
+          if (!data || !data.session) throw new Error('No fue posible renovar la sesión de RemPro.');
+          state.session = data.session;
+          setTimeout(notify, 0);
+          return data.session;
+        }).catch(error => {
+          const code = String(error && error.code || '');
+          const message = String(error && error.message || '');
+          if (/refresh_token|invalid_grant/i.test(code + ' ' + message)) {
+            state.session = null;
+            setTimeout(notify, 0);
+          }
+          throw new Error('La sesión de RemPro venció y no pudo renovarse. Vuelve a iniciar sesión.');
+        }).finally(() => { refreshPromise = null; });
+      }
+      return refreshPromise;
     }
 
-    if (!sessionToken) {
-      return fetch(input, init);
+    let sessionToken = null;
+    try {
+      const session = await freshSession();
+      sessionToken = session && session.access_token;
+    } catch (error) {
+      throw error;
     }
+
+    if (!sessionToken) return fetch(input, init);
 
     const inheritedHeaders = input && input.headers ? input.headers : undefined;
     const headers = new Headers(inheritedHeaders || undefined);
