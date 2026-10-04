@@ -714,10 +714,11 @@ function renderCivilResult(result) {
       ${primarySummary}
       <div><span>Dosificación</span><strong>${esc(result.dosage)}${['concrete','column','beam','footing','reinforced_wall','reinforced_slab'].includes(result.type) ? ' kg/cm²' : ''}</strong></div>
     </div>
-    <table class="civil-result-table">
-      <thead><tr><th>Material</th><th>Unidad</th><th>Cantidad</th></tr></thead>
-      <tbody>${result.materials.map(m => `<tr><td>${esc(m.description)}</td><td>${esc(m.unit)}</td><td>${nf.format(m.quantity)}</td></tr>`).join('')}</tbody>
-    </table>
+    ${(() => {
+      const costing=costCalculatedMaterials(result.materials.map(pricingCivilMaterial));
+      applyAutomaticApu(costing,civilApuMeta(result,civilLastResult?.input || {}));
+      return renderCivilCosting(costing,nf);
+    })()}
     <p class="civil-source-note">Las cantidades incluyen los desperdicios capturados. El agua se mantiene según la dosificación base y no se incrementa por desperdicio.</p>`;
 }
 
@@ -1227,8 +1228,26 @@ function pricingMaterialFromRow(row, context={}) {
 
 function pricingCivilMaterial(material) {
   const description=String(material?.description || '');
+  const rawUnit=String(material?.unit || '');
   const n=window.RemProCostEngine?.normalize(description) || description.toLowerCase();
   let hints=[description];
+  let quantity=Number(material?.quantity || 0);
+  let unit=rawUnit;
+  let note='';
+
+  // El calculador civil expresa cemento/cal por saco; el costeo se normaliza
+  // a kg para que pueda usar de forma segura sacos de 25/50 kg u otra
+  // presentación cuyo peso esté declarado en el catálogo.
+  const sackKg=rawUnit.match(/saco\s+(\d+(?:[.,]\d+)?)\s*kg/i);
+  if (sackKg) {
+    const kg=Number(sackKg[1].replace(',','.'));
+    if (Number.isFinite(kg) && kg > 0) {
+      quantity*=kg;
+      unit='kg';
+      note=`Cuantificación original: ${material.quantity} ${rawUnit}`;
+    }
+  }
+
   if (n.includes('cemento')) hints=['cemento gris portland','cemento gris','cemento'];
   else if (n.includes('arena')) hints=['arena para construccion','arena'];
   else if (n.includes('grava')) hints=['grava'];
@@ -1241,14 +1260,64 @@ function pricingCivilMaterial(material) {
     const diameter=mm ? mm[1].replace(',','.') : '';
     hints=map[diameter] ? [`varilla ${map[diameter]}`,`acero ${diameter} mm`] : [description];
   } else if (n.includes('cimbra')) hints=['triplay cimbra','cimbra'];
-  return {
-    description,
-    quantity:Number(material?.quantity || 0),
-    unit:material?.unit || '',
-    note:'',
-    hints,
-    costable:true
+
+  return { description, quantity, unit, note, hints, costable:true };
+}
+
+function civilApuMeta(result, input={}) {
+  const labels={
+    concrete:'Elaboración de concreto en obra',
+    mortar:'Elaboración de mortero en obra',
+    masonry_wall:'Muro de mampostería',
+    stone_masonry:'Mampostería de piedra',
+    column:'Columna de concreto armado',
+    beam:'Trabe de concreto armado',
+    footing:'Zapata de concreto armado',
+    reinforced_wall:'Muro de concreto reforzado',
+    reinforced_slab:'Losa de concreto reforzado'
   };
+  let saleQty=1, saleUnit='u';
+  if (result.type==='concrete' || result.type==='mortar' || result.type==='stone_masonry') {
+    saleQty=result.volumeM3 || 1; saleUnit='m³';
+  } else if (result.type==='masonry_wall') {
+    saleQty=result.netAreaM2 || 1; saleUnit='m²';
+  } else if (result.type==='column' || result.type==='footing') {
+    saleQty=result.count || 1; saleUnit='pza';
+  } else if (result.type==='beam') {
+    saleQty=(Number(input.length)||0)*(Number(result.count)||1) || 1; saleUnit='ml';
+  } else if (result.type==='reinforced_wall') {
+    saleQty=result.netAreaM2 || 1; saleUnit='m²';
+  } else if (result.type==='reinforced_slab') {
+    saleQty=result.areaM2 || 1; saleUnit='m²';
+  }
+  const label=labels[result.type] || 'Concepto de obra civil';
+  return {
+    sourceKey:`civil:${result.type}:${val('civilLabel') || label}`,
+    description:`${label}${val('civilLabel') ? ' · '+val('civilLabel') : ''}, incluyendo materiales cuantificados conforme a los parámetros capturados.`,
+    saleQty,
+    saleUnit,
+    requiresLabor:true
+  };
+}
+
+function renderCivilCosting(costing, nf) {
+  const rows=costing.rows.map(r=>{
+    const pu=r.status==='priced'
+      ? `<strong>${money(r.unitCost)}</strong><small>${esc(r.price?.supplier || '')} · ${esc(r.price?.date || '')}</small>`
+      : `<strong>⚠ Pendiente</strong><small>${esc(r.reason || 'Sin precio')}</small>`;
+    return `<tr><td><strong>${esc(r.description)}</strong><small>${esc(r.note || '')}</small></td><td>${esc(r.unit)}</td><td>${nf.format(r.quantity)}</td><td>${pu}</td><td>${r.status==='priced' ? money(r.amount) : '—'}</td></tr>`;
+  }).join('');
+  return `
+    <table class="civil-result-table">
+      <thead><tr><th>Material</th><th>Unidad</th><th>Cantidad</th><th>P.U.</th><th>Importe</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="civil-result-summary">
+      <div><span>Costo conocido de materiales</span><strong>${money(costing.subtotal)}</strong></div>
+      <div><span>Estado</span><strong>${costing.complete ? 'Costeo completo' : 'Costeo incompleto'}</strong></div>
+    </div>
+    <p class="civil-source-note">${costing.pendingCount ? '⚠ '+costing.pendingCount+' insumo(s) requieren precio o conversión.' : '✓ Materiales costados con el catálogo vigente.'}</p>
+    <button type="button" class="secondary" data-open-civil-apu>Ver APU automático</button>`;
 }
 
 function costCalculatedMaterials(materials, prices=activePrices()) {
