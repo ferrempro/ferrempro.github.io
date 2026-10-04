@@ -290,3 +290,50 @@ test('losa reforzada admite losa sobre terreno y valida parrillas', () => {
   assert.throws(() => civil.calcReinforcedSlab({ ...base, formworkMode: 'edges' }), /cimbra/);
   assert.throws(() => civil.calcReinforcedSlab({ ...base, spacingY: 0 }), /separaciones/);
 });
+
+
+test('destajos y cuadrillas separa costo directo, flujo y comparación', () => {
+  const r = civil.calcCrewWork({
+    quantity: 120, unit: 'm²', productivityPerDay: 20,
+    workDaysPerWeek: 6, contingencyPercent: 0,
+    selectedMethod: 'crew', pieceworkUnitRate: 250,
+    roles: [
+      { role: 'Oficial', count: 1, weeklyCost: 6000 },
+      { role: 'Ayudante', count: 1, weeklyCost: 4000 }
+    ]
+  });
+  assert.equal(r.type, 'crew_work');
+  assert.equal(r.plannedDays, 6);
+  assert.equal(r.crewWeeklyCost, 10000);
+  assert.equal(r.crewDirectCost, 10000);
+  assert.equal(r.pieceworkDirectCost, 30000);
+  assert.equal(r.selectedDirectCost, 10000);
+  assert.equal(r.cashFlow.length, 1);
+  assert.equal(r.cashFlow[0].amount, 10000);
+});
+
+test('destajo distribuye el flujo por semanas sin alterar el costo directo', () => {
+  const r = civil.calcCrewWork({
+    quantity: 150, unit: 'm²', productivityPerDay: 20,
+    workDaysPerWeek: 6, selectedMethod: 'piecework', pieceworkUnitRate: 100,
+    roles: []
+  });
+  assert.equal(r.plannedDays, 7.5);
+  assert.equal(r.pieceworkDirectCost, 15000);
+  assert.equal(r.selectedDirectCost, 15000);
+  assert.equal(r.cashFlow.length, 2);
+  assert.equal(r.cashFlow.reduce((sum, row) => sum + row.amount, 0), 15000);
+  assert.equal(r.cashFlow.reduce((sum, row) => sum + row.quantity, 0), 150);
+});
+
+test('destajos y cuadrillas valida rendimiento, calendario y método seleccionado', () => {
+  const base = {
+    quantity: 10, unit: 'pza', productivityPerDay: 2,
+    workDaysPerWeek: 6, selectedMethod: 'crew',
+    roles: [{ role: 'Oficial', count: 1, weeklyCost: 6000 }]
+  };
+  assert.throws(() => civil.calcCrewWork({ ...base, productivityPerDay: 0 }), /rendimiento/);
+  assert.throws(() => civil.calcCrewWork({ ...base, workDaysPerWeek: 8 }), /entero entre 1 y 7/);
+  assert.throws(() => civil.calcCrewWork({ ...base, roles: [] }), /integrante/);
+  assert.throws(() => civil.calcCrewWork({ ...base, selectedMethod: 'piecework', pieceworkUnitRate: 0 }), /destajo positivo/);
+});

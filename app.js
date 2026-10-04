@@ -343,6 +343,7 @@ function updateCivilTypeFields() {
   const footing = type === 'footing';
   const reinforcedWall = type === 'reinforced_wall';
   const reinforcedSlab = type === 'reinforced_slab';
+  const crewWork = type === 'crew_work';
   const structural = column || beam || footing || reinforcedWall || reinforcedSlab;
   const fields = document.getElementById('civilMasonryFields');
   if (fields) fields.hidden = !masonry;
@@ -358,6 +359,12 @@ function updateCivilTypeFields() {
   if (reinforcedWallFields) reinforcedWallFields.hidden = !reinforcedWall;
   const reinforcedSlabFields = document.getElementById('civilReinforcedSlabFields');
   if (reinforcedSlabFields) reinforcedSlabFields.hidden = !reinforcedSlab;
+  const crewFields = document.getElementById('civilCrewFields');
+  if (crewFields) crewFields.hidden = !crewWork;
+  const materialFields = document.getElementById('civilMaterialFields');
+  if (materialFields) materialFields.hidden = crewWork;
+  document.getElementById('civilDosageLabel').hidden = crewWork;
+  document.getElementById('civilBagWeightLabel').hidden = crewWork;
   document.getElementById('civilThicknessLabel').hidden = masonry;
   document.getElementById('civilDirectVolumeLabel').hidden = masonry || structural;
   document.getElementById('civilVolumeHeading').textContent = masonry ? 'Geometría del muro' : stone ? 'Geometría de la mampostería de piedra' : column ? 'Geometría de la columna' : beam ? 'Geometría de la trabe' : footing ? 'Geometría de la zapata' : reinforcedWall ? 'Geometría del muro de concreto' : reinforcedSlab ? 'Geometría de la losa de concreto' : 'Volumen';
@@ -390,6 +397,10 @@ function updateCivilDosageOptions() {
   if (!select || !window.RemProCivil) return;
   updateCivilTypeFields();
   const previous = select.value;
+  if (type === 'crew_work') {
+    select.innerHTML = '';
+    return;
+  }
   if (['concrete','column','beam','footing','reinforced_wall','reinforced_slab'].includes(type)) {
     if (label?.firstChild) label.firstChild.nodeValue = "Resistencia f'c ";
     if (thirdLabel?.firstChild) thirdLabel.firstChild.nodeValue = 'Grava (%)';
@@ -555,6 +566,25 @@ function civilInputPayload() {
       fc: dosage
     };
   }
+
+  if (type === 'crew_work') {
+    return {
+      quantity: num(val('civilCrewQuantity')),
+      unit: val('civilCrewUnit'),
+      productivityPerDay: num(val('civilCrewProductivity')),
+      workDaysPerWeek: num(val('civilCrewDaysPerWeek')),
+      contingencyPercent: num(val('civilCrewContingency')),
+      selectedMethod: val('civilCrewMethod'),
+      pieceworkUnitRate: num(val('civilCrewPieceRate')),
+      roles: [
+        { role: 'Oficial', count: num(val('civilCrewOfficialCount')), weeklyCost: num(val('civilCrewOfficialCost')) },
+        { role: 'Ayudante', count: num(val('civilCrewHelperCount')), weeklyCost: num(val('civilCrewHelperCost')) },
+        { role: 'Cabo', count: num(val('civilCrewForemanCount')), weeklyCost: num(val('civilCrewForemanCost')) },
+        { role: 'Supervisor', count: num(val('civilCrewSupervisorCount')), weeklyCost: num(val('civilCrewSupervisorCost')) },
+        { role: 'Especialista', count: num(val('civilCrewSpecialistCount')), weeklyCost: num(val('civilCrewSpecialistCost')) }
+      ]
+    };
+  }
   return {
     ...common,
     directVolume: num(val('civilDirectVolume')),
@@ -578,6 +608,33 @@ function renderCivilResult(result) {
   out.className = '';
   if (source) source.textContent = result.source || '';
   const nf = new Intl.NumberFormat('es-MX',{maximumFractionDigits:3});
+
+  if (result.type === 'crew_work') {
+    const methodLabel = result.selectedMethod === 'crew' ? 'Cuadrilla' : 'Destajo';
+    const roleRows = result.roles.length
+      ? result.roles.map(row => `<tr><td>${esc(row.role)} × ${nf.format(row.count)}</td><td>semana</td><td>${money(row.weeklySubtotal)}</td></tr>`).join('')
+      : '<tr><td colspan="3">Sin integración de cuadrilla capturada.</td></tr>';
+    const flowRows = result.cashFlow.map(row =>
+      `<tr><td>Periodo ${nf.format(row.period)} · ${nf.format(row.days)} día(s)</td><td>${nf.format(row.quantity)} ${esc(result.unit)}</td><td>${money(row.amount)}</td></tr>`
+    ).join('');
+    out.innerHTML = `
+      <div class="civil-result-summary">
+        <div><span>Duración estimada</span><strong>${nf.format(result.plannedDays)} días</strong></div>
+        <div><span>Costo directo cuadrilla</span><strong>${money(result.crewDirectCost)}</strong></div>
+        <div><span>Costo directo destajo</span><strong>${money(result.pieceworkDirectCost)}</strong></div>
+        <div><span>Método seleccionado</span><strong>${methodLabel} · ${money(result.selectedDirectCost)}</strong></div>
+      </div>
+      <table class="civil-result-table">
+        <thead><tr><th>Integración</th><th>Periodo</th><th>Costo semanal</th></tr></thead>
+        <tbody>${roleRows}</tbody>
+      </table>
+      <table class="civil-result-table">
+        <thead><tr><th>Flujo estimado</th><th>Producción</th><th>Salida</th></tr></thead>
+        <tbody>${flowRows}</tbody>
+      </table>
+      <p class="civil-source-note">${esc(result.costBoundaryNote)}</p>`;
+    return;
+  }
   const primarySummary = result.type === 'masonry_wall'
     ? `<div><span>Área neta de muro</span><strong>${nf.format(result.netAreaM2)} m²</strong></div>
        <div><span>Piezas</span><strong>${nf.format(result.pieceCount)} pzas</strong></div>
@@ -695,6 +752,24 @@ function clearCivilCalculator() {
   document.getElementById('civilSlabFormworkMode').value='bottom';
   document.getElementById('civilSlabWasteSteel').value='5';
   document.getElementById('civilSlabWasteFormwork').value='5';
+
+  document.getElementById('civilCrewQuantity').value='';
+  document.getElementById('civilCrewUnit').value='m²';
+  document.getElementById('civilCrewProductivity').value='';
+  document.getElementById('civilCrewDaysPerWeek').value='6';
+  document.getElementById('civilCrewContingency').value='0';
+  document.getElementById('civilCrewMethod').value='crew';
+  document.getElementById('civilCrewPieceRate').value='0';
+  document.getElementById('civilCrewOfficialCount').value='1';
+  document.getElementById('civilCrewOfficialCost').value='0';
+  document.getElementById('civilCrewHelperCount').value='1';
+  document.getElementById('civilCrewHelperCost').value='0';
+  document.getElementById('civilCrewForemanCount').value='0';
+  document.getElementById('civilCrewForemanCost').value='0';
+  document.getElementById('civilCrewSupervisorCount').value='0';
+  document.getElementById('civilCrewSupervisorCost').value='0';
+  document.getElementById('civilCrewSpecialistCount').value='0';
+  document.getElementById('civilCrewSpecialistCost').value='0';
   document.getElementById('civilStoneOpeningArea').value='0';
   document.getElementById('civilStoneFactor').value='1.20';
   document.getElementById('civilStoneMortarFactor').value='0.30';
@@ -713,10 +788,10 @@ function saveCivilCalculation() {
     id: crypto.randomUUID(),
     project_id: val('civilProject') || null,
     calculation_type: civilLastResult.type,
-    label: val('civilLabel').trim() || ({ concrete: 'Concreto', mortar: 'Mortero', masonry_wall: 'Muro de mampostería', stone_masonry: 'Mampostería de piedra', column: 'Columna de concreto armado', beam: 'Trabe de concreto armado', footing: 'Zapata / dado de concreto armado', reinforced_wall: 'Muro de concreto reforzado', reinforced_slab: 'Losa de concreto reforzado' }[civilLastResult.type] || 'Obra civil'),
+    label: val('civilLabel').trim() || ({ concrete: 'Concreto', mortar: 'Mortero', masonry_wall: 'Muro de mampostería', stone_masonry: 'Mampostería de piedra', column: 'Columna de concreto armado', beam: 'Trabe de concreto armado', footing: 'Zapata / dado de concreto armado', reinforced_wall: 'Muro de concreto reforzado', reinforced_slab: 'Losa de concreto reforzado', crew_work: 'Destajo / cuadrilla' }[civilLastResult.type] || 'Obra civil'),
     input_payload: civilLastResult.input,
     result_payload: civilLastResult.result,
-    source_version: 'civil-v7',
+    source_version: 'civil-v8',
     deleted: false,
     updated_at: nowISO(),
     updated_by: currentEmail()
@@ -729,6 +804,10 @@ function saveCivilCalculation() {
 }
 
 function civilResultSummary(result) {
+  if (result?.type === 'crew_work') {
+    const method = result.selectedMethod === 'crew' ? 'Cuadrilla' : 'Destajo';
+    return `${method}: ${money(result.selectedDirectCost)} · ${Number(result.plannedDays || 0).toLocaleString('es-MX',{maximumFractionDigits:2})} días`;
+  }
   if (!result?.materials?.length) return '—';
   return result.materials.slice(0,2).map(m => `${m.description}: ${Number(m.quantity).toLocaleString('es-MX',{maximumFractionDigits:2})} ${m.unit}`).join(' · ');
 }
@@ -742,12 +821,14 @@ function renderCivilHistory() {
     const r=c.result_payload || {};
     return `<tr>
       <td>${esc((c.updated_at || '').slice(0,10) || '—')}</td>
-      <td>${({concrete:'Concreto',mortar:'Mortero',masonry_wall:'Muro mampostería',stone_masonry:'Piedra',column:'Columna',beam:'Trabe',footing:'Zapata / dado',reinforced_wall:'Muro de concreto',reinforced_slab:'Losa de concreto'}[c.calculation_type] || esc(c.calculation_type))}</td>
+      <td>${({concrete:'Concreto',mortar:'Mortero',masonry_wall:'Muro mampostería',stone_masonry:'Piedra',column:'Columna',beam:'Trabe',footing:'Zapata / dado',reinforced_wall:'Muro de concreto',reinforced_slab:'Losa de concreto',crew_work:'Destajo / cuadrilla'}[c.calculation_type] || esc(c.calculation_type))}</td>
       <td>${esc(p?.name || 'Sin vincular')}</td>
       <td>${esc(c.label || '—')}</td>
       <td>${c.calculation_type === 'masonry_wall'
         ? `${Number(r.netAreaM2 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m²`
-        : `${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³`}</td>
+        : c.calculation_type === 'crew_work'
+          ? `${Number(r.quantity || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} ${esc(r.unit || '')}`
+          : `${Number(r.volumeM3 || 0).toLocaleString('es-MX',{maximumFractionDigits:3})} m³`}</td>
       <td><small>${esc(civilResultSummary(r))}</small></td>
       <td><div class="civil-history-actions"><button class="mini-btn" data-civil-load="${esc(c.id)}">Cargar</button><button class="mini-btn" data-civil-remove="${esc(c.id)}">Eliminar</button></div></td>
     </tr>`;
@@ -818,6 +899,28 @@ function loadCivilCalculation(id) {
     document.getElementById('civilSlabFormworkMode').value=i.formworkMode || 'bottom';
     document.getElementById('civilSlabWasteSteel').value=i.wasteSteel ?? 5;
     document.getElementById('civilSlabWasteFormwork').value=i.wasteFormwork ?? 5;
+  }
+
+  if (c.calculation_type === 'crew_work') {
+    document.getElementById('civilCrewQuantity').value=i.quantity || '';
+    document.getElementById('civilCrewUnit').value=i.unit || 'm²';
+    document.getElementById('civilCrewProductivity').value=i.productivityPerDay || '';
+    document.getElementById('civilCrewDaysPerWeek').value=i.workDaysPerWeek || 6;
+    document.getElementById('civilCrewContingency').value=i.contingencyPercent ?? 0;
+    document.getElementById('civilCrewMethod').value=i.selectedMethod || 'crew';
+    document.getElementById('civilCrewPieceRate').value=i.pieceworkUnitRate ?? 0;
+    const roles=Array.isArray(i.roles)?i.roles:[];
+    const role=(name)=>roles.find(row=>row.role===name) || {};
+    document.getElementById('civilCrewOfficialCount').value=role('Oficial').count ?? 1;
+    document.getElementById('civilCrewOfficialCost').value=role('Oficial').weeklyCost ?? 0;
+    document.getElementById('civilCrewHelperCount').value=role('Ayudante').count ?? 1;
+    document.getElementById('civilCrewHelperCost').value=role('Ayudante').weeklyCost ?? 0;
+    document.getElementById('civilCrewForemanCount').value=role('Cabo').count ?? 0;
+    document.getElementById('civilCrewForemanCost').value=role('Cabo').weeklyCost ?? 0;
+    document.getElementById('civilCrewSupervisorCount').value=role('Supervisor').count ?? 0;
+    document.getElementById('civilCrewSupervisorCost').value=role('Supervisor').weeklyCost ?? 0;
+    document.getElementById('civilCrewSpecialistCount').value=role('Especialista').count ?? 0;
+    document.getElementById('civilCrewSpecialistCost').value=role('Especialista').weeklyCost ?? 0;
   }
   if (c.calculation_type === 'column') {
     document.getElementById('civilColumnCount').value=i.count || 1;
@@ -1276,7 +1379,7 @@ async function importData(file) {
       ['unsent','sent'].includes(d.sent_state)
     ))) throw new Error('Documento inválido');
     if (data.civilCalculations && (!Array.isArray(data.civilCalculations) || !data.civilCalculations.every(c =>
-      c && ['concrete','mortar','masonry_wall','stone_masonry','column','beam','footing','reinforced_wall','reinforced_slab'].includes(c.calculation_type) &&
+      c && ['concrete','mortar','masonry_wall','stone_masonry','column','beam','footing','reinforced_wall','reinforced_slab','crew_work'].includes(c.calculation_type) &&
       c.input_payload && typeof c.input_payload === 'object' &&
       c.result_payload && typeof c.result_payload === 'object'
     ))) throw new Error('Cálculo de obra civil inválido');
