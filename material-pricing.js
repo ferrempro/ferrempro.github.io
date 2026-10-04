@@ -53,7 +53,12 @@
   function keyBonus(key,text,search){
     const has=(re)=>re.test(text);
     switch(String(key||'')){
-      case 'panels': return /permabase|durock|guard rey|adpanel|tablaroca/.test(search)&&has(/permabase|durock|guard rey|adpanel|tablaroca/) ? 120 : has(/\bhoja\b|panel/) ? 45 : 0;
+      case 'panels': {
+        const variants=['permabase','durock','guard rey','adpanel','tablaroca'];
+        const wanted=variants.find(v=>search.includes(v));
+        if(wanted) return text.includes(wanted) ? 150 : 0;
+        return has(/\bhoja\b|panel/) ? 30 : 0;
+      }
       case 'studs': return has(/\bposte\b|monten/) ? 110 : 0;
       case 'track': return has(/\bcanal\b/)&&!has(/liston|carga/) ? 105 : 0;
       case 'liston': return has(/canal liston/) ? 120 : 0;
@@ -78,6 +83,22 @@
     }
   }
 
+  function profileWidthCm(text){
+    const s=strip(text);
+    let m=s.match(/ancho\s*(\d+(?:\.\d+)?)\s*cm/);
+    if(m) return Number(m[1]);
+    m=s.match(/\b(\d+)\s+(\d+)\/(\d+)\s*(?:pulg|in|")?/);
+    if(m) return (Number(m[1])+Number(m[2])/Number(m[3]))*2.54;
+    m=s.match(/\b(\d+(?:\.\d+)?)\s*(?:pulg|in)\b/);
+    if(m) return Number(m[1])*2.54;
+    return null;
+  }
+
+  function gauge(text){
+    const m=strip(text).match(/(?:cal(?:ibre)?\.?\s*)(\d{2})\b/);
+    return m?Number(m[1]):null;
+  }
+
   function scorePrice(material,price){
     const text=strip(price&&price.item);
     const search=strip([material.label||material.description,material.note,material.searchText].filter(Boolean).join(' '));
@@ -86,7 +107,15 @@
     for(const t of a) if(b.has(t)) common++;
     let score=common*12 + keyBonus(material.key,text,search);
     if(search&&text&&text.includes(search)) score+=80;
-    if(material.key&&keyBonus(material.key,text,search)===0&&['studs','track','liston','canaleta','angle','mini','screws','tape','joint_tape','basecoat','compound','membrane','hanger_wire','tie_wire','hanger_anchors','hanger_shots','angle_nails','angle_shots'].includes(material.key)) score-=60;
+    const strict=['panels','studs','track','liston','canaleta','angle','mini','screws','tape','joint_tape','basecoat','compound','membrane','hanger_wire','tie_wire','hanger_anchors','hanger_shots','angle_nails','angle_shots'];
+    if(material.key&&keyBonus(material.key,text,search)===0&&strict.includes(material.key)) score-=90;
+
+    if(['studs','track','liston','canaleta'].includes(material.key)) {
+      const wantedWidth=profileWidthCm(search), candidateWidth=profileWidthCm(text);
+      if(wantedWidth&&candidateWidth) score += Math.abs(wantedWidth-candidateWidth)<=0.35 ? 45 : -220;
+      const wantedGauge=gauge(search), candidateGauge=gauge(text);
+      if(wantedGauge&&candidateGauge) score += wantedGauge===candidateGauge ? 35 : -180;
+    }
     return score;
   }
 
