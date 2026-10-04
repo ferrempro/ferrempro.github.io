@@ -4,7 +4,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 
-function buildHarness({restoredSession=null}={}) {
+function buildHarness({restoredSession=null,signedInSession=null,refreshedSession=null,refreshError=null}={}) {
   let createOptions=null;
   const requests=[];
   let resolveInitialSession;
@@ -32,9 +32,12 @@ function buildHarness({restoredSession=null}={}) {
     getSession:()=>initialSessionPromise,
     onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
     signInWithPassword:async()=>({
-      data:{session:{access_token:'user-jwt',refresh_token:'refresh',user:{id:'u1',email:'test@example.test'}}},
+      data:{session:signedInSession||{access_token:'user-jwt',refresh_token:'refresh',user:{id:'u1',email:'test@example.test'}}},
       error:null
     }),
+    refreshSession:async()=> refreshError
+      ? {data:{session:null},error:refreshError}
+      : {data:{session:refreshedSession||{access_token:'fresh-jwt',refresh_token:'refresh-2',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'u1',email:'test@example.test'}}},error:null},
     signOut:async()=>({error:null})
   };
   ctx.supabase={
@@ -82,5 +85,33 @@ test('auth endpoints are not rewritten with the user JWT by the custom fetch',as
     {headers:{Authorization:'Bearer sb_publishable_test'}}
   );
   assert.equal(h.requests.at(-1).authorization,'Bearer sb_publishable_test');
+  h.resolveInitialSession(null);
+});
+
+
+test('expired JWT is refreshed before a PostgREST request',async()=>{
+  const expired={access_token:'expired-jwt',refresh_token:'refresh',expires_at:Math.floor(Date.now()/1000)-10,user:{id:'u1',email:'test@example.test'}};
+  const fresh={access_token:'fresh-jwt',refresh_token:'refresh-2',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'u1',email:'test@example.test'}};
+  const h=buildHarness({signedInSession:expired,refreshedSession:fresh});
+  await h.ctx.RemProSupabase.signIn('test@example.test','secret');
+  await h.options.global.fetch(
+    'https://rvjjnkrojkpepbcxvevl.supabase.co/rest/v1/rpc/rempro_is_member',
+    {headers:{Authorization:'Bearer sb_publishable_test'}}
+  );
+  assert.equal(h.requests.at(-1).authorization,'Bearer fresh-jwt');
+  assert.equal(h.ctx.RemProSupabase.session.access_token,'fresh-jwt');
+  h.resolveInitialSession(null);
+});
+
+test('invalid refresh token asks for reauthentication instead of sending stale JWT',async()=>{
+  const expired={access_token:'expired-jwt',refresh_token:'bad',expires_at:Math.floor(Date.now()/1000)-10,user:{id:'u1',email:'test@example.test'}};
+  const h=buildHarness({signedInSession:expired,refreshError:{code:'refresh_token_not_found',message:'Invalid Refresh Token'}});
+  await h.ctx.RemProSupabase.signIn('test@example.test','secret');
+  await assert.rejects(
+    ()=>h.options.global.fetch('https://rvjjnkrojkpepbcxvevl.supabase.co/rest/v1/rpc/rempro_is_member',{}),
+    /Vuelve a iniciar sesión/
+  );
+  assert.equal(h.ctx.RemProSupabase.session,null);
+  assert.equal(h.requests.some(r=>r.authorization==='Bearer expired-jwt'),false);
   h.resolveInitialSession(null);
 });
