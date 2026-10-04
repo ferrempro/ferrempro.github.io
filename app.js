@@ -2073,7 +2073,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   async function refreshRemProServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register(
-        './sw.js?v=20261004-ipad-pwa1',
+        './sw.js?v=20261004-autoapu1',
         { updateViaCache: 'none' }
       );
       await registration.update();
