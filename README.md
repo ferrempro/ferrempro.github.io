@@ -90,3 +90,10 @@ El motor único incorpora muros y losas macizas de concreto reforzado a partir d
 ### Fase 8 · destajos y cuadrillas
 
 El módulo compara la mano de obra directa de una cuadrilla contra un destajo a partir de cantidad, unidad y rendimiento diario. La integración semanal se captura por puesto y por persona; RemPro Control no publica salarios ni tarifas operativas como valores predeterminados. El resultado presenta duración estimada, costo directo de ambos métodos y un flujo periódico del método seleccionado. La contingencia modifica el tiempo y el costo de cuadrilla, mientras el destajo conserva cantidad × precio unitario. Materiales, precio comercial, IVA, indirectos y utilidad permanecen fuera de este cálculo y siguen separados en el APU. El historial se sincroniza entre dispositivos mediante la tabla privada existente, protegida por RLS, y forma parte del respaldo/importación y de la PWA.
+
+
+### Fase 9 · generador libre
+
+El generador libre permite integrar hasta 100 renglones de longitud, área o volumen mediante operaciones explícitas de agregar y descontar. Cada renglón multiplica cantidad por las dimensiones aplicables; las descripciones se tratan siempre como texto y nunca se ejecutan como fórmulas o código. El resultado conserva agregados, deducciones, cantidad neta y detalle por renglón. Historial, sincronización privada con RLS, respaldo/importación y PWA quedan integrados. Costos, flujo, precio comercial, IVA, indirectos y utilidad permanecen fuera del generador.
+
+Con esta fase quedan migrados al motor unificado los módulos previstos del Excel/manual: concretos y morteros, muros de tabique/block, columnas, trabes, zapatas y dados, mampostería de piedra, muros y losas de concreto reforzado, destajos/cuadrillas y generador libre.
