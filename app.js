@@ -640,7 +640,7 @@ function civilInputPayload() {
   };
 }
 
-function renderCivilResult(result) {
+function renderCivilResult(result,{syncApu=true}={}) {
   const out = document.getElementById('civilResult');
   const source = document.getElementById('civilSource');
   if (!out) return;
@@ -719,7 +719,7 @@ function renderCivilResult(result) {
       <tbody>${result.materials.map(m => `<tr><td>${esc(m.description)}</td><td>${esc(m.unit)}</td><td>${nf.format(m.quantity)}</td></tr>`).join('')}</tbody>
     </table>
     <p class="civil-source-note">Las cantidades incluyen los desperdicios capturados. El agua se mantiene según la dosificación base y no se incrementa por desperdicio.</p>`;
-  priceCivilResult(result,out);
+  priceCivilResult(result,out,syncApu);
 }
 
 function calculateCivil() {
@@ -729,7 +729,7 @@ function calculateCivil() {
     const input = civilInputPayload();
     const result = window.RemProCivil.calculate(type, input);
     civilLastResult = { type, input, result };
-    renderCivilResult(result);
+    renderCivilResult(result,{syncApu:true});
     document.getElementById('civilSaveBtn').disabled = false;
   } catch (err) {
     civilLastResult = null;
@@ -845,7 +845,7 @@ function clearCivilCalculator() {
   applyCivilMasonryPreset();
   civilLastResult=null;
   document.getElementById('civilSaveBtn').disabled=true;
-  renderCivilResult(null);
+  renderCivilResult(null,{syncApu:false});
 }
 
 function saveCivilCalculation() {
@@ -1060,7 +1060,7 @@ function renderCivil() {
   updateCivilProjectOptions();
   updateCivilDosageOptions();
   renderCivilHistory();
-  if (civilLastResult) renderCivilResult(civilLastResult.result);
+  if (civilLastResult) renderCivilResult(civilLastResult.result,{syncApu:false});
 }
 
 document.getElementById('civilType')?.addEventListener('change',()=>{
@@ -1147,7 +1147,7 @@ function setupMaterialControls() {
     if (membrane) membrane.disabled=!['cementWall1','cementWall2'].includes(system.value);
   };
   if (!system.dataset.materialSyncBound) {
-    system.addEventListener('change',()=>{syncPanelToSystem();calcMaterials();});
+    system.addEventListener('change',()=>{syncPanelToSystem();calcMaterials(false);});
     system.dataset.materialSyncBound='1';
   }
   syncPanelToSystem();
@@ -1182,7 +1182,7 @@ function pricingKeyForMaterial(label,note='') {
   return '';
 }
 
-function normalizeCalculatedMaterials(items) {
+function normalizeCalculatedMaterials(items,pricingContext='') {
   return (items||[]).map(row=>{
     const label=row.label ?? row.description ?? row[0] ?? '';
     const quantity=Number(row.quantity ?? row[1] ?? 0);
@@ -1197,7 +1197,7 @@ function normalizeCalculatedMaterials(items) {
       quantity,
       unit,
       note,
-      searchText:[label,note].filter(Boolean).join(' '),
+      searchText:[label,note,pricingContext].filter(Boolean).join(' '),
       skipPricing:technicalOnly,
       skipReason:technicalOnly ? 'Cantidad de control; su material ya se costea en los renglones de alambre, anclas o fijaciones.' : ''
     };
@@ -1250,11 +1250,11 @@ function syncApuFromAutomaticPricing(priced,concept={}) {
   renderApu();
 }
 
-function priceAndSyncMaterials(items,concept={}) {
+function priceAndSyncMaterials(items,concept={},syncApu=true) {
   if(!window.RemProMaterialPricing) return null;
-  const materials=normalizeCalculatedMaterials(items);
+  const materials=normalizeCalculatedMaterials(items,concept.pricingContext||'');
   const priced=window.RemProMaterialPricing.priceMaterials(materials,activePrices());
-  syncApuFromAutomaticPricing(priced,concept);
+  if(syncApu) syncApuFromAutomaticPricing(priced,concept);
   return priced;
 }
 
@@ -1268,13 +1268,13 @@ function civilPricingConcept(result) {
   return {description:val('civilLabel').trim()||labels[result?.type]||'Obra civil',quantity:Number(result?.volumeM3||0),unit:'m³'};
 }
 
-function priceCivilResult(result,out) {
+function priceCivilResult(result,out,syncApu=true) {
   if(!result?.materials?.length || !out) return;
-  const priced=priceAndSyncMaterials(result.materials,civilPricingConcept(result));
+  const priced=priceAndSyncMaterials(result.materials,civilPricingConcept(result),syncApu);
   if(priced) out.insertAdjacentHTML('beforeend',renderAutomaticPricing(priced));
 }
 
-function calcMaterials() {
+function calcMaterials(syncApu=true) {
   const type=val('systemType'), L=num(val('matLength')), H=num(val('matHeight')), w=num(val('matWaste'))/100,
     layers=num(val('matLayers')), area=L*H, panelArea=1.22*2.44, f=1+w;
   if (![L,H,layers].every(n=>Number.isFinite(n)&&n>0)||!Number.isInteger(layers)||!Number.isFinite(w)||w<0||w>1) {
@@ -1348,10 +1348,11 @@ function calcMaterials() {
   out.className='result-list';
   out.innerHTML=items.map(x=>`<div class="result-row"><div><strong>${esc(x[0])}</strong><small>${esc(x[3]||'')}</small></div><div><strong>${x[1]}</strong> <small>${esc(x[2])}</small></div></div>`).join('');
   const conceptName=document.getElementById('systemType')?.selectedOptions?.[0]?.textContent || 'Muro / plafón';
-  const priced=priceAndSyncMaterials(items,{description:conceptName,quantity:area,unit:'m²'});
+  const pricingContext=[panel,`ancho ${profileWidth} cm`,cementWall||cementCeiling?'calibre 20 cementicio':''].filter(Boolean).join(' · ');
+  const priced=priceAndSyncMaterials(items,{description:conceptName,quantity:area,unit:'m²',pricingContext},syncApu);
   if(priced) out.insertAdjacentHTML('beforeend',renderAutomaticPricing(priced));
 }
-document.getElementById('calcMaterialsBtn').onclick=calcMaterials;
+document.getElementById('calcMaterialsBtn').onclick=()=>calcMaterials(true);
 
 let apuRows = load(STORAGE.apu, null)?.rows || [{ type: 'Material', desc: '', sourcePriceId: '', qty: 1, unit: 'pza', pu: 0 }, { type: 'Mano de obra', desc: '', sourcePriceId: '', qty: 1, unit: 'jor', pu: 0 }];
 function latestPriceOptions(selected='') {
@@ -1855,7 +1856,7 @@ window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloud
 window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.civilCalculations,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials();
+renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials(false);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
