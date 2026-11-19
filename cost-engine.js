@@ -35,6 +35,11 @@
     return Number.isFinite(n) && n > 0 ? n : null;
   };
 
+  function isWholePackagePresentation(price) {
+    const unit = normalize(price?.unit);
+    return /\b(caja|cja|paquete|paq)\b/.test(unit);
+  }
+
   function dimensionPair(text) {
     const t = normalize(text);
     const match = t.match(/(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*m\b/);
@@ -167,6 +172,14 @@
       return { ...material, status:'invalid-price', reason:'El precio del catálogo no es válido.', price, unitCost:null, amount:null, conversion };
     }
     const unitCost = gross / conversion.capacity;
+    const wholePackage = isWholePackagePresentation(price) && conversion.capacity > 1;
+    const purchaseQuantity = wholePackage
+      ? (quantity > 0 ? Math.ceil(quantity / conversion.capacity) : 0)
+      : quantity / conversion.capacity;
+    const unusedQuantity = wholePackage
+      ? Math.max(0, purchaseQuantity * conversion.capacity - quantity)
+      : 0;
+    const amount = wholePackage ? purchaseQuantity * gross : quantity * unitCost;
     return {
       ...material,
       status:'priced',
@@ -175,7 +188,14 @@
       conversion,
       purchaseGross:gross,
       unitCost,
-      amount:quantity * unitCost
+      purchaseMode:wholePackage ? 'whole-package' : 'fractional',
+      purchaseQuantity,
+      purchaseUnit:price?.unit || '',
+      technicalQuantity:quantity,
+      technicalUnit:material?.unit || '',
+      unusedQuantity,
+      inventoryDisposition:wholePackage ? 'not-added' : 'not-applicable',
+      amount
     };
   }
 
@@ -203,6 +223,7 @@
     normalize,
     canonicalUnit,
     presentationCapacity,
+    isWholePackagePresentation,
     findBestPrice,
     costWithPrice,
     costMaterial,
