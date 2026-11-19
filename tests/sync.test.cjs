@@ -116,3 +116,12 @@ test('cálculo de obra civil local se sube a la tabla sincronizada', async()=>{
  assert.equal(h.tables.rempro_civil_calculations[0].label,'Zapata');
  assert.equal(h.ctx.RemProSync.status.status,'synced');
 });
+
+test('legacy rules receive geometry defaults on first upload',async()=>{
+ const h=harness();
+ await h.ctx.RemProSync.syncNow();
+ const r=h.tables.rempro_rules[0];
+ assert.equal(r.stud_spacing,.61);
+ assert.equal(r.stud_length,3.05);
+ assert.equal(r.track_length,3.05);
+});
