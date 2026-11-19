@@ -8,7 +8,7 @@
   const fields = {
     projects: ['id','name','client','folio','status','contract','collected','cost','progress','deleted','updated_at','updated_by'],
     prices: ['id','item','supplier','unit','net','vat','date','deleted','updated_at','updated_by'],
-    rules: ['id','liston','canaleta','angle','wire','screws','mini','cajillo','curtain','updated_at','updated_by'],
+    rules: ['id','liston','canaleta','angle','wire','screws','mini','cajillo','curtain','stud_spacing','stud_length','track_length','updated_at','updated_by'],
     documents: ['id','project_id','title','document_type','folio','amount','status','sent_state','due_date','notes','deleted','updated_at','updated_by'],
     civilCalculations: ['id','project_id','calculation_type','label','input_payload','result_payload','source_version','deleted','updated_at','updated_by']
   };
@@ -132,7 +132,7 @@
 
   async function syncRules(client,user) {
     const snapshot=data.local.load(data.keys.rules,{});
-    const local={...snapshot,id:'default',updated_at:snapshot.updated_at || new Date(0).toISOString()};
+    const local={stud_spacing:0.61,stud_length:3.05,track_length:3.05,...snapshot,id:'default',updated_at:snapshot.updated_at || new Date(0).toISOString()};
     const rows=await readAll(client,'rempro_rules');
     assertSession(user.id);
     const remote=rows.find(r=>r.id==='default');
