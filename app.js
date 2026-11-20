@@ -38,6 +38,7 @@ const activeDocuments = () => documents.filter(d => !d.deleted);
 const activeCivilCalculations = () => civilCalculations.filter(c => !c.deleted);
 
 const views = {
+  escuadra: ['Escuadra', 'Obras en vivo y tu equipo de trabajo'],
   dashboard: ['Dashboard', 'Resumen general de RemPro'],
   master: ['Control Maestro', 'Obras, cobros y costos'],
   materials: ['Muros y plafones', 'Cuantificación paramétrica'],
@@ -54,6 +55,7 @@ function showView(id) {
   document.getElementById('viewSubtitle').textContent = views[id][1];
   document.getElementById('sidebar').classList.remove('open');
   if (id === 'dashboard') renderDashboard();
+  if (id === 'escuadra') renderEscuadra();
   if (id === 'civil') renderCivil();
 }
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
@@ -124,6 +126,110 @@ function renderDashboard() {
   if (!alerts.length) { a.className = 'empty'; a.textContent = 'Sin alertas por ahora.'; }
   else { a.className = ''; a.innerHTML = alerts.map(x => `<div class="alert-card">${esc(x)}</div>`).join(''); }
 }
+
+function sqFechaCorta(d) {
+  const t = Date.parse(d || '');
+  if (!Number.isFinite(t)) return '';
+  return new Date(t).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+}
+
+function renderEscuadra() {
+  const root = document.getElementById('escuadra');
+  if (!root) return;
+  const data = window.RemProEscuadra || { roles: [] };
+  const list = activeProjects();
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  // Totales del portafolio: misma aritmética que Dashboard y Control Maestro.
+  const contract = list.reduce((a, p) => a + Math.max(0, num(p.contract)), 0);
+  const collected = list.reduce((a, p) => a + Math.max(0, num(p.collected)), 0);
+  const receivable = list.reduce((a, p) => num(p.contract) > 0 ? a + Math.max(0, num(p.contract) - num(p.collected)) : a, 0);
+  setText('sqKpiContract', money(contract));
+  setText('sqKpiCollected', money(collected));
+  setText('sqKpiReceivable', money(receivable));
+  setText('sqKpiActive', String(list.filter(p => p.status === 'Activa').length));
+  setText('sqKpiPending', String(list.filter(p => p.status === 'Terminada' && num(p.contract) > 0 && (num(p.contract) - num(p.collected)) > 1).length));
+
+  // Franja «Lo más reciente»: avances de obra y entregables de la escuadra, por fecha.
+  const items = [];
+  activeProjectUpdates().forEach(u => {
+    const p = list.find(x => x.id === u.project_id);
+    if (!p) return;
+    items.push({ date: u.as_of_date || u.created_at, tag: 'Obra', text: `${p.name}: avance ${num(u.progress).toFixed(0)}%${u.notes ? ` · ${u.notes}` : ''}` });
+  });
+  (data.roles || []).forEach(r => (r.recientes || []).forEach(x => items.push({ date: x.date, tag: r.name, text: x.text })));
+  items.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
+  const strip = document.getElementById('sqRecent');
+  if (strip) {
+    if (!items.length) { strip.className = 'empty'; strip.textContent = 'Sin actividad reciente.'; }
+    else {
+      strip.className = '';
+      strip.innerHTML = items.slice(0, 6).map(i => `<div class="recent-item"><div><strong>${esc(i.text)}</strong><small>${esc(i.tag)}</small></div><strong>${esc(sqFechaCorta(i.date))}</strong></div>`).join('');
+    }
+  }
+
+  // Bloque A: obras en vivo (mismos importes y saldo que Control Maestro).
+  const works = document.getElementById('sqWorks');
+  if (works) {
+    const order = { 'Activa': 0, 'En cotización': 1, 'En pausa': 2, 'Terminada': 3 };
+    const sorted = [...list].sort((a, b) => ((order[a.status] ?? 4) - (order[b.status] ?? 4)) || ((Date.parse(b.updated_at || 0) || 0) - (Date.parse(a.updated_at || 0) || 0)));
+    if (!sorted.length) { works.innerHTML = '<div class="empty">Aún no hay obras registradas.</div>'; }
+    else {
+      works.innerHTML = sorted.map(p => {
+        const c = num(p.contract), col = num(p.collected), saldo = c > 0 ? Math.max(0, c - col) : null;
+        const updates = activeProjectUpdates().filter(u => u.project_id === p.id)
+          .sort((a, b) => (Date.parse(b.as_of_date || b.created_at) || 0) - (Date.parse(a.as_of_date || a.created_at) || 0));
+        const latest = updates[0];
+        const pending = p.status === 'Terminada' && saldo !== null && saldo > 1;
+        return `<article class="sq-work">
+          <div class="sq-work-head">
+            <div><strong>${esc(p.name)}</strong><small>${esc(p.client)}${p.folio ? ` · ${esc(p.folio)}` : ''}</small></div>
+            <span class="status"><i class="dot ${statusColor(p)}"></i>${esc(p.status)}</span>
+          </div>
+          ${pending ? '<div class="sq-badge">Pendiente de cobro</div>' : ''}
+          <div class="sq-nums">
+            <div><span>Contratado</span><strong>${c > 0 ? money(c) : 'Por conciliar'}</strong></div>
+            <div><span>Cobrado</span><strong>${money(col)}</strong></div>
+            <div><span>Saldo</span><strong>${saldo !== null ? money(saldo) : 'Por conciliar'}</strong></div>
+            <div><span>Costo real</span><strong>${money(p.cost)}</strong></div>
+          </div>
+          <div class="sq-prog"><div class="sq-prog-track"><i style="width:${Math.min(100, Math.max(0, num(p.progress)))}%"></i></div><span>Avance físico ${num(p.progress)}%</span></div>
+          ${latest ? `<p class="sq-latest">Último avance: ${esc(latest.as_of_date || '')} · ${num(latest.progress).toFixed(0)}%${latest.notes ? ` · ${esc(latest.notes)}` : ''}</p>` : ''}
+        </article>`;
+      }).join('');
+    }
+  }
+
+  // Bloque B: la escuadra (datos versionados en escuadra-data.js).
+  const rolesEl = document.getElementById('sqRoles');
+  if (rolesEl) {
+    const roles = data.roles || [];
+    if (!roles.length) { rolesEl.innerHTML = '<div class="empty">Sin datos de la escuadra.</div>'; }
+    else {
+      rolesEl.innerHTML = roles.map((r, idx) => `<article class="sq-role${idx === 0 ? ' open' : ''}">
+        <button class="sq-role-head" type="button" data-sq-toggle="${idx}">
+          <span class="sq-role-ico">${esc(r.icon || '▦')}</span>
+          <span class="sq-role-name"><strong>${esc(r.name)}</strong><small>${esc(r.what || '')}</small></span>
+          <span class="sq-chev">▾</span>
+        </button>
+        <div class="sq-role-body">
+          <h4>Recientes</h4>
+          <ul class="sq-list">${(r.recientes || []).map(x => `<li><span>${esc(x.text)}</span><small>${esc(sqFechaCorta(x.date))}</small></li>`).join('') || '<li><small>Sin registros.</small></li>'}</ul>
+          <h4>Pendientes</h4>
+          <ul class="sq-list">${(r.pendientes || []).map(x => `<li><span>${esc(x)}</span></li>`).join('') || '<li><small>Nada pendiente.</small></li>'}</ul>
+          ${r.ask ? `<p class="sq-ask"><span>Pídelo así:</span> ${esc(r.ask)}</p>` : ''}
+        </div>
+      </article>`).join('');
+    }
+  }
+}
+
+document.getElementById('escuadra')?.addEventListener('click', e => {
+  const toggle = e.target.closest('[data-sq-toggle]');
+  if (toggle) { toggle.closest('.sq-role')?.classList.toggle('open'); return; }
+  if (e.target.closest('#sqExpandAll')) document.querySelectorAll('#sqRoles .sq-role').forEach(r => r.classList.add('open'));
+  if (e.target.closest('#sqCollapseAll')) document.querySelectorAll('#sqRoles .sq-role').forEach(r => r.classList.remove('open'));
+});
 
 function renderProjects() {
   const query = val('projectSearch').trim().toLocaleLowerCase('es');
@@ -2196,13 +2302,13 @@ function reloadLocalData() {
   const nextRules = { ...defaultRules, ...load(STORAGE.rules, rules) };
   const rulesChanged = JSON.stringify(nextRules) !== JSON.stringify(rules);
   rules = nextRules;
-  renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); if (rulesChanged) loadRulesForm();
+  renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); reloadApuFromLocal(); renderEscuadra(); if (rulesChanged) loadRulesForm();
 }
 window.addEventListener('rempro:synced', () => { reloadLocalData(); refreshCloudExtensions(); });
 window.addEventListener('storage', e => { if ([STORAGE.projects,STORAGE.prices,STORAGE.priceHistory,STORAGE.projectUpdates,STORAGE.documents,STORAGE.civilCalculations,STORAGE.rules,STORAGE.apu].includes(e.key)) reloadLocalData(); });
 const savedApu = load(STORAGE.apu, null);
 if (savedApu?.fields) Object.entries(savedApu.fields).forEach(([id,value]) => { const input = document.getElementById(id); if (input) input.value = value; });
-renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderApu(); loadRulesForm(); calcMaterials(false);
+renderProjects(); renderDocuments(); renderCivil(); renderPrices(); renderPriceHistory(); renderEscuadra(); renderApu(); loadRulesForm(); calcMaterials(false);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   let remproReloadingForUpdate = false;
 
@@ -2215,7 +2321,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   async function refreshRemProServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register(
-        './sw.js?v=20261004-lightrey1',
+        './sw.js?v=20261119-escuadra1',
         { updateViaCache: 'none' }
       );
       await registration.update();

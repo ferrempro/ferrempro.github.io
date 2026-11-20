@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="stylesheet" href="styles.css?v=20261004-lightrey1" />
+  <link rel="stylesheet" href="styles.css?v=20261119-escuadra1" />
 </head>
 <body>
   <div class="app-shell">
@@ -21,7 +21,8 @@
         <div><strong>RemPro Control</strong><span>V2 · Control + APU + Nube</span></div>
       </div>
       <nav>
-        <button class="nav-btn active" data-view="dashboard">▦ <span>Dashboard</span></button>
+        <button class="nav-btn active" data-view="escuadra">♟ <span>Escuadra</span></button>
+        <button class="nav-btn" data-view="dashboard">▦ <span>Dashboard</span></button>
         <button class="nav-btn" data-view="master">⌂ <span>Control Maestro</span></button>
         <button class="nav-btn" data-view="materials">▤ <span>Muros y plafones</span></button>
         <button class="nav-btn" data-view="civil">▧ <span>Obra civil</span></button>
@@ -36,8 +37,8 @@
       <header class="topbar">
         <button class="icon-btn" id="menuBtn" aria-label="Menú">☰</button>
         <div>
-          <h1 id="viewTitle">Dashboard</h1>
-          <p id="viewSubtitle">Resumen general de RemPro</p>
+          <h1 id="viewTitle">Escuadra</h1>
+          <p id="viewSubtitle">Obras en vivo y tu equipo de trabajo</p>
         </div>
         <div class="top-actions">
           <span id="cloudStatus" class="desktop-only">● Local</span>
@@ -47,7 +48,37 @@
         </div>
       </header>
 
-      <section id="dashboard" class="view active">
+      <section id="escuadra" class="view active">
+        <div class="panel sq-strip-panel">
+          <div class="panel-head"><h3>Lo más reciente</h3><button class="link-btn" data-go="master">Ver obras</button></div>
+          <div id="sqRecent" class="empty">Sin actividad reciente.</div>
+        </div>
+
+        <div class="kpi-grid sq-kpis">
+          <article class="kpi"><span>Contratado</span><strong id="sqKpiContract">$0</strong><small>portafolio registrado</small></article>
+          <article class="kpi"><span>Cobrado</span><strong id="sqKpiCollected">$0</strong><small>flujo real recibido</small></article>
+          <article class="kpi"><span>Saldo por cobrar</span><strong id="sqKpiReceivable">$0</strong><small>solo contratos conciliados</small></article>
+          <article class="kpi"><span>Obras activas</span><strong id="sqKpiActive">0</strong><small>en ejecución</small></article>
+          <article class="kpi"><span>Terminadas con saldo</span><strong id="sqKpiPending">0</strong><small>pendientes de cobro</small></article>
+        </div>
+
+        <div class="section-head sq-block-head">
+          <div><h2>Obras en vivo</h2><p>Los mismos importes de Control Maestro, actualizados en cada sincronización.</p></div>
+          <button class="secondary" data-go="master">Abrir Control Maestro</button>
+        </div>
+        <div id="sqWorks" class="sq-works"></div>
+
+        <div class="section-head sq-block-head">
+          <div><h2>La escuadra</h2><p>Tu equipo de trabajo con Muse: entregables recientes y pendientes por puesto.</p></div>
+          <div class="row-actions">
+            <button class="secondary" id="sqExpandAll" type="button">Expandir todo</button>
+            <button class="secondary" id="sqCollapseAll" type="button">Contraer todo</button>
+          </div>
+        </div>
+        <div id="sqRoles" class="sq-roles"></div>
+      </section>
+
+      <section id="dashboard" class="view">
         <div class="hero-card">
           <div>
             <small>RemPro Control V2</small>
@@ -548,13 +579,14 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=20261004-lightrey1"></script>
-  <script src="supabase-client.js?v=20261004-lightrey1"></script>
-  <script src="data-store.js?v=20261004-lightrey1"></script>
-  <script src="civil-calculator.js?v=20261004-lightrey1"></script>
-  <script src="cost-engine.js?v=20261004-lightrey1"></script>
-  <script src="app.js?v=20261004-lightrey1"></script>
-  <script src="sync.js?v=20261004-lightrey1"></script>
+  <script src="supabase-config.js?v=20261119-escuadra1"></script>
+  <script src="supabase-client.js?v=20261119-escuadra1"></script>
+  <script src="data-store.js?v=20261119-escuadra1"></script>
+  <script src="civil-calculator.js?v=20261119-escuadra1"></script>
+  <script src="cost-engine.js?v=20261119-escuadra1"></script>
+  <script src="escuadra-data.js?v=20261119-escuadra1"></script>
+  <script src="app.js?v=20261119-escuadra1"></script>
+  <script src="sync.js?v=20261119-escuadra1"></script>
   <script>RemProSync.onStatusChange(paintStatus);</script>
 </body>
 </html>
